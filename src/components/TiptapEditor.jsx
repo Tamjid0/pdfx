@@ -1,5 +1,5 @@
 'use client';
-const _jsxFileName = "j:\\antigravity\\pdfx\\src\\components\\TiptapEditor.tsx";import { useEditor, EditorContent } from '@tiptap/react';
+const _jsxFileName = "j:\\antigravity\\pdfx\\src\\components\\TiptapEditor.tsx"; import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import React, { useEffect } from 'react';
 import TextAlign from '@tiptap/extension-text-align';
@@ -18,6 +18,7 @@ const TiptapEditor = ({ onEditorChange, htmlContent, onEditorCreated }) => {
         types: ['heading', 'paragraph'],
       }),
     ],
+    immediatelyRender: false,
     content: htmlContent || '',
     onUpdate: ({ editor }) => {
       onEditorChange(editor.getHTML(), editor.getText());
@@ -42,8 +43,8 @@ const TiptapEditor = ({ onEditorChange, htmlContent, onEditorCreated }) => {
   }, [htmlContent, editor]);
 
   return (
-    React.createElement('div', {__self: this, __source: {fileName: _jsxFileName, lineNumber: 44}}
-      , React.createElement(EditorContent, { editor: editor, __self: this, __source: {fileName: _jsxFileName, lineNumber: 45}} )
+    React.createElement('div', { __self: this, __source: { fileName: _jsxFileName, lineNumber: 44 } }
+      , React.createElement(EditorContent, { editor: editor, __self: this, __source: { fileName: _jsxFileName, lineNumber: 45 } })
     )
   );
 };

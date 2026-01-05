@@ -9,9 +9,26 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@lexical/html": "^0.39.0",
+    "@lexical/plain-text": "^0.39.0",
+    "@lexical/react": "^0.39.0",
+    "@tiptap/extension-text-align": "^3.14.0",
+    "@tiptap/react": "^3.14.0",
+    "@tiptap/starter-kit": "^3.14.0",
+    "allotment": "^1.20.5",
+    "elkjs": "^0.11.0",
+    "jwt-decode": "^4.0.0",
+    "katex": "^0.16.27",
+    "lexical": "^0.39.0",
+    "lucide-react": "^0.562.0",
     "next": "16.1.1",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "react-icons": "^5.5.0",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.11.0",
+    "reactflow": "^11.11.4",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

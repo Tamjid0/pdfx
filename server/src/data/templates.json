@@ -1,0 +1,107 @@
+[
+  {
+    "id": "clean_format",
+    "name": "Clean & Professional Formatting",
+    "category": "general",
+    "description": "Cleans spacing, fixes punctuation, applies headings, and ensures perfect formatting.",
+    "prompt": "Clean, normalize, and professionally format the following text. Fix spacing, punctuation, structure, and readability. Apply headings, bullet points, and consistent indentation where needed. Do NOT change the meaning.\n\nCONTENT:\n{{content}}"
+  },
+  {
+    "id": "academic_essay",
+    "name": "Academic Essay Format",
+    "category": "academic",
+    "description": "Converts any text into proper academic essay formatting with structured headings.",
+    "prompt": "Reformat the content into a clean academic essay with clear sections: Introduction, Main Argument, Supporting Evidence, Counterargument, Conclusion. Improve clarity but do NOT alter meaning.\n\nCONTENT:\n{{content}}"
+  },
+  {
+    "id": "bullet_point_summary",
+    "name": "Bullet Summary",
+    "category": "summary",
+    "description": "Turns the content into clean bullet points.",
+    "prompt": "Convert the following content into clean, organized bullet points, keeping all important details.\n\nCONTENT:\n{{content}}"
+  },
+  {
+    "id": "executive_summary",
+    "name": "Executive Summary",
+    "category": "summary",
+    "description": "Condensed, business-style executive summary.",
+    "prompt": "Rewrite as a concise executive summary, focusing on key insights and outcomes. Keep it professional.\n\nCONTENT:\n{{content}}"
+  },
+  {
+    "id": "resume_bullet_points",
+    "name": "Resume Bullet Points",
+    "category": "professional",
+    "description": "Converts text into strong, ATS-friendly resume bullets.",
+    "prompt": "Extract key actions and achievements. Rewrite them as strong ATS-friendly resume bullet points using action verbs.\n\nCONTENT:\n{{content}}"
+  },
+  {
+    "id": "email_polish",
+    "name": "Email Polishing",
+    "category": "communication",
+    "description": "Polishes text into a professional email.",
+    "prompt": "Rewrite the following content as a clean, polite, professional email. Correct structure, tone, and grammar.\n\nCONTENT:\n{{content}}"
+  },
+  {
+    "id": "expand_explain",
+    "name": "Expand & Explain",
+    "category": "writing",
+    "description": "Expands the text with more clarity and explanation.",
+    "prompt": "Expand the following content. Add clarity, examples, and explanation while keeping original meaning.\n\nCONTENT:\n{{content}}"
+  },
+  {
+    "id": "shorten_text",
+    "name": "Shorten Text (Concise)",
+    "category": "editing",
+    "description": "Shortens content but keeps meaning intact.",
+    "prompt": "Shorten this content while keeping all essential meaning. Make it clear and concise.\n\nCONTENT:\n{{content}}"
+  },
+  {
+    "id": "proofread",
+    "name": "Proofread & Fix Grammar",
+    "category": "editing",
+    "description": "Fixes all grammar, typos, punctuation, and clarity.",
+    "prompt": "Proofread and correct grammar, punctuation, clarity, and readability without changing meaning.\n\nCONTENT:\n{{content}}"
+  },
+  {
+    "id": "meeting_notes",
+    "name": "Meeting Notes Formatter",
+    "category": "organization",
+    "description": "Turns text into well-structured meeting minutes.",
+    "prompt": "Convert into meeting notes with sections: Agenda, Key Discussion Points, Decisions, Action Items.\n\nCONTENT:\n{{content}}"
+  },
+  {
+    "id": "study_notes",
+    "name": "Study Notes",
+    "category": "academic",
+    "description": "Converts text into simplified study notes.",
+    "prompt": "Turn this into simple, clean study notes with definitions, key points, and explanations.\n\nCONTENT:\n{{content}}"
+  },
+  {
+    "id": "story_rewrite",
+    "name": "Creative Rewrite",
+    "category": "writing",
+    "description": "Rewrites text in a creative, story-like tone.",
+    "prompt": "Rewrite the content in a storytelling style, adding narrative flow but keeping core meaning.\n\nCONTENT:\n{{content}}"
+  },
+  {
+    "id": "legal_format",
+    "name": "Legal Format",
+    "category": "professional",
+    "description": "Converts text into formal legal-style language.",
+    "prompt": "Rewrite in a formal, legal documentation tone. Maintain precision and seriousness.\n\nCONTENT:\n{{content}}"
+  },
+  {
+    "id": "blog_format",
+    "name": "Blog Article Format",
+    "category": "writing",
+    "description": "Turns content into a blog-style formatted article.",
+    "prompt": "Format into a blog article with headline, intro paragraph, subheadings, and concluding summary.\n\nCONTENT:\n{{content}}"
+  },
+  {
+    "id": "technical_explanation",
+    "name": "Technical Explanation",
+    "category": "technical",
+    "description": "Explains content in a simple, beginner-friendly manner.",
+    "prompt": "Rewrite the text as a beginner-friendly technical explanation. Use simple language.\n\nCONTENT:\n{{content}}"
+  }
+]

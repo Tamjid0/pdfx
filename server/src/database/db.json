@@ -1,0 +1,39 @@
+{
+  "users": [
+    {
+      "id": "2025-11-05T10:18:49.746Z",
+      "firstName": "Tamjid",
+      "lastName": "Chowdhury",
+      "email": "tamjid3259@gmail.com",
+      "password": "$2b$10$oTMVGIQJanuWkeBF2AFQuOOakHU9vAz2YdDm8.uQhpkKzJCApyPqW"
+    },
+    {
+      "id": "2025-11-07T05:50:02.040Z",
+      "firstName": "Test",
+      "lastName": "User",
+      "email": "test@example.com",
+      "password": "$2b$10$1XAhJgffoHFhq.hfzwm0SO9jS0/mwSCkbJq515YwVDTw8Y3CKtf5m"
+    },
+    {
+      "id": "2025-11-07T08:22:06.735Z",
+      "firstName": "Tamjid",
+      "lastName": "Chowdhury",
+      "email": "tamjid@gmail.com",
+      "password": "$2b$10$ciDkVSWMSzATgd5Xegnqcuer6rIhzb1sk58mMQTgqYLbKAx/38BAe"
+    },
+    {
+      "id": "2025-11-07T08:27:52.849Z",
+      "firstName": "Tamjid",
+      "lastName": "Chowdhury",
+      "email": "tamjid32559@gmail.com",
+      "password": "$2b$10$ADORsRdcpo7UfklV0envOuVFnU.rgzSBfE0jliKJHYdV.O6AD8IDy"
+    },
+    {
+      "id": "2025-11-07T08:33:19.178Z",
+      "firstName": "Tamjid",
+      "lastName": "Chowdhury",
+      "email": "tamjid325559@gmail.com",
+      "password": "$2b$10$d0KlGnTu95usiSIDoW3/Len29MdwU5L8p1fwU646guZZFmGFW6XHW"
+    }
+  ]
+}

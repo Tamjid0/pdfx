@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.perspective-1000 {
+    perspective: 1000px;
+}
+.transform-style-preserve-3d {
+    transform-style: preserve-3d;
+}
+.rotate-y-180 {
+    transform: rotateY(180deg);
+}
+.backface-hidden {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+.notes-list li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: #00ff88;
+    font-weight: 700;
+}

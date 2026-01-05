@@ -1,0 +1,63 @@
+import fs from 'fs';
+import path from 'path';
+import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { fileURLToPath, pathToFileURL } from 'url';
+
+// Configure PDF.js worker
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+pdfjs.GlobalWorkerOptions.standardFontDataUrl = 'https://mozilla.github.io/pdf.js/standard_fonts/';
+const workerPath = path.resolve(process.cwd(), 'src/static/pdf.worker.mjs');
+pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(workerPath).href;
+
+/**
+ * Checks the file type and ensures it's allowed.
+ * @param {string} filePath - The path to the file.
+ * @returns {Promise<{mime: string, ext: string}>} - The file type object or throws an error.
+ */
+export async function checkFileType(filePath) {
+    const buffer = fs.readFileSync(filePath);
+    const { fileTypeFromBuffer } = await import('file-type');
+    const type = await fileTypeFromBuffer(buffer);
+
+    const allowedMimeTypes = ['application/pdf', 'text/plain'];
+    if (!type || !allowedMimeTypes.includes(type.mime)) {
+        throw new Error('Invalid file type. Only PDF and TXT files are allowed.');
+    }
+    return type;
+}
+
+/**
+ * Extracts text content from a PDF file.
+ * @param {string} filePath - The path to the PDF file.
+ * @returns {Promise<string>} - The extracted text content.
+ */
+export async function extractTextFromPdf(filePath) {
+    const buffer = fs.readFileSync(filePath);
+    const uint8Array = new Uint8Array(buffer);
+    const doc = await pdfjs.getDocument({ data: uint8Array }).promise;
+    let text = '';
+    for (let i = 1; i <= doc.numPages; i++) {
+        const page = await doc.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map(item => item.str).join(' ') + '\n';
+    }
+    return text;
+}
+
+/**
+ * Cleans the extracted text content.
+ * @param {string} text - The raw text content.
+ * @returns {string} - The cleaned text content.
+ */
+export function cleanText(text) {
+    // Remove repeated headers & footers (placeholder - needs more advanced logic)
+    // Remove page numbers (placeholder - needs regex based on common patterns)
+    // Remove empty or garbage OCR blocks (placeholder - needs context-aware cleaning)
+    // Collapse excessive whitespace
+    let cleanedText = text.replace(/\s+/g, ' ').trim(); // Replace multiple spaces with a single space and trim
+
+    // Basic cleaning for now, will enhance later based on testing with various PDFs
+    return cleanedText;
+}

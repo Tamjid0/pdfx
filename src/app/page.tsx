@@ -64,6 +64,7 @@ const Home = () => {
         activeNotesToggles,
         activeInsightsToggles,
         isPreviewMode, setPreviewMode,
+        isTyping, setIsTyping,
         stats, setStats,
         openExportModal,
         summaryData, insightsData, notesData, quizData, flashcardsData,
@@ -80,50 +81,66 @@ const Home = () => {
             text: message,
             timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
         };
+
         // @ts-ignore
         setChatHistory(prev => [...prev, newUserMessage]);
-        setIsLoading(true);
+        setIsTyping(true);
 
         try {
-            const aiResponse = await apiService.chatWithDocument(message, fileId);
-            // @ts-ignore
-            setChatHistory(prev => [...prev, aiResponse]);
+            let fullAiText = '';
+
+            await apiService.chatWithDocumentStream(
+                message,
+                fileId,
+                (chunk) => {
+                    fullAiText += chunk;
+                    setIsTyping(false); // Stop "thinking" animation when first chunk arrives
+
+                    // Update the last message in history (the AI message)
+                    // @ts-ignore
+                    setChatHistory(prev => {
+                        const lastMsg = prev[prev.length - 1];
+                        if (lastMsg && lastMsg.sender === 'ai' && lastMsg.timestamp === 'streaming...') {
+                            return [...prev.slice(0, -1), { ...lastMsg, text: fullAiText }];
+                        } else {
+                            // Initial AI message placeholder
+                            return [...prev, {
+                                sender: 'ai',
+                                text: fullAiText,
+                                timestamp: 'streaming...'
+                            }];
+                        }
+                    });
+                },
+                (finalText) => {
+                    // Final update to set the correct timestamp
+                    // @ts-ignore
+                    setChatHistory(prev => {
+                        return [...prev.slice(0, -1), {
+                            sender: 'ai',
+                            text: finalText,
+                            timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                        }];
+                    });
+                    setIsTyping(false);
+                }
+            );
         } catch (error) {
             console.error("Error sending message:", error);
+            setIsTyping(false);
             const errorResponse: ChatMessage = {
                 sender: 'ai',
                 text: 'Sorry, I encountered an error. Please try again.',
                 timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
             };
             // @ts-ignore
-            setChatHistory(prev => [...prev, errorResponse]);
-        } finally {
-            setIsLoading(false);
+            setChatHistory(prev => [...prev.slice(0, -1), errorResponse]);
         }
     };
 
-    const handleScrapeUrl = async (url: string) => {
-        console.log("Scraping URL:", url);
-        setIsLoading(true);
-        try {
-            const response = await fetch(`/api/scrape?url=${encodeURIComponent(url)}`);
-            if (!response.ok) throw new Error("Failed to scrape URL");
-            const data = await response.json();
-            setHtmlPreview(data.html);
-            setView("editor");
-            setMode('editor');
-        } catch (error) {
-            console.error("Error scraping URL:", error);
-            setHtmlPreview(null);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handlePasteContent = () => {
-        setView("editor");
-        setHtmlPreview("");
-        setMode('editor');
+    const backToImport = () => {
+        setView("import");
+        setMode("editor");
     };
 
     const handleEditorChange = (html: string, text: string) => {
@@ -135,9 +152,17 @@ const Home = () => {
         setStats({ wordCount: words, charCount: chars, lineCount: lines, readTime: readTime });
     };
 
-    const backToImport = () => {
-        setView("import");
-        setMode("editor");
+    const triggerBackgroundEmbedding = async (text: string, name?: string) => {
+        if (!text.trim()) return;
+        try {
+            const data = await apiService.embedText(text, name);
+            if (data.fileId) {
+                setFileId(data.fileId);
+                console.log("[+] Content embedded in background:", data.fileId);
+            }
+        } catch (error) {
+            console.error("[-] Background embedding failed:", error);
+        }
     };
 
     const handleFileUpload = async (file: File) => {
@@ -159,6 +184,38 @@ const Home = () => {
             setFileId(null);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleScrapeUrl = async (url: string) => {
+        console.log("Scraping URL:", url);
+        setIsLoading(true);
+        try {
+            const response = await fetch(`/api/scrape?url=${encodeURIComponent(url)}`);
+            if (!response.ok) throw new Error("Failed to scrape URL");
+            const data = await response.json();
+            setHtmlPreview(data.html);
+            setView("editor");
+            setMode('editor');
+
+            // Background Embedding
+            const textContent = new DOMParser().parseFromString(data.html, "text/html").body.textContent || "";
+            triggerBackgroundEmbedding(textContent, url);
+        } catch (error) {
+            console.error("Error scraping URL:", error);
+            setHtmlPreview(null);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handlePasteContent = (content?: string) => {
+        setView("editor");
+        setHtmlPreview(typeof content === 'string' ? content : "");
+        setMode('editor');
+
+        if (typeof content === 'string' && content.trim()) {
+            triggerBackgroundEmbedding(content, "Pasted Content");
         }
     };
 
@@ -340,7 +397,12 @@ const Home = () => {
                                         <Allotment.Pane>
                                             <div className="flex-1 flex flex-col p-6 overflow-y-auto border-r border-[#222] h-full">
                                                 {(mode === 'editor' || leftPanelView === 'editor') ? (
-                                                    <Editor htmlContent={htmlPreview} onEditorChange={handleEditorChange} />
+                                                    <Editor
+                                                        htmlContent={htmlPreview}
+                                                        onEditorChange={handleEditorChange}
+                                                        onFileUpload={handleFileUpload}
+                                                        onPasteContent={handlePasteContent}
+                                                    />
                                                 ) : (
                                                     <Artboard htmlContent={htmlPreview} isLoading={false} activeNotesToggles={activeNotesToggles} activeInsightsToggles={activeInsightsToggles} onExport={handleExport} />
                                                 )}
@@ -358,8 +420,14 @@ const Home = () => {
                                                         {mode === 'flashcards' && <Flashcards onGenerate={() => handleGenerate('flashcards')} />}
                                                         {mode === 'quiz' && <Quiz onGenerate={() => handleGenerate('quiz')} />}
                                                         {mode === 'mindmap' && <Mindmap data={mindmapData} onGenerate={() => handleGenerate('mindmap')} />}
-                                                        {mode === 'chat' && <Chat onSendMessage={handleSendMessage} history={chatHistory} />}
                                                     </DocumentPreview>
+                                                )}
+                                                {mode === 'chat' && (
+                                                    <Chat
+                                                        history={chatHistory}
+                                                        onSendMessage={handleSendMessage}
+                                                        isTyping={isTyping}
+                                                    />
                                                 )}
                                             </div>
                                         </Allotment.Pane>

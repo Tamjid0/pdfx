@@ -11,9 +11,10 @@ interface ChatMessage {
 interface ChatProps {
     history: ChatMessage[];
     onSendMessage: (message: string) => void;
+    isTyping?: boolean;
 }
 
-const Chat: React.FC<ChatProps> = ({ history, onSendMessage }) => {
+const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
     const [inputValue, setInputValue] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -24,7 +25,7 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage }) => {
 
     useEffect(() => {
         scrollToBottom();
-    }, [history]);
+    }, [history, isTyping]);
 
     const handleSend = () => {
         if (inputValue.trim()) {
@@ -95,8 +96,8 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage }) => {
                             <div className={`chat-message-avatar w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center font-semibold text-sm ${msg.sender === 'user' ? 'bg-gradient-to-br from-[#00ff88] to-[#00cc66] text-black' : 'bg-[#1a1a1a] border-2 border-[#333]'}`}>
                                 {msg.sender === 'user' ? 'JD' : <svg viewBox="0 0 24 24" className="w-5 h-5 fill-[#00ff88]"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" /></svg>}
                             </div>
-                            <div className="chat-message-content flex-1">
-                                <div className={`chat-message-bubble p-3 px-4 text-sm leading-relaxed rounded-2xl ${msg.sender === 'user' ? 'bg-gradient-to-br from-[#00ff88] to-[#00cc66] text-black rounded-br-lg' : 'bg-[#1a1a1a] text-[#ccc] border border-[#333] rounded-bl-lg'}`}>
+                            <div className="chat-message-content max-w-full">
+                                <div className={`chat-message-bubble p-3 px-4 text-sm leading-relaxed rounded-2xl w-fit ${msg.sender === 'user' ? 'bg-gradient-to-br from-[#00ff88] to-[#00cc66] text-black rounded-br-lg ml-auto' : 'bg-[#1a1a1a] text-[#ccc] border border-[#333] rounded-bl-lg'}`}>
                                     {msg.sender === 'ai' ? (
                                         <ReactMarkdown>
                                             {msg.text}
@@ -109,6 +110,28 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage }) => {
                             </div>
                         </div>
                     ))
+                )}
+                {isTyping && (
+                    <div className="chat-message flex gap-3 max-w-[85%] animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <div className="chat-message-avatar w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center bg-[#1a1a1a] border-2 border-[#333]">
+                            <div className="relative flex items-center justify-center w-full h-full">
+                                <div className="absolute w-full h-full bg-[#00ff88] rounded-full opacity-20 animate-ping duration-[2000ms]"></div>
+                                <div className="absolute w-3/4 h-3/4 bg-[#00ff88] rounded-full opacity-40 animate-ping duration-[1500ms]"></div>
+                                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-[#00ff88] z-10"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" /></svg>
+                            </div>
+                        </div>
+                        <div className="chat-message-content max-w-full">
+                            <div className="chat-message-bubble p-3 px-4 text-sm leading-relaxed rounded-2xl bg-[#1a1a1a] text-[#aaa] border border-[#333] rounded-bl-lg w-fit">
+                                <div className="flex items-center gap-2">
+                                    <div className="flex gap-1 items-center py-1">
+                                        <div className="w-1.5 h-1.5 bg-[#00ff88] rounded-full animate-pulse shadow-[0_0_8px_rgba(0,255,136,0.5)]"></div>
+                                        <div className="w-1.5 h-1.5 bg-[#00ff88] rounded-full animate-pulse [animation-delay:200ms] shadow-[0_0_8px_rgba(0,255,136,0.3)]"></div>
+                                    </div>
+                                    <span className="text-xs font-medium tracking-wide animate-pulse uppercase">AI is thinking</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 )}
                 <div ref={messagesEndRef} />
             </div>

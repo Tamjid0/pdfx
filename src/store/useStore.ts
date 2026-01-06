@@ -24,6 +24,7 @@ interface AppState {
     htmlPreview: string | null;
     fileId: string | null;
     isLoading: boolean;
+    isTyping: boolean;
     prompt: string;
     leftPanelView: 'editor' | 'artboard';
     stats: Stats;
@@ -99,6 +100,9 @@ interface AppState {
     setPreviewMode: (enabled: boolean) => void;
     setPreviewPreset: (preset: PreviewPreset) => void;
 
+    // Chat Actions
+    setIsTyping: (val: boolean) => void;
+
     // Export Actions
     setExportModalOpen: (open: boolean) => void;
     openExportModal: (mode: Mode | 'preview', data: any) => void;
@@ -121,6 +125,7 @@ const initialState = {
     htmlPreview: null,
     fileId: null,
     isLoading: false,
+    isTyping: false,
     prompt: '',
     leftPanelView: 'editor' as const,
     stats: {
@@ -230,6 +235,8 @@ export const useStore = create<AppState>((set) => ({
 
     setPreviewMode: (isPreviewMode) => set({ isPreviewMode }),
     setPreviewPreset: (previewPreset) => set({ previewPreset }),
+
+    setIsTyping: (isTyping) => set({ isTyping }),
 
     setExportModalOpen: (isExportModalOpen) => set({ isExportModalOpen }),
     openExportModal: (mode, data) => set({ isExportModalOpen: true, exportContext: { mode, data } }),

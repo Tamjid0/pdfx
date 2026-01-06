@@ -60,6 +60,21 @@ export async function uploadFile(file: File) {
     return response.json();
 }
 
+export async function embedText(text: string, fileName?: string) {
+    const response = await fetch('/api/embed-text', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text, fileName }),
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to embed text');
+    }
+    return response.json();
+}
+
 export async function fetchNotes(arg1: GenerationPayload, settings?: any) {
     const payload = getPayload(arg1, settings);
     const response = await fetch('/api/notes', {
@@ -162,4 +177,52 @@ export async function chatWithDocument(message: string, fileId: string) {
         throw new Error('Failed to send message');
     }
     return response.json();
+}
+
+export async function chatWithDocumentStream(message: string, fileId: string, onChunk: (text: string) => void, onComplete: (fullText: string) => void) {
+    const response = await fetch('/api/chat/stream', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message, fileId }),
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to initiate streaming chat');
+    }
+
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder();
+    let fullText = '';
+
+    if (!reader) return;
+
+    try {
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    try {
+                        const data = JSON.parse(line.slice(6));
+                        if (data.text) {
+                            fullText += data.text;
+                            onChunk(data.text);
+                        }
+                    } catch (e) {
+                        // Ignore parsing errors for partial JSON or other events
+                    }
+                } else if (line.startsWith('event: end')) {
+                    onComplete(fullText);
+                }
+            }
+        }
+    } finally {
+        reader.releaseLock();
+    }
 }

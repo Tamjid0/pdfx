@@ -14,7 +14,7 @@ const __dirname = path.dirname(__filename);
 // Configure Multer for file storage
 const uploadsDir = path.resolve(__dirname, '../../uploads');
 if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+    fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
 // Directory to store FAISS indexes
@@ -73,6 +73,39 @@ export const uploadFile = async (req, res) => {
     } catch (error) {
         console.error('File processing failed:', error);
         res.status(500).send({ error: error.message || 'Failed to process file.' });
+    }
+};
+
+export const embedText = async (req, res) => {
+    const { text, fileName } = req.body;
+
+    if (!text) {
+        return res.status(400).send({ error: 'No text provided for embedding.' });
+    }
+
+    const fileId = crypto.randomBytes(16).toString('hex');
+
+    try {
+        const cleanedText = cleanText(text);
+        const splitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000, chunkOverlap: 100 });
+        const docs = await splitter.createDocuments([cleanedText]);
+
+        const vectorStore = await FaissStore.fromDocuments(docs, hfEmbeddings);
+        const indexPath = path.join(indexesDir, fileId);
+        await vectorStore.save(indexPath);
+
+        console.log(`[+] FAISS index created successfully for pasted text, fileId: ${fileId}`);
+
+        res.json({
+            fileId: fileId,
+            fileName: fileName || 'Pasted Content',
+            extractedText: cleanedText,
+            message: 'Text processed and index created successfully.'
+        });
+
+    } catch (error) {
+        console.error('Text embedding failed:', error);
+        res.status(500).send({ error: error.message || 'Failed to embed text.' });
     }
 };
 

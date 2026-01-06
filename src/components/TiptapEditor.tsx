@@ -24,7 +24,7 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({ onEditorChange, htmlContent
         },
         editorProps: {
             attributes: {
-                class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none',
+                class: 'prose prose-invert prose-emerald max-w-none focus:outline-none min-h-[500px] text-gray-300 leading-relaxed font-sans',
             },
         },
     });

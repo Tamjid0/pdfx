@@ -89,7 +89,7 @@ export function transformInsights(insightsData) {
     const sections = insightsData.insights.map((insight) => ({
         heading: insight.title,
         content: insight.description,
-        type: 'paragraph' 
+        type: 'paragraph'
     }));
 
     return {
@@ -162,7 +162,7 @@ export function transformQuiz(quizData) {
         if (q.type === 'mc' && q.options) {
             q.options.forEach((opt) => {
                 const marker = opt.value === q.correctAnswer ? '✓' : '○';
-                content += `${marker} ${opt.label}\n`;
+                content += `${marker} ${opt.label}. ${opt.value}\n`;
             });
         } else if (q.type === 'tf') {
             content += `○ True\n○ False\n`;
@@ -173,7 +173,7 @@ export function transformQuiz(quizData) {
 
         return {
             content,
-            type: 'paragraph' 
+            type: 'paragraph'
         };
     });
 
@@ -196,7 +196,7 @@ export function transformFlashcards(flashcardsData) {
     const sections = flashcardsData.flashcards.map((card, index) => ({
         heading: `Card ${index + 1}: ${card.question}`,
         content: card.answer,
-        type: 'paragraph' 
+        type: 'paragraph'
     }));
 
     return {

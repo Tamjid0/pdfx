@@ -196,7 +196,7 @@ export const useStore = create<AppState>((set) => ({
     ...initialState,
 
     setView: (view) => set({ view }),
-    setMode: (mode) => set({ mode }),
+    setMode: (mode) => set({ mode, isPreviewMode: false }),
     setHtmlPreview: (htmlPreview) => set({ htmlPreview }),
     setFileId: (fileId) => set({ fileId }),
     setIsLoading: (isLoading) => set({ isLoading }),

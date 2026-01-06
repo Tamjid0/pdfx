@@ -71,11 +71,6 @@ const Home = () => {
     } = useStore();
 
     const handleSendMessage = async (message: string) => {
-        if (!fileId) {
-            alert("Please upload a document before using the chat.");
-            return;
-        }
-
         const newUserMessage: ChatMessage = {
             sender: 'user',
             text: message,
@@ -84,6 +79,20 @@ const Home = () => {
 
         // @ts-ignore
         setChatHistory(prev => [...prev, newUserMessage]);
+
+        if (!fileId) {
+            setTimeout(() => {
+                const aiErrorMessage: ChatMessage = {
+                    sender: 'ai',
+                    text: "I'm sorry, I can only answer questions based on documents. Please upload or paste a document first so I can assist you!",
+                    timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+                };
+                // @ts-ignore
+                setChatHistory(prev => [...prev, aiErrorMessage]);
+            }, 500);
+            return;
+        }
+
         setIsTyping(true);
 
         try {

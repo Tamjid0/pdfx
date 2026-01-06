@@ -1,6 +1,8 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface ChatMessage {
     sender: 'user' | 'ai';
@@ -52,7 +54,6 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
         }
     }, [inputValue]);
 
-
     return (
         <div className="chat-container flex flex-col h-full w-full">
             <div className="chat-messages-area flex-1 overflow-y-auto p-6 flex flex-col gap-5">
@@ -92,18 +93,64 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                     </div>
                 ) : (
                     history.map((msg, index) => (
-                        <div key={index} className={`chat-message flex gap-3 max-w-[85%] ${msg.sender === 'user' ? 'ml-auto flex-row-reverse' : ''}`}>
+                        <div key={index} className={`chat-message flex gap-3 max-w-[95%] ${msg.sender === 'user' ? 'ml-auto flex-row-reverse' : ''}`}>
                             <div className={`chat-message-avatar w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center font-semibold text-sm ${msg.sender === 'user' ? 'bg-gradient-to-br from-[#00ff88] to-[#00cc66] text-black' : 'bg-[#1a1a1a] border-2 border-[#333]'}`}>
                                 {msg.sender === 'user' ? 'JD' : <svg viewBox="0 0 24 24" className="w-5 h-5 fill-[#00ff88]"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" /></svg>}
                             </div>
-                            <div className="chat-message-content max-w-full">
-                                <div className={`chat-message-bubble p-3 px-4 text-sm leading-relaxed rounded-2xl w-fit ${msg.sender === 'user' ? 'bg-gradient-to-br from-[#00ff88] to-[#00cc66] text-black rounded-br-lg ml-auto' : 'bg-[#1a1a1a] text-[#ccc] border border-[#333] rounded-bl-lg'}`}>
+                            <div className="chat-message-content max-w-full overflow-hidden">
+                                <div className={`chat-message-bubble p-3 px-4 text-sm leading-relaxed rounded-2xl w-fit max-w-full ${msg.sender === 'user' ? 'bg-[#00ff88] text-black rounded-br-lg ml-auto' : 'bg-[#1a1a1a] text-[#ddd] border border-[#333] rounded-bl-lg'}`}>
                                     {msg.sender === 'ai' ? (
-                                        <ReactMarkdown>
-                                            {msg.text}
-                                        </ReactMarkdown>
+                                        <div className="markdown-content prose prose-invert prose-emerald prose-sm max-w-none">
+                                            <ReactMarkdown
+                                                remarkPlugins={[remarkGfm]}
+                                                components={{
+                                                    code({ node, inline, className, children, ...props }: any) {
+                                                        const match = /language-(\w+)/.exec(className || '');
+                                                        return !inline && match ? (
+                                                            <div className="rounded-md overflow-hidden my-3 border border-[#333]">
+                                                                <div className="bg-[#2d2d2d] px-4 py-1.5 text-[10px] font-mono text-[#888] flex justify-between items-center border-b border-[#333]">
+                                                                    <span>{match[1].toUpperCase()}</span>
+                                                                </div>
+                                                                <SyntaxHighlighter
+                                                                    style={vscDarkPlus}
+                                                                    language={match[1]}
+                                                                    PreTag="div"
+                                                                    customStyle={{
+                                                                        margin: 0,
+                                                                        padding: '1rem',
+                                                                        fontSize: '0.8rem',
+                                                                        background: '#1e1e1e'
+                                                                    }}
+                                                                    {...props}
+                                                                >
+                                                                    {String(children).replace(/\n$/, '')}
+                                                                </SyntaxHighlighter>
+                                                            </div>
+                                                        ) : (
+                                                            <code className="bg-[#2d2d2d] px-1.5 py-0.5 rounded text-[#00ff88] font-mono text-[0.85em]" {...props}>
+                                                                {children}
+                                                            </code>
+                                                        );
+                                                    },
+                                                    h1: ({ children }) => <h1 className="text-lg font-bold mt-4 mb-2 text-white border-b border-[#222] pb-1">{children}</h1>,
+                                                    h2: ({ children }) => <h2 className="text-base font-bold mt-4 mb-2 text-white">{children}</h2>,
+                                                    h3: ({ children }) => <h3 className="text-sm font-bold mt-3 mb-1 text-white">{children}</h3>,
+                                                    p: ({ children }) => <p className="mb-3 last:mb-0 leading-relaxed text-[rgba(255,255,255,0.85)]">{children}</p>,
+                                                    ul: ({ children }) => <ul className="list-disc ml-5 mb-3 space-y-1">{children}</ul>,
+                                                    ol: ({ children }) => <ol className="list-decimal ml-5 mb-3 space-y-1">{children}</ol>,
+                                                    li: ({ children }) => <li className="pl-1">{children}</li>,
+                                                    blockquote: ({ children }) => <blockquote className="border-l-4 border-[#00ff88] pl-4 py-1 my-3 bg-[#1e1e1e] rounded-r-md italic text-[#888]">{children}</blockquote>,
+                                                    a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-[#00ff88] hover:underline transition-all underline-offset-2">{children}</a>,
+                                                    table: ({ children }) => <div className="overflow-x-auto my-4 rounded-lg border border-[#333]"><table className="w-full text-left border-collapse">{children}</table></div>,
+                                                    th: ({ children }) => <th className="bg-[#1e1e1e] p-2 font-bold border-b border-[#333] text-[#00ff88]">{children}</th>,
+                                                    td: ({ children }) => <td className="p-2 border-b border-[#222] text-[#ccc]">{children}</td>,
+                                                }}
+                                            >
+                                                {msg.text}
+                                            </ReactMarkdown>
+                                        </div>
                                     ) : (
-                                        msg.text
+                                        <span className="whitespace-pre-wrap">{msg.text}</span>
                                     )}
                                 </div>
                                 <div className={`chat-message-time text-xs text-[#666] mt-1 px-1 ${msg.sender === 'user' ? 'text-right' : ''}`}>{msg.timestamp}</div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import TiptapEditor from './TiptapEditor';
 import { marked } from 'marked';
@@ -14,6 +14,17 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
     const {
         summaryData, setSummaryData,
     } = useStore();
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = () => {
+        if (!summaryData?.summary) return;
+        // Strip HTML tags for clean clipboard copy
+        const plainText = summaryData.summary.replace(/<[^>]*>/g, '');
+        navigator.clipboard.writeText(plainText).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        });
+    };
 
     // Helper to get HTML content
     const getSummaryHtml = () => {
@@ -114,11 +125,33 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
                         </div>
                         <div className="relative group">
                             <div className="absolute -inset-1 bg-gradient-to-r from-[#00ff88]/20 to-transparent rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
-                            <div className="relative bg-[#111]/50 border border-[#222] rounded-2xl p-6 min-h-[150px] transition-all group-hover:border-[#00ff88]/20">
-                                <TiptapEditor
-                                    htmlContent={getSummaryHtml() as string}
-                                    onEditorChange={handleSummaryChange}
-                                />
+                            <div className="relative bg-[#111]/50 border border-[#222] rounded-2xl h-auto transition-all group-hover:border-[#00ff88]/20 overflow-hidden">
+                                {/* Integrated Copy Button */}
+                                <button
+                                    onClick={handleCopy}
+                                    className="absolute top-3 right-3 p-2 bg-[#1a1a1a]/50 backdrop-blur-md border border-[#333] rounded-xl text-gray-500 hover:text-[#00ff88] hover:bg-[#00ff88]/10 hover:border-[#00ff88]/30 transition-all z-20 opacity-0 group-hover:opacity-100 cursor-pointer shadow-lg"
+                                    title="Copy to clipboard"
+                                >
+                                    {copied ? (
+                                        <svg className="w-4 h-4 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                                    ) : (
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                                    )}
+                                    {copied && (
+                                        <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-[#00ff88] text-black text-[9px] font-black px-2 py-0.5 rounded-md whitespace-nowrap animate-in fade-in slide-in-from-right-2">
+                                            CLIPBOARD READY
+                                        </span>
+                                    )}
+                                </button>
+
+                                <div className="p-4">
+                                    <TiptapEditor
+                                        htmlContent={getSummaryHtml() as string}
+                                        onEditorChange={handleSummaryChange}
+                                        minHeight="min-h-0"
+                                        tightMargins={true}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </section>

@@ -49,7 +49,10 @@ export const ProfessionalPreset: React.FC<PresetProps> = ({ data }) => {
                                     ))}
                                 </ul>
                             ) : (
-                                <p className="whitespace-pre-wrap">{section.content}</p>
+                                <div
+                                    className="whitespace-pre-wrap"
+                                    dangerouslySetInnerHTML={{ __html: section.content }}
+                                />
                             )}
                         </div>
                     </div>
@@ -105,7 +108,10 @@ export const AcademicPreset: React.FC<PresetProps> = ({ data }) => {
                                     ))}
                                 </ul>
                             ) : (
-                                <p className="whitespace-pre-wrap indent-8">{section.content}</p>
+                                <div
+                                    className="whitespace-pre-wrap indent-8"
+                                    dangerouslySetInnerHTML={{ __html: section.content }}
+                                />
                             )}
                         </div>
                     </div>
@@ -152,7 +158,10 @@ export const MinimalPreset: React.FC<PresetProps> = ({ data }) => {
                                     ))}
                                 </ul>
                             ) : (
-                                <p className="whitespace-pre-wrap">{section.content}</p>
+                                <div
+                                    className="whitespace-pre-wrap"
+                                    dangerouslySetInnerHTML={{ __html: section.content }}
+                                />
                             )}
                         </div>
                     </div>
@@ -206,7 +215,10 @@ export const CreativePreset: React.FC<PresetProps> = ({ data }) => {
                                     ))}
                                 </ul>
                             ) : (
-                                <p className="whitespace-pre-wrap">{section.content}</p>
+                                <div
+                                    className="whitespace-pre-wrap"
+                                    dangerouslySetInnerHTML={{ __html: section.content }}
+                                />
                             )}
                         </div>
                     </div>

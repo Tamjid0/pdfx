@@ -7,9 +7,17 @@ interface TiptapEditorProps {
     onEditorChange: (html: string, text: string) => void;
     htmlContent: string | null;
     onEditorCreated?: (editor: any) => void;
+    minHeight?: string;
+    tightMargins?: boolean;
 }
 
-const TiptapEditor: React.FC<TiptapEditorProps> = ({ onEditorChange, htmlContent, onEditorCreated }) => {
+const TiptapEditor: React.FC<TiptapEditorProps> = ({
+    onEditorChange,
+    htmlContent,
+    onEditorCreated,
+    minHeight = 'min-h-[500px]',
+    tightMargins = false
+}) => {
     const editor = useEditor({
         extensions: [
             StarterKit,
@@ -25,7 +33,7 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({ onEditorChange, htmlContent
         },
         editorProps: {
             attributes: {
-                class: 'prose prose-invert prose-emerald max-w-none focus:outline-none min-h-[500px] text-gray-300 leading-relaxed font-sans caret-[#00ff88]',
+                class: `prose prose-invert prose-emerald max-w-none focus:outline-none ${minHeight} ${tightMargins ? '[&_p]:my-0 [&_h1]:mt-0 [&_h2]:mt-0 [&_h3]:mt-0' : ''} text-gray-300 leading-relaxed font-sans caret-[#00ff88]`,
             },
         },
     });
@@ -42,11 +50,7 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({ onEditorChange, htmlContent
         }
     }, [htmlContent, editor]);
 
-    return (
-        <div>
-            <EditorContent editor={editor} />
-        </div>
-    );
+    return <EditorContent editor={editor} />;
 };
 
 export default TiptapEditor;

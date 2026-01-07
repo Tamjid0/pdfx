@@ -1,6 +1,6 @@
 'use client';
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { marked } from 'marked';
 import { Allotment } from "allotment";
 import "allotment/dist/style.css";
@@ -36,6 +36,12 @@ interface ChatMessage {
 }
 
 const Home = () => {
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     const {
         htmlPreview, setHtmlPreview,
         isLoading, setIsLoading,
@@ -343,7 +349,7 @@ const Home = () => {
         <div className="flex flex-col h-screen bg-[#0a0a0a] text-white font-sans">
             <Header />
             <div className="flex flex-1 overflow-hidden">
-                {view !== 'import' && <Sidebar />}
+                {view !== 'import' && isMounted && <Sidebar />}
                 <main className="flex-1 flex flex-col bg-[#0f0f0f] overflow-hidden relative">
                     {isLoading && <LoadingOverlay />}
                     {view === "import" ? (
@@ -356,7 +362,7 @@ const Home = () => {
                         </div>
                     ) : (
                         <div className="flex flex-1 overflow-hidden">
-                            <div className={`transition-all duration-500 ease-in-out overflow-hidden ${mode === 'editor' ? 'w-[320px]' : 'w-0'}`}>
+                            <div className={`${isMounted ? 'transition-all duration-500 ease-in-out' : ''} overflow-hidden ${mode === 'editor' ? 'w-[320px]' : 'w-0'}`}>
                                 <LeftSidebar />
                             </div>
 
@@ -401,49 +407,51 @@ const Home = () => {
                                 </div>
 
                                 <div className="flex-1 flex overflow-hidden">
-                                    <Allotment>
-                                        <Allotment.Pane>
-                                            <div className="flex-1 flex flex-col p-6 overflow-y-auto border-r border-[#222] h-full">
-                                                {(mode === 'editor' || leftPanelView === 'editor') ? (
-                                                    <Editor
-                                                        htmlContent={htmlPreview}
-                                                        onEditorChange={handleEditorChange}
-                                                        onFileUpload={handleFileUpload}
-                                                        onPasteContent={handlePasteContent}
-                                                    />
-                                                ) : (
-                                                    <Artboard htmlContent={htmlPreview} isLoading={false} activeNotesToggles={activeNotesToggles} activeInsightsToggles={activeInsightsToggles} onExport={handleExport} />
-                                                )}
-                                            </div>
-                                        </Allotment.Pane>
-                                        <Allotment.Pane>
-                                            <div className="flex-1 flex flex-col p-6 overflow-y-auto h-full">
-                                                {mode === 'editor' ? (
-                                                    <Artboard htmlContent={htmlPreview} isLoading={false} activeNotesToggles={activeNotesToggles} activeInsightsToggles={activeInsightsToggles} onExport={handleExport} />
-                                                ) : (
-                                                    <DocumentPreview mode={mode}>
-                                                        {mode === 'summary' && <Summary onGenerate={() => handleGenerate('summary')} />}
-                                                        {mode === 'insights' && <Insights onGenerate={() => handleGenerate('insights')} />}
-                                                        {mode === 'notes' && <Notes onGenerate={() => handleGenerate('notes')} />}
-                                                        {mode === 'flashcards' && <Flashcards onGenerate={() => handleGenerate('flashcards')} />}
-                                                        {mode === 'quiz' && <Quiz onGenerate={() => handleGenerate('quiz')} />}
-                                                        {mode === 'mindmap' && <Mindmap data={mindmapData} onGenerate={() => handleGenerate('mindmap')} />}
-                                                    </DocumentPreview>
-                                                )}
-                                                {mode === 'chat' && (
-                                                    <Chat
-                                                        history={chatHistory}
-                                                        onSendMessage={handleSendMessage}
-                                                        isTyping={isTyping}
-                                                    />
-                                                )}
-                                            </div>
-                                        </Allotment.Pane>
-                                    </Allotment>
+                                    {isMounted && (
+                                        <Allotment>
+                                            <Allotment.Pane>
+                                                <div className="flex-1 flex flex-col p-6 overflow-y-auto border-r border-[#222] h-full">
+                                                    {(mode === 'editor' || leftPanelView === 'editor') ? (
+                                                        <Editor
+                                                            htmlContent={htmlPreview}
+                                                            onEditorChange={handleEditorChange}
+                                                            onFileUpload={handleFileUpload}
+                                                            onPasteContent={handlePasteContent}
+                                                        />
+                                                    ) : (
+                                                        <Artboard htmlContent={htmlPreview} isLoading={false} activeNotesToggles={activeNotesToggles} activeInsightsToggles={activeInsightsToggles} onExport={handleExport} />
+                                                    )}
+                                                </div>
+                                            </Allotment.Pane>
+                                            <Allotment.Pane>
+                                                <div className="flex-1 flex flex-col p-6 overflow-y-auto h-full">
+                                                    {mode === 'editor' ? (
+                                                        <Artboard htmlContent={htmlPreview} isLoading={false} activeNotesToggles={activeNotesToggles} activeInsightsToggles={activeInsightsToggles} onExport={handleExport} />
+                                                    ) : (
+                                                        <DocumentPreview mode={mode}>
+                                                            {mode === 'summary' && <Summary onGenerate={() => handleGenerate('summary')} />}
+                                                            {mode === 'insights' && <Insights onGenerate={() => handleGenerate('insights')} />}
+                                                            {mode === 'notes' && <Notes onGenerate={() => handleGenerate('notes')} />}
+                                                            {mode === 'flashcards' && <Flashcards onGenerate={() => handleGenerate('flashcards')} />}
+                                                            {mode === 'quiz' && <Quiz onGenerate={() => handleGenerate('quiz')} />}
+                                                            {mode === 'mindmap' && <Mindmap data={mindmapData} onGenerate={() => handleGenerate('mindmap')} />}
+                                                        </DocumentPreview>
+                                                    )}
+                                                    {mode === 'chat' && (
+                                                        <Chat
+                                                            history={chatHistory}
+                                                            onSendMessage={handleSendMessage}
+                                                            isTyping={isTyping}
+                                                        />
+                                                    )}
+                                                </div>
+                                            </Allotment.Pane>
+                                        </Allotment>
+                                    )}
                                 </div>
                             </main>
 
-                            <div className={`transition-all duration-500 ease-in-out overflow-hidden ${(mode !== 'editor' && mode !== 'chat') ? 'w-[320px]' : 'w-0'}`}>
+                            <div className={`${isMounted ? 'transition-all duration-500 ease-in-out' : ''} overflow-hidden ${(mode !== 'editor' && mode !== 'chat') ? 'w-[320px]' : 'w-0'}`}>
                                 <RightSidebar
                                     onApplyTools={handleGenerate}
                                     hasGenerated={getHasGenerated()}

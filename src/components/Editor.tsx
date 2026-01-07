@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TiptapEditor from './TiptapEditor';
 import { Editor as TiptapEditorClass } from '@tiptap/core';
 import * as apiService from '../services/apiService';
@@ -16,7 +16,12 @@ const Editor: React.FC<EditorProps> = ({ htmlContent, onEditorChange, onFileUplo
     const { setFileId } = useStore();
     const [editor, setEditor] = useState<TiptapEditorClass | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     const isEmpty = !htmlContent || htmlContent === '<p></p>' || htmlContent === '';
 
@@ -70,7 +75,7 @@ const Editor: React.FC<EditorProps> = ({ htmlContent, onEditorChange, onFileUplo
             onPaste={handlePaste}
         >
             {/* Modern Floating Toolbar - Only show when has content */}
-            {editor && !isEmpty && (
+            {editor && !isEmpty && isMounted && (
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 p-1.5 bg-[#1a1a1a]/80 backdrop-blur-xl border border-[#333] rounded-2xl shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500">
                     <button className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${editor.isActive('bold') ? 'bg-[#00ff88] text-black' : 'text-white hover:bg-[#2a2a2a]'}`} onClick={() => editor.chain().focus().toggleBold().run()}>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z" /></svg>
@@ -92,20 +97,20 @@ const Editor: React.FC<EditorProps> = ({ htmlContent, onEditorChange, onFileUplo
                 </div>
             )}
 
-            <div className="editor-content-container flex-1 bg-[#0a0a0a] rounded-3xl border border-[#222] shadow-2xl relative overflow-hidden group">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00ff88]/30 to-transparent"></div>
+            <div className="editor-content-container flex-1 bg-[#151515] rounded-3xl border border-[#333] shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden group ring-1 ring-white/5">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00ff88]/20 to-transparent"></div>
 
                 {/* Subtle Empty State Placeholder */}
-                {isEmpty && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20 animate-in fade-in zoom-in-95 duration-1000">
+                {isEmpty && isMounted && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
                         {/* Background guide (non-interactive) */}
-                        <div className="flex flex-col items-center opacity-40 group-hover:opacity-60 transition-opacity">
-                            <div className="w-20 h-20 mb-6 bg-[#111]/50 rounded-[2rem] border border-[#222] flex items-center justify-center">
+                        <div className="flex flex-col items-center opacity-20 group-hover:opacity-30 transition-opacity">
+                            <div className="w-20 h-20 mb-6 bg-[#222] rounded-[2rem] border border-[#333] flex items-center justify-center">
                                 <svg className="w-10 h-10 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                             </div>
-                            <p className="text-[#333] font-black uppercase tracking-[0.3em] text-[10px] group-hover:text-[#444] transition-colors mb-8">
+                            <p className="text-[#00ff88]/40 font-black uppercase tracking-[0.3em] text-[10px] transition-colors mb-8">
                                 Paste content or drop files here
                             </p>
                         </div>
@@ -116,7 +121,7 @@ const Editor: React.FC<EditorProps> = ({ htmlContent, onEditorChange, onFileUplo
                                 e.stopPropagation();
                                 handleFileClick();
                             }}
-                            className="pointer-events-auto flex items-center gap-2 px-6 py-3 bg-[#111] border border-[#222] text-[#00ff88] rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#1a1a1a] hover:border-[#00ff88]/30 hover:scale-105 active:scale-95 transition-all shadow-2xl cursor-pointer"
+                            className="pointer-events-auto flex items-center gap-2 px-6 py-3 bg-[#222] border border-[#333] text-[#00ff88] rounded-2xl font-black text-xs uppercase tracking-widest hover:border-[#00ff88]/50 hover:bg-[#2a2a2a] hover:scale-105 active:scale-95 transition-all shadow-xl cursor-pointer"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -126,7 +131,7 @@ const Editor: React.FC<EditorProps> = ({ htmlContent, onEditorChange, onFileUplo
                     </div>
                 )}
 
-                <div className="h-full p-8 md:p-12 overflow-y-auto custom-scrollbar">
+                <div className="h-full p-8 md:p-12 overflow-y-auto custom-scrollbar relative z-10">
                     <TiptapEditor
                         htmlContent={htmlContent}
                         onEditorChange={onEditorChange}

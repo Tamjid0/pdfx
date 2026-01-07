@@ -19,12 +19,13 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({ onEditorChange, htmlContent
         ],
         content: htmlContent || '',
         immediatelyRender: false,
+        autofocus: 'start',
         onUpdate: ({ editor }) => {
             onEditorChange(editor.getHTML(), editor.getText());
         },
         editorProps: {
             attributes: {
-                class: 'prose prose-invert prose-emerald max-w-none focus:outline-none min-h-[500px] text-gray-300 leading-relaxed font-sans',
+                class: 'prose prose-invert prose-emerald max-w-none focus:outline-none min-h-[500px] text-gray-300 leading-relaxed font-sans caret-[#00ff88]',
             },
         },
     });

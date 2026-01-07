@@ -120,7 +120,7 @@ interface AppState {
 }
 
 const initialState = {
-    view: 'import' as const,
+    view: 'editor' as const,
     mode: 'editor' as const,
     htmlPreview: null,
     fileId: null,

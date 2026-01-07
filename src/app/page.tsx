@@ -146,7 +146,6 @@ const Home = () => {
             setChatHistory(prev => [...prev.slice(0, -1), errorResponse]);
         }
     };
-
     const backToImport = () => {
         setView("import");
         setMode("editor");

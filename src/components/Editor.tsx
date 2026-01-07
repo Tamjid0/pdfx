@@ -49,31 +49,8 @@ const Editor: React.FC<EditorProps> = ({ htmlContent, onEditorChange, onFileUplo
         }
     };
 
-    const [isPasting, setIsPasting] = useState(false);
-    const [pastedText, setPastedText] = useState('');
-
-    const handleConfirmPaste = async () => {
-        if (pastedText && onEditorChange) {
-            onEditorChange(`<p>${pastedText.replace(/\n/g, '</p><p>')}</p>`, pastedText);
-            setIsPasting(false);
-
-            // Background Embedding
-            try {
-                const data = await apiService.embedText(pastedText);
-                if (data.fileId) {
-                    setFileId(data.fileId);
-                    console.log("[+] Pasted content embedded in background:", data.fileId);
-                }
-            } catch (err) {
-                console.error("[-] Failed to embed pasted content in background", err);
-            }
-
-            setPastedText('');
-        }
-    };
-
     const handlePaste = (e: React.ClipboardEvent) => {
-        // If there's a file in the clipboard, handle it as an upload
+        // If there's a file in the clipboard (Shift+Ctrl+V or similar), handle it as an upload
         const file = e.clipboardData.files?.[0];
         if (file && onFileUpload) {
             e.preventDefault();
@@ -81,15 +58,7 @@ const Editor: React.FC<EditorProps> = ({ htmlContent, onEditorChange, onFileUplo
             return;
         }
 
-        // If the editor is empty and text is pasted, handle it in our hub
-        if (isEmpty && !isPasting) {
-            const text = e.clipboardData.getData('text');
-            if (text) {
-                e.preventDefault();
-                setIsPasting(true);
-                setPastedText(text);
-            }
-        }
+        // Otherwise, let Tiptap handle the text paste naturally
     };
 
     return (
@@ -100,7 +69,7 @@ const Editor: React.FC<EditorProps> = ({ htmlContent, onEditorChange, onFileUplo
             onDrop={handleDrop}
             onPaste={handlePaste}
         >
-            {/* Modern Floating Toolbar */}
+            {/* Modern Floating Toolbar - Only show when has content */}
             {editor && !isEmpty && (
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 p-1.5 bg-[#1a1a1a]/80 backdrop-blur-xl border border-[#333] rounded-2xl shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500">
                     <button className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${editor.isActive('bold') ? 'bg-[#00ff88] text-black' : 'text-white hover:bg-[#2a2a2a]'}`} onClick={() => editor.chain().focus().toggleBold().run()}>
@@ -123,94 +92,56 @@ const Editor: React.FC<EditorProps> = ({ htmlContent, onEditorChange, onFileUplo
                 </div>
             )}
 
-            {/* Empty State / Start Hub */}
-            {isEmpty ? (
-                <div className="flex-1 flex flex-col items-center justify-center p-8 bg-[#0a0a0a] rounded-3xl border-2 border-dashed border-[#222] group hover:border-[#00ff88]/30 transition-all duration-500 overflow-hidden relative text-center">
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#00ff88]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+            <div className="editor-content-container flex-1 bg-[#0a0a0a] rounded-3xl border border-[#222] shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00ff88]/30 to-transparent"></div>
 
-                    <div className="relative z-10 w-full max-w-md flex flex-col items-center">
-                        {!isPasting ? (
-                            <>
-                                <div className="w-24 h-24 mb-8 bg-[#111] rounded-[2rem] border border-[#222] flex items-center justify-center shadow-2xl group-hover:border-[#00ff88]/50 group-hover:shadow-[#00ff88]/10 transition-all duration-500 rotate-3 group-hover:rotate-0">
-                                    <svg className="w-12 h-12 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                </div>
-
-                                <h2 className="text-3xl font-black text-white mb-4 tracking-tight">Ready to create?</h2>
-                                <p className="text-gray-400 mb-10 leading-relaxed font-medium">
-                                    Choose a starting point or just start typing. Drag and drop any file directly here to begin your transformation.
-                                </p>
-
-                                <div className="flex flex-col sm:flex-row gap-4 w-full px-4">
-                                    <button
-                                        onClick={handleFileClick}
-                                        className="flex-1 px-6 py-4 bg-[#00ff88] text-black rounded-2xl font-black text-sm uppercase tracking-wider shadow-lg shadow-[#00ff88]/20 hover:scale-[1.03] active:scale-95 transition-all"
-                                    >
-                                        Upload File
-                                    </button>
-                                    <button
-                                        onClick={() => setIsPasting(true)}
-                                        className="flex-1 px-6 py-4 bg-[#111] text-white border border-[#333] rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-[#1a1a1a] hover:border-[#444] active:scale-95 transition-all"
-                                    >
-                                        Paste Content
-                                    </button>
-                                </div>
-                            </>
-                        ) : (
-                            <div className="w-full animate-in zoom-in-95 duration-300">
-                                <h2 className="text-2xl font-black text-white mb-6">Paste your content</h2>
-                                <textarea
-                                    autoFocus
-                                    className="w-full h-48 p-6 bg-[#111] border border-[#333] rounded-3xl text-gray-200 focus:outline-none focus:border-[#00ff88] focus:ring-1 focus:ring-[#00ff88]/50 transition-all mb-6 resize-none font-sans text-sm"
-                                    placeholder="Paste text here..."
-                                    value={pastedText}
-                                    onChange={(e) => setPastedText(e.target.value)}
-                                />
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => setIsPasting(false)}
-                                        className="flex-1 px-6 py-3 bg-transparent text-gray-500 rounded-xl font-black text-xs uppercase tracking-widest hover:text-white transition-all"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleConfirmPaste}
-                                        disabled={!pastedText.trim()}
-                                        className="flex-[2] px-6 py-3 bg-[#00ff88] disabled:opacity-50 disabled:grayscale text-black rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-[#00ff88]/10 hover:scale-[1.02] transition-all"
-                                    >
-                                        Confirm & Start
-                                    </button>
-                                </div>
+                {/* Subtle Empty State Placeholder */}
+                {isEmpty && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20 animate-in fade-in zoom-in-95 duration-1000">
+                        {/* Background guide (non-interactive) */}
+                        <div className="flex flex-col items-center opacity-40 group-hover:opacity-60 transition-opacity">
+                            <div className="w-20 h-20 mb-6 bg-[#111]/50 rounded-[2rem] border border-[#222] flex items-center justify-center">
+                                <svg className="w-10 h-10 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
                             </div>
-                        )}
-
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            className="hidden"
-                            onChange={onFileChange}
-                            accept=".pdf,.txt,.md"
-                        />
-
-                        <div className="mt-12 flex items-center gap-2 text-[#444] text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">
-                            <div className="w-1.5 h-1.5 rounded-full bg-[#00ff88]"></div>
-                            Drop files anywhere to start
+                            <p className="text-[#333] font-black uppercase tracking-[0.3em] text-[10px] group-hover:text-[#444] transition-colors mb-8">
+                                Paste content or drop files here
+                            </p>
                         </div>
+
+                        {/* Interactive Upload Button */}
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleFileClick();
+                            }}
+                            className="pointer-events-auto flex items-center gap-2 px-6 py-3 bg-[#111] border border-[#222] text-[#00ff88] rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#1a1a1a] hover:border-[#00ff88]/30 hover:scale-105 active:scale-95 transition-all shadow-2xl cursor-pointer"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                            Upload file
+                        </button>
                     </div>
+                )}
+
+                <div className="h-full p-8 md:p-12 overflow-y-auto custom-scrollbar">
+                    <TiptapEditor
+                        htmlContent={htmlContent}
+                        onEditorChange={onEditorChange}
+                        onEditorCreated={setEditor}
+                    />
                 </div>
-            ) : (
-                <div className="editor-content-container flex-1 bg-[#0a0a0a] rounded-3xl border border-[#222] shadow-2xl relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00ff88]/30 to-transparent"></div>
-                    <div className="h-full p-8 md:p-12 overflow-y-auto custom-scrollbar">
-                        <TiptapEditor
-                            htmlContent={htmlContent}
-                            onEditorChange={onEditorChange}
-                            onEditorCreated={setEditor}
-                        />
-                    </div>
-                </div>
-            )}
+            </div>
+
+            <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={onFileChange}
+                accept=".pdf,.txt,.md"
+            />
         </div>
     );
 };

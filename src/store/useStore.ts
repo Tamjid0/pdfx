@@ -68,6 +68,11 @@ interface AppState {
     setIsFlashcardsGenerated: (val: boolean) => void;
     setIsQuizGenerated: (val: boolean) => void;
     setIsMindmapGenerated: (val: boolean) => void;
+    setSummarySettings: (settings: any) => void;
+    setQuizSettings: (settings: any) => void;
+    setNotesSettings: (settings: any) => void;
+    setInsightsSettings: (settings: any) => void;
+    setMindmapSettings: (settings: any) => void;
     openExportModal: (mode: string, content: any) => void;
     closeExportModal: () => void;
 }
@@ -93,11 +98,41 @@ export const useStore = create<AppState>((set) => ({
     exportMode: 'editor',
     exportContent: null,
 
-    summarySettings: { summaryLength: 50, summaryFormat: 'paragraph', tone: 'professional', language: 'English', summaryType: 'abstractive' },
-    insightsSettings: { keyEntities: true, topics: false },
-    notesSettings: { detailLevel: 'medium' },
-    quizSettings: { questionCount: 5, difficulty: 'medium' },
-    mindmapSettings: { depth: 2 },
+    summarySettings: {
+        summaryLength: 50,
+        summaryFormat: 'paragraph',
+        tone: 'professional',
+        language: 'English',
+        summaryType: 'abstractive',
+        keywords: '',
+        keySentences: false
+    },
+    insightsSettings: {
+        keyEntities: true,
+        topics: false,
+        customExtraction: ''
+    },
+    notesSettings: {
+        detailLevel: 'medium',
+        keyConcepts: true,
+        actionItems: true,
+        aiSummary: true
+    },
+    quizSettings: {
+        questionCount: 5,
+        difficulty: 'medium',
+        questionTypes: ['multiple-choice'],
+        timed: false,
+        timeLimit: 10
+    },
+    mindmapSettings: {
+        depth: 2,
+        layout: 'organic',
+        theme: 'default',
+        focusMode: false,
+        presentationMode: false,
+        searchTerm: ''
+    },
 
     isSummaryGenerated: false,
     isInsightsGenerated: false,
@@ -133,6 +168,11 @@ export const useStore = create<AppState>((set) => ({
     setIsFlashcardsGenerated: (val) => set({ isFlashcardsGenerated: val }),
     setIsQuizGenerated: (val) => set({ isQuizGenerated: val }),
     setIsMindmapGenerated: (val) => set({ isMindmapGenerated: val }),
+    setSummarySettings: (settings) => set({ summarySettings: settings }),
+    setQuizSettings: (settings) => set({ quizSettings: settings }),
+    setNotesSettings: (settings) => set({ notesSettings: settings }),
+    setInsightsSettings: (settings) => set({ insightsSettings: settings }),
+    setMindmapSettings: (settings) => set({ mindmapSettings: settings }),
     openExportModal: (mode, content) => set({ showExportModal: true, exportMode: mode, exportContent: content }),
     closeExportModal: () => set({ showExportModal: false }),
 }));

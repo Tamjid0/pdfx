@@ -7,6 +7,7 @@ import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import { FaissStore } from '@langchain/community/vectorstores/faiss'; // Import FaissStore
 import { hfEmbeddings } from '../services/embeddingService.js';
 import { checkFileType, extractTextFromPdf, cleanText } from '../services/fileProcessingService.js';
+import { extractSlides } from '../services/pptxService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,8 +53,31 @@ export const uploadFile = async (req, res) => {
             req.file.mimetype === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' ||
             req.file.mimetype === 'application/vnd.ms-powerpoint'
         ) {
-            // Placeholder for slide content until proper parsing is implemented
-            textContent = "Presentation file uploaded. Slide content extraction pending.";
+            // Use real PPTX parsing service
+            const buffer = fs.readFileSync(filePath);
+            const slides = await extractSlides(buffer);
+
+            // For embedding/search, we'll combine all slide content
+            textContent = slides.map(s => `${s.title}\n${s.content}`).join('\n\n');
+            const cleanedText = cleanText(textContent);
+
+            // SKIP EMBEDDING FOR SLIDES AS REQUESTED
+            // const splitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000, chunkOverlap: 100 });
+            // const docs = await splitter.createDocuments([cleanedText]);
+
+            // const vectorStore = await FaissStore.fromDocuments(docs, hfEmbeddings);
+            // const indexPath = path.join(indexesDir, fileId);
+            // await vectorStore.save(indexPath);
+
+            // console.log(`[+] FAISS index created successfully for fileId: ${fileId}`);
+
+            return res.json({
+                fileId: fileId,
+                fileName: req.file.originalname,
+                extractedText: cleanedText,
+                slides: slides, // Return structured slides
+                message: 'File processed (slides extracted, embeddings skipped).'
+            });
         } else {
             textContent = fs.readFileSync(filePath, 'utf-8');
         }

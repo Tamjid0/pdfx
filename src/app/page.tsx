@@ -155,14 +155,18 @@ const Home = () => {
             setFileId(data.fileId);
             setView("editor");
 
-            if (isSlideFile) {
-                // Mock some slides for now as requested
+            console.log("Upload response data:", data); // DEBUG
+            if (data.slides && data.slides.length > 0) {
+                console.log("Setting slides:", data.slides); // DEBUG
+                // Use real slides from backend
+                setSlides(data.slides);
+                setIsSlideMode(true);
+                setLeftPanelView('slides');
+                setMode('editor');
+            } else if (isSlideFile) {
+                // Fallback if parsing failed but file extension was correct
                 setSlides([
-                    { title: "Introduction to Project", content: "Overview of the main goals\nKey stakeholders\nTimeline" },
-                    { title: "Market Analysis", content: "Current trends\nCompetitor landscape\nPotential opportunities" },
-                    { title: "Technical Architecture", content: "Frontend: Next.js + React\nBackend: Node.js + Express\nVector Store: FAISS" },
-                    { title: "User Experience Focus", content: "Modern dark aesthetics\nFluid animations\nIntuitive document flows" },
-                    { title: "Future Roadmap", content: "Q3: Advanced AI Analytics\nQ4: Collaboration tools\n2027: Global scaling" }
+                    { title: "Processing Error", content: "Could not extract slides from this file." }
                 ]);
                 setIsSlideMode(true);
                 setLeftPanelView('slides');

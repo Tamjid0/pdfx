@@ -26,12 +26,14 @@
     "file-type": "^21.1.1",
     "html-to-docx": "^1.8.0",
     "jsonwebtoken": "^9.0.2",
+    "jszip": "^3.10.1",
     "langchain": "^1.2.3",
     "multer": "^2.0.2",
     "node-fetch": "^3.3.2",
     "pdfjs-dist": "^4.4.170",
     "puppeteer": "^22.10.0",
-    "winston": "^3.19.0"
+    "winston": "^3.19.0",
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
     "cross-env": "^10.1.0",

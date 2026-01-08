@@ -9,6 +9,7 @@ import RightSidebar from "./RightSidebar";
 import LoadingOverlay from "./LoadingOverlay";
 import Editor from "./Editor";
 import Artboard from "./Artboard";
+import SlidePipelineContainer from "./slides/SlidePipelineContainer";
 import ImportChat from "./ImportChat";
 import ModeSwitcher from "./ModeSwitcher";
 import { DocumentPreview } from "./DocumentPreview/DocumentPreview";
@@ -90,6 +91,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                                     <div className={`inline-flex bg-[#1a1a1a] p-1 rounded-md border border-[#333] ${mode === 'editor' ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                         <button onClick={() => { if (mode !== 'editor') setLeftPanelView('editor') }} className={`px-4 py-2 text-sm font-medium rounded ${leftPanelView === 'editor' && mode !== 'editor' ? 'bg-[#00ff88] text-black' : 'text-white'}`} disabled={mode === 'editor'}>Editor</button>
                                         <button onClick={() => { if (mode !== 'editor') setLeftPanelView('artboard') }} className={`px-4 py-2 text-sm font-medium rounded ${leftPanelView === 'artboard' && mode !== 'editor' ? 'bg-[#00ff88] text-black' : 'text-white'}`} disabled={mode === 'editor'}>Artboard</button>
+                                        <button onClick={() => { if (mode !== 'editor') setLeftPanelView('slides') }} className={`px-4 py-2 text-sm font-medium rounded ${leftPanelView === 'slides' && mode !== 'editor' ? 'bg-[#00ff88] text-black' : 'text-white'}`} disabled={mode === 'editor'}>Slides</button>
                                     </div>
                                     <ModeSwitcher currentMode={mode} onModeChange={(newMode) => setMode(newMode)} />
                                 </div>
@@ -125,16 +127,22 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                                 {isMounted && (
                                     <Allotment>
                                         <Allotment.Pane>
-                                            <div className="flex-1 flex flex-col p-6 overflow-y-auto border-r border-[#222] h-full">
-                                                {(mode === 'editor' || leftPanelView === 'editor') ? (
-                                                    <Editor
-                                                        htmlContent={htmlPreview}
-                                                        onEditorChange={handleEditorChange}
-                                                        onFileUpload={handleFileUpload}
-                                                        onPasteContent={handlePasteContent}
-                                                    />
+                                            <div className="flex-1 flex flex-col overflow-y-auto border-r border-[#222] h-full">
+                                                {leftPanelView === 'slides' ? (
+                                                    <SlidePipelineContainer />
+                                                ) : (mode === 'editor' || leftPanelView === 'editor') ? (
+                                                    <div className="p-6 h-full flex flex-col">
+                                                        <Editor
+                                                            htmlContent={htmlPreview}
+                                                            onEditorChange={handleEditorChange}
+                                                            onFileUpload={handleFileUpload}
+                                                            onPasteContent={handlePasteContent}
+                                                        />
+                                                    </div>
                                                 ) : (
-                                                    <Artboard htmlContent={htmlPreview} isLoading={false} activeNotesToggles={activeNotesToggles} activeInsightsToggles={activeInsightsToggles} onExport={handleExport} />
+                                                    <div className="p-6 h-full flex flex-col">
+                                                        <Artboard htmlContent={htmlPreview} isLoading={false} activeNotesToggles={activeNotesToggles} activeInsightsToggles={activeInsightsToggles} onExport={handleExport} />
+                                                    </div>
                                                 )}
                                             </div>
                                         </Allotment.Pane>

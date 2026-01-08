@@ -46,6 +46,7 @@ const Home = () => {
         stats, setStats,
         openExportModal,
         summaryData, insightsData, notesData, quizData, flashcardsData,
+        setIsSlideMode, setSlides,
     } = useStore();
 
     const handleSendMessage = async (message: string) => {
@@ -146,11 +147,31 @@ const Home = () => {
     const handleFileUpload = async (file: File) => {
         setIsLoading(true);
         try {
+            // Detect slide file types
+            const isSlideFile = file.name.endsWith('.pptx') || file.name.endsWith('.ppt') || file.name.endsWith('.key');
+
             const data = await apiService.uploadFile(file);
             setHtmlPreview(data.extractedText);
             setFileId(data.fileId);
             setView("editor");
-            setMode('editor');
+
+            if (isSlideFile) {
+                // Mock some slides for now as requested
+                setSlides([
+                    { title: "Introduction to Project", content: "Overview of the main goals\nKey stakeholders\nTimeline" },
+                    { title: "Market Analysis", content: "Current trends\nCompetitor landscape\nPotential opportunities" },
+                    { title: "Technical Architecture", content: "Frontend: Next.js + React\nBackend: Node.js + Express\nVector Store: FAISS" },
+                    { title: "User Experience Focus", content: "Modern dark aesthetics\nFluid animations\nIntuitive document flows" },
+                    { title: "Future Roadmap", content: "Q3: Advanced AI Analytics\nQ4: Collaboration tools\n2027: Global scaling" }
+                ]);
+                setIsSlideMode(true);
+                setLeftPanelView('slides');
+                setMode('editor');
+            } else {
+                setIsSlideMode(false);
+                setLeftPanelView('editor');
+                setMode('editor');
+            }
         } catch (error) {
             console.error("Error uploading file:", error);
         } finally {

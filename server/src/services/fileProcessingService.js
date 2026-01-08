@@ -21,9 +21,14 @@ export async function checkFileType(filePath) {
     const { fileTypeFromBuffer } = await import('file-type');
     const type = await fileTypeFromBuffer(buffer);
 
-    const allowedMimeTypes = ['application/pdf', 'text/plain'];
+    const allowedMimeTypes = [
+        'application/pdf',
+        'text/plain',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'application/vnd.ms-powerpoint'
+    ];
     if (!type || !allowedMimeTypes.includes(type.mime)) {
-        throw new Error('Invalid file type. Only PDF and TXT files are allowed.');
+        throw new Error('Invalid file type. Only PDF, TXT, and Presentation files are allowed.');
     }
     return type;
 }

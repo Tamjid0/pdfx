@@ -48,6 +48,12 @@ export const uploadFile = async (req, res) => {
         let textContent = '';
         if (req.file.mimetype === 'application/pdf' || (await checkFileType(filePath)).mime === 'application/pdf') {
             textContent = await extractTextFromPdf(filePath);
+        } else if (
+            req.file.mimetype === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' ||
+            req.file.mimetype === 'application/vnd.ms-powerpoint'
+        ) {
+            // Placeholder for slide content until proper parsing is implemented
+            textContent = "Presentation file uploaded. Slide content extraction pending.";
         } else {
             textContent = fs.readFileSync(filePath, 'utf-8');
         }

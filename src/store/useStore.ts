@@ -4,8 +4,8 @@ interface AppState {
     htmlPreview: string | null;
     isLoading: boolean;
     view: 'import' | 'editor' | 'viewer';
-    mode: 'summary' | 'insights' | 'notes' | 'quiz' | 'flashcards' | 'mindmap' | 'editor' | 'chat';
-    leftPanelView: 'editor' | 'artboard';
+    mode: 'summary' | 'insights' | 'notes' | 'quiz' | 'flashcards' | 'mindmap' | 'editor' | 'chat' | 'slides';
+    leftPanelView: 'editor' | 'artboard' | 'slides';
     mindmapData: any | null;
     insightsData: any | null;
     notesData: any | null;
@@ -25,6 +25,11 @@ interface AppState {
     showExportModal: boolean;
     exportMode: string;
     exportContent: any;
+
+    // Slide State
+    isSlideMode: boolean;
+    slides: any[];
+    currentSlideIndex: number;
 
     // Settings (expanded as needed)
     summarySettings: any;
@@ -50,7 +55,7 @@ interface AppState {
     setIsLoading: (loading: boolean) => void;
     setView: (view: 'import' | 'editor' | 'viewer') => void;
     setMode: (mode: any) => void;
-    setLeftPanelView: (view: 'editor' | 'artboard') => void;
+    setLeftPanelView: (view: 'editor' | 'artboard' | 'slides') => void;
     setMindmapData: (data: any) => void;
     setInsightsData: (data: any) => void;
     setNotesData: (data: any) => void;
@@ -73,6 +78,14 @@ interface AppState {
     setNotesSettings: (settings: any) => void;
     setInsightsSettings: (settings: any) => void;
     setMindmapSettings: (settings: any) => void;
+
+    // Slide Actions
+    setIsSlideMode: (isSlideMode: boolean) => void;
+    setSlides: (slides: any[]) => void;
+    setCurrentSlideIndex: (index: number) => void;
+    nextSlide: () => void;
+    prevSlide: () => void;
+
     openExportModal: (mode: string, content: any) => void;
     closeExportModal: () => void;
 }
@@ -97,6 +110,10 @@ export const useStore = create<AppState>((set) => ({
     showExportModal: false,
     exportMode: 'editor',
     exportContent: null,
+
+    isSlideMode: false,
+    slides: [],
+    currentSlideIndex: 0,
 
     summarySettings: {
         summaryLength: 50,
@@ -173,6 +190,17 @@ export const useStore = create<AppState>((set) => ({
     setNotesSettings: (settings) => set({ notesSettings: settings }),
     setInsightsSettings: (settings) => set({ insightsSettings: settings }),
     setMindmapSettings: (settings) => set({ mindmapSettings: settings }),
+
+    setIsSlideMode: (isSlideMode) => set({ isSlideMode }),
+    setSlides: (slides) => set({ slides }),
+    setCurrentSlideIndex: (index) => set({ currentSlideIndex: index }),
+    nextSlide: () => set((state) => ({
+        currentSlideIndex: Math.min(state.currentSlideIndex + 1, state.slides.length - 1)
+    })),
+    prevSlide: () => set((state) => ({
+        currentSlideIndex: Math.max(state.currentSlideIndex - 1, 0)
+    })),
+
     openExportModal: (mode, content) => set({ showExportModal: true, exportMode: mode, exportContent: content }),
     closeExportModal: () => set({ showExportModal: false }),
 }));

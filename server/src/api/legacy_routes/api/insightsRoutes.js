@@ -1,10 +1,11 @@
 import express from 'express';
 import { generateFullDocumentTransformation } from '../../../services/aiGenerationService.js';
 import { getVectorStore } from '../../../services/vectorStoreService.js';
+import { aiGenerationLimiter } from '../../../middleware/rateLimitMiddleware.js';
 
 const router = express.Router();
 
-router.post('/insights', async (req, res) => {
+router.post('/insights', aiGenerationLimiter, async (req, res, next) => {
     const { text, fileId, settings } = req.body;
     let fullText = text;
 
@@ -55,8 +56,7 @@ router.post('/insights', async (req, res) => {
 
         res.json(jsonResponse);
     } catch (error) {
-        console.error('Error generating insights:', error);
-        res.status(500).json({ error: 'Failed to generate insights' });
+        next(error);
     }
 });
 

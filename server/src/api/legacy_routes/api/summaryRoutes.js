@@ -1,10 +1,11 @@
 import express from 'express';
 import { generateFullDocumentTransformation } from '../../../services/aiGenerationService.js';
 import { getVectorStore } from '../../../services/vectorStoreService.js';
+import { aiGenerationLimiter } from '../../../middleware/rateLimitMiddleware.js';
 
 const router = express.Router();
 
-router.post('/summary', async (req, res) => {
+router.post('/summary', aiGenerationLimiter, async (req, res, next) => {
     const { text, fileId, settings } = req.body;
     let fullText = text;
 
@@ -71,8 +72,7 @@ router.post('/summary', async (req, res) => {
         res.json(json);
 
     } catch (error) {
-        console.error('Error generating summary:', error);
-        res.status(500).json({ error: 'Failed to generate summary.' });
+        next(error);
     }
 });
 

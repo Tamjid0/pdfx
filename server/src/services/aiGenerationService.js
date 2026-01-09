@@ -50,7 +50,7 @@ User's specific instruction: "${promptInstruction}"
  * @param {number} [topN=4] - Number of top relevant documents to retrieve.
  * @returns {Promise<string>} - The AI generated content based on relevant documents.
  */
-export async function generateChunkBasedTransformation(fileId, query, topN = 4) {
+export async function generateChunkBasedTransformation(fileId, query, topN = 8) {
     const indexesDir = path.join(process.cwd(), 'src', 'database', 'indexes');
     const indexPath = path.join(indexesDir, fileId);
 
@@ -67,13 +67,28 @@ export async function generateChunkBasedTransformation(fileId, query, topN = 4) 
         return "Information not found in document. Try rephrasing your question.";
     }
 
-    const context = searchResults.map(doc => doc.pageContent).join('\n\n---\n\n');
+    // Phase 2: Include metadata in context for page/slide citations
+    const context = searchResults.map((doc, idx) => {
+        const meta = doc.metadata || {};
+        let source = '';
+
+        if (meta.pageIndex !== undefined) {
+            if (meta.pageType === 'slide') {
+                source = `[Source: Slide ${meta.pageIndex}]`;
+            } else {
+                source = `[Source: Page ${meta.pageIndex}]`;
+            }
+        }
+
+        return `${source}\n${doc.pageContent}`;
+    }).join('\n\n---\n\n');
 
     const systemPrompt = `
 You are an expert AI assistant answering questions based STRICTLY on the provided "Context".
 Your goal is to provide a helpful and well-formatted answer.
 - ONLY use information directly from the "Context" below.
 - DO NOT invent facts. If the answer is not in the Context, say so clearly.
+- When answering, ALWAYS cite the source (Page X or Slide X) from the [Source: ...] tags in the Context.
 - Format your answer using Markdown. Use lists, bold text, and newlines to make the information clear and readable.
 - Be concise but thorough in your answer.
 
@@ -101,7 +116,7 @@ User's query: "${query}"
  * @param {number} [topN=4] - Number of top relevant documents to retrieve.
  * @returns {AsyncGenerator<string>} - Async generator yielding AI content chunks.
  */
-export async function* generateChunkBasedStreamingTransformation(fileId, query, topN = 4) {
+export async function* generateChunkBasedStreamingTransformation(fileId, query, topN = 8) {
     const indexesDir = path.join(process.cwd(), 'src', 'database', 'indexes');
     const indexPath = path.join(indexesDir, fileId);
 
@@ -117,11 +132,27 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
         return;
     }
 
-    const context = searchResults.map(doc => doc.pageContent).join('\n\n---\n\n');
+    // Phase 2: Include metadata in context for page/slide citations
+    const context = searchResults.map((doc, idx) => {
+        const meta = doc.metadata || {};
+        let source = '';
+
+        if (meta.pageIndex !== undefined) {
+            if (meta.pageType === 'slide') {
+                source = `[Source: Slide ${meta.pageIndex}]`;
+            } else {
+                source = `[Source: Page ${meta.pageIndex}]`;
+            }
+        }
+
+        return `${source}\n${doc.pageContent}`;
+    }).join('\n\n---\n\n');
 
     const systemPrompt = `
 You are an expert AI assistant answering questions based STRICTLY on the provided "Context".
-Format your answer using Markdown.
+- When answering, ALWAYS cite the source (Page X or Slide X) from the [Source: ...] tags in the Context.
+- Format your answer using Markdown.
+
 Context:
 """
 ${context}

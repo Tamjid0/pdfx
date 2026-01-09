@@ -43,6 +43,8 @@ next-env.d.ts
 # local server data
 server/uploads/
 server/database/
+server/src/database/documents/
+server/src/database/indexes/
 **/indexes/
 **/chunks/
 *.db

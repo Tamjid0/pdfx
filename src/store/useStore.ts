@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+export type PreviewPreset = 'professional' | 'academic' | 'minimal' | 'creative';
+
 interface AppState {
     htmlPreview: string | null;
     isLoading: boolean;
@@ -50,6 +52,9 @@ interface AppState {
     activeNotesToggles: any;
     activeInsightsToggles: any;
 
+    // Preview Settings
+    previewPreset: PreviewPreset;
+
     // Actions
     setHtmlPreview: (html: string | null) => void;
     setIsLoading: (loading: boolean) => void;
@@ -85,6 +90,9 @@ interface AppState {
     setCurrentSlideIndex: (index: number) => void;
     nextSlide: () => void;
     prevSlide: () => void;
+
+    // Preview Actions
+    setPreviewPreset: (preset: PreviewPreset) => void;
 
     openExportModal: (mode: string, content: any) => void;
     closeExportModal: () => void;
@@ -161,6 +169,8 @@ export const useStore = create<AppState>((set) => ({
     activeNotesToggles: {},
     activeInsightsToggles: {},
 
+    previewPreset: 'professional',
+
     setHtmlPreview: (html) => set({ htmlPreview: html }),
     setIsLoading: (loading) => set({ isLoading: loading }),
     setView: (view) => set({ view: view }),
@@ -203,4 +213,6 @@ export const useStore = create<AppState>((set) => ({
 
     openExportModal: (mode, content) => set({ showExportModal: true, exportMode: mode, exportContent: content }),
     closeExportModal: () => set({ showExportModal: false }),
+
+    setPreviewPreset: (preset) => set({ previewPreset: preset }),
 }));

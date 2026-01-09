@@ -14,6 +14,7 @@ import exportRoutes from './legacy_routes/api/exportRoutes.js';
 
 // New pipeline routes
 import fileUploadRoutes from './fileUploadRoutes.js';
+import documentRoutes from './documentRoutes.js';
 
 
 const router = Router();
@@ -33,6 +34,7 @@ router.use(exportRoutes);
 
 // New pipeline routes
 router.use(fileUploadRoutes);
+router.use('/documents', documentRoutes);
 
 
 export default router;

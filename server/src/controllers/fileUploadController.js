@@ -59,32 +59,39 @@ export const uploadFile = async (req, res) => {
         // UNIFIED PIPELINE EXECUTION
         const result = await documentProcessor.processFile(req.file);
 
-        const { documentId, documentGraph, extractedText } = result;
-        const cleanedText = cleanText(extractedText);
+        const { documentId, documentGraph, chunks, extractedText } = result;
 
-        // EXISTING EMBEDDING LOGIC (Wrapped)
-        // We use the text derived from the new graph
-        const splitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000, chunkOverlap: 100 });
-        const docs = await splitter.createDocuments([cleanedText]);
+        // Phase 2: Use structured chunks with metadata for embedding
+        console.log(`[Phase 2] Embedding ${chunks.length} structured chunks with metadata`);
 
-        const vectorStore = await FaissStore.fromDocuments(docs, hfEmbeddings);
+        const docsWithMetadata = chunks.map(chunk => ({
+            pageContent: chunk.content,
+            metadata: {
+                ...chunk.metadata,
+                source: documentId,
+                fileName: req.file.originalname
+            }
+        }));
 
-        // We save index using the NEW documentId to align with the new storage
-        // But to keep frontend compatible if it expects 'fileId', we might need to return that too.
-        // For now, let's save index as documentId.
+        const vectorStore = await FaissStore.fromDocuments(docsWithMetadata, hfEmbeddings);
+
+        // Save index using the NEW documentId to align with the new storage
         const indexPath = path.join(indexesDir, documentId);
         await vectorStore.save(indexPath);
 
         console.log(`[+] FAISS index created successfully for documentId: ${documentId}`);
+        console.log(`[+] Metadata preserved: pageIndex, documentType, imageCount, etc.`);
+
+        // Clean text for response (legacy compatibility)
+        const cleanedText = cleanText(extractedText);
 
         res.json({
             fileId: documentId, // Returning the NEW unified ID
             originalFileId: fileId, // Keep reference if needed
             fileName: req.file.originalname,
             extractedText: cleanedText,
-            // We can return the graph structure too if the frontend wants to inspect it
-            // structure: documentGraph,
-            message: 'File processed via Unified Pipeline.'
+            chunkCount: chunks.length,
+            message: 'File processed via Unified Pipeline (Phase 2: Structured Chunks).'
         });
 
     } catch (error) {

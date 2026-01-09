@@ -2,6 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import { PdfExtractor } from './extractors/PdfExtractor.js';
 import { PptxExtractor } from './extractors/PptxExtractor.js';
+import { StructuredChunker } from './StructuredChunker.js';
+import { ImageExtractor } from './ImageExtractor.js';
 
 const STORAGE_DIR = path.resolve(process.cwd(), 'src/database/documents');
 
@@ -17,9 +19,9 @@ export class DocumentProcessor {
     }
 
     /**
-     * Processes a file and allows valid extraction.
+     * Processes a file and returns structured chunks for embedding.
      * @param {Object} file - Multer file object
-     * @returns {Promise<Object>} { documentId, textForEmbedding, structure }
+     * @returns {Promise<Object>} { documentId, chunks, extractedText }
      */
     async processFile(file) {
         let documentGraph;
@@ -47,38 +49,35 @@ export class DocumentProcessor {
         fs.writeFileSync(jsonPath, JSON.stringify(documentGraph, null, 2));
         console.log(`[DocumentProcessor] Saved graph to ${jsonPath}`);
 
-        // Derive plain text for Legacy Embedding System (Wrap, don't rip)
-        const flatText = this.derivePlainText(documentGraph);
+        // Phase 2: Extract images to disk and update JSON
+        const imageResult = await ImageExtractor.extractAndSave(
+            documentGraph.documentId,
+            documentGraph
+        );
+        if (imageResult.extractedCount > 0) {
+            console.log(`[DocumentProcessor] Extracted ${imageResult.extractedCount} images to disk`);
+        }
+
+        // Phase 2: Generate structured chunks with metadata
+        const chunks = StructuredChunker.chunkByStructure(documentGraph);
+        console.log(`[DocumentProcessor] Created ${chunks.length} structured chunks`);
+
+        // Legacy compatibility: Derive plain text for existing systems
+        const flatText = StructuredChunker.deriveTextFromGraph(documentGraph);
 
         return {
             documentId: documentGraph.documentId,
             documentGraph,
-            extractedText: flatText
+            chunks,           // Phase 2: Structured chunks with metadata
+            extractedText: flatText  // Legacy: Plain text for backward compatibility
         };
     }
 
     /**
-     * Flattens the graph into a string for the current FAISS implementation.
+     * Legacy method - kept for backward compatibility
+     * Use StructuredChunker.deriveTextFromGraph() for new code
      */
     derivePlainText(docGraph) {
-        let texts = [];
-
-        docGraph.structure.pages.forEach(page => {
-            texts.push(`--- Page/Slide ${page.index} ---`);
-
-            // Sort nodes by Y position roughly to maintain reading order
-            const sortedNodes = page.nodes.sort((a, b) => {
-                return (a.position?.y || 0) - (b.position?.y || 0);
-            });
-
-            sortedNodes.forEach(node => {
-                if (node.type === 'text') {
-                    texts.push(node.content.text);
-                }
-            });
-            texts.push('\n');
-        });
-
-        return texts.join('\n');
+        return StructuredChunker.deriveTextFromGraph(docGraph);
     }
 }

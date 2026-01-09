@@ -18,6 +18,7 @@
     "@langchain/core": "^1.1.8",
     "@langchain/textsplitters": "^1.0.1",
     "bcrypt": "^6.0.0",
+    "canvas": "^3.2.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^4.19.2",
@@ -30,7 +31,7 @@
     "langchain": "^1.2.3",
     "multer": "^2.0.2",
     "node-fetch": "^3.3.2",
-    "pdfjs-dist": "^4.4.170",
+    "pdfjs-dist": "^3.11.174",
     "puppeteer": "^22.10.0",
     "winston": "^3.19.0",
     "xml2js": "^0.6.2"

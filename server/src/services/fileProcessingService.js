@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
+import '../utils/polyfill.js';
+import pdfjs from 'pdfjs-dist/legacy/build/pdf.js';
 import { fileURLToPath, pathToFileURL } from 'url';
 
 // Configure PDF.js worker
@@ -8,8 +9,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 pdfjs.GlobalWorkerOptions.standardFontDataUrl = 'https://mozilla.github.io/pdf.js/standard_fonts/';
-const workerPath = path.resolve(process.cwd(), 'src/static/pdf.worker.mjs');
-pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(workerPath).href;
+const workerPath = path.resolve(process.cwd(), 'src/static/pdf.worker.js');
+// pdfjs-dist legacy build in Node requires a string path, NOT a file URL
+// or in many cases, no workerSrc at all if the file is in the right place.
+// But if we must set it, it should be a path.
+// pdfjs.GlobalWorkerOptions.workerSrc = workerPath;
 
 /**
  * Checks the file type and ensures it's allowed.

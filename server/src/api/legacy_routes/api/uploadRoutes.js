@@ -1,7 +1,8 @@
 
 import express from 'express';
 import multer from 'multer';
-import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
+import '../../../utils/polyfill.js';
+import pdfjs from 'pdfjs-dist/legacy/build/pdf.js';
 import fs from 'fs';
 import path from 'path'; // Import path module
 import { fileURLToPath, pathToFileURL } from 'url'; // Import fileURLToPath and pathToFileURL
@@ -11,8 +12,8 @@ const __dirname = path.dirname(__filename);
 
 
 pdfjs.GlobalWorkerOptions.standardFontDataUrl = 'https://mozilla.github.io/pdf.js/standard_fonts/';
-const workerPath = path.resolve(process.cwd(), 'src/static/pdf.worker.mjs');
-pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(workerPath).href;
+const workerPath = path.resolve(process.cwd(), 'src/static/pdf.worker.js');
+// pdfjs.GlobalWorkerOptions.workerSrc = workerPath;
 
 const router = express.Router();
 // Ensure the uploads directory exists
@@ -32,7 +33,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   try {
     const buffer = fs.readFileSync(filePath);
     // Dynamically import file-type to avoid CJS/ESM issues
-    const { fileTypeFromBuffer } = await import('file-type'); 
+    const { fileTypeFromBuffer } = await import('file-type');
     const type = await fileTypeFromBuffer(buffer);
 
     // Security: Check for allowed MIME types

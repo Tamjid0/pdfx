@@ -37,67 +37,54 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+import { DocumentProcessor } from '../services/DocumentProcessor.js';
+
+// ... (keep imports)
+const documentProcessor = new DocumentProcessor();
+
 export const uploadFile = async (req, res) => {
     if (!req.file) {
         return res.status(400).send({ error: 'No file uploaded.' });
     }
 
     const { filename, path: filePath } = req.file;
+    // We can use the processor's ID or keep the fileId from filename for now to match Multer
+    // Let's use the DocumentProcessor's ID for the DB, but we might need to relate them.
+    // Ideally, we move to the new ID.
     const fileId = path.parse(filename).name;
 
     try {
-        let textContent = '';
-        if (req.file.mimetype === 'application/pdf' || (await checkFileType(filePath)).mime === 'application/pdf') {
-            textContent = await extractTextFromPdf(filePath);
-        } else if (
-            req.file.mimetype === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' ||
-            req.file.mimetype === 'application/vnd.ms-powerpoint'
-        ) {
-            // Use real PPTX parsing service
-            const buffer = fs.readFileSync(filePath);
-            const slides = await extractSlides(buffer);
+        console.log(`[+] Uploading file: ${req.file.originalname}`);
 
-            // For embedding/search, we'll combine all slide content
-            textContent = slides.map(s => `${s.title}\n${s.content}`).join('\n\n');
-            const cleanedText = cleanText(textContent);
+        // UNIFIED PIPELINE EXECUTION
+        const result = await documentProcessor.processFile(req.file);
 
-            // SKIP EMBEDDING FOR SLIDES AS REQUESTED
-            // const splitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000, chunkOverlap: 100 });
-            // const docs = await splitter.createDocuments([cleanedText]);
+        const { documentId, documentGraph, extractedText } = result;
+        const cleanedText = cleanText(extractedText);
 
-            // const vectorStore = await FaissStore.fromDocuments(docs, hfEmbeddings);
-            // const indexPath = path.join(indexesDir, fileId);
-            // await vectorStore.save(indexPath);
-
-            // console.log(`[+] FAISS index created successfully for fileId: ${fileId}`);
-
-            return res.json({
-                fileId: fileId,
-                fileName: req.file.originalname,
-                extractedText: cleanedText,
-                slides: slides, // Return structured slides
-                message: 'File processed (slides extracted, embeddings skipped).'
-            });
-        } else {
-            textContent = fs.readFileSync(filePath, 'utf-8');
-        }
-        const cleanedText = cleanText(textContent);
-
+        // EXISTING EMBEDDING LOGIC (Wrapped)
+        // We use the text derived from the new graph
         const splitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000, chunkOverlap: 100 });
         const docs = await splitter.createDocuments([cleanedText]);
 
-        // Create and save a FAISS index from the documents
         const vectorStore = await FaissStore.fromDocuments(docs, hfEmbeddings);
-        const indexPath = path.join(indexesDir, fileId);
+
+        // We save index using the NEW documentId to align with the new storage
+        // But to keep frontend compatible if it expects 'fileId', we might need to return that too.
+        // For now, let's save index as documentId.
+        const indexPath = path.join(indexesDir, documentId);
         await vectorStore.save(indexPath);
 
-        console.log(`[+] FAISS index created successfully for fileId: ${fileId}`);
+        console.log(`[+] FAISS index created successfully for documentId: ${documentId}`);
 
         res.json({
-            fileId: fileId,
+            fileId: documentId, // Returning the NEW unified ID
+            originalFileId: fileId, // Keep reference if needed
             fileName: req.file.originalname,
             extractedText: cleanedText,
-            message: 'File processed and index created successfully.'
+            // We can return the graph structure too if the frontend wants to inspect it
+            // structure: documentGraph,
+            message: 'File processed via Unified Pipeline.'
         });
 
     } catch (error) {

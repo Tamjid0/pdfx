@@ -1,10 +1,13 @@
 import express from 'express';
 import puppeteer from 'puppeteer';
 import HTMLtoDOCX from 'html-to-docx';
+import validate from '../../middleware/validate.js';
+import { exportSchema } from '../../validations/export.validation.js';
+import ApiError from '../../utils/ApiError.js';
 
 const router = express.Router();
 
-router.post('/export', async (req, res) => {
+router.post('/', validate(exportSchema), async (req, res, next) => {
     const { format, html, data, mode, filename = 'exported-document' } = req.body;
 
     console.log(`[Export] Request: format=${format}, mode=${mode}, filename=${filename}`);
@@ -98,11 +101,10 @@ router.post('/export', async (req, res) => {
             res.send(csvBuffer);
 
         } else {
-            res.status(400).json({ error: 'Unsupported format' });
+            throw new ApiError(400, 'Unsupported format');
         }
     } catch (error) {
-        console.error('[Export] Server Error:', error);
-        res.status(500).json({ error: `Failed to generate export file: ${error.message}` });
+        next(error);
     }
 });
 

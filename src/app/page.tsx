@@ -7,8 +7,13 @@ import { ExportModal } from "../components/ExportModal";
 import * as apiService from "../services/apiService";
 import { useStore } from "../store/useStore";
 
+import { useFileUpload } from "../hooks/useFileUpload";
+import { useChat } from "../hooks/useChat";
+
 const Home = () => {
     const [isMounted, setIsMounted] = useState(false);
+    const { handleFileUpload } = useFileUpload();
+    const { handleSendMessage } = useChat();
 
     useEffect(() => {
         setIsMounted(true);
@@ -49,75 +54,6 @@ const Home = () => {
         setIsSlideMode, setSlides,
     } = useStore();
 
-    const handleSendMessage = async (message: string) => {
-        const newUserMessage = {
-            sender: 'user',
-            text: message,
-            timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-        };
-
-        setChatHistory(prev => [...prev, newUserMessage]);
-
-        if (!fileId) {
-            setTimeout(() => {
-                const aiErrorMessage = {
-                    sender: 'ai',
-                    text: "I'm sorry, I can only answer questions based on documents. Please upload or paste a document first so I can assist you!",
-                    timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-                };
-                setChatHistory(prev => [...prev, aiErrorMessage]);
-            }, 500);
-            return;
-        }
-
-        setIsTyping(true);
-
-        try {
-            let fullAiText = '';
-
-            await apiService.chatWithDocumentStream(
-                message,
-                fileId,
-                (chunk) => {
-                    fullAiText += chunk;
-                    setIsTyping(false);
-
-                    setChatHistory(prev => {
-                        const lastMsg = prev[prev.length - 1];
-                        if (lastMsg && lastMsg.sender === 'ai' && lastMsg.timestamp === 'streaming...') {
-                            return [...prev.slice(0, -1), { ...lastMsg, text: fullAiText }];
-                        } else {
-                            return [...prev, {
-                                sender: 'ai',
-                                text: fullAiText,
-                                timestamp: 'streaming...'
-                            }];
-                        }
-                    });
-                },
-                (finalText) => {
-                    setChatHistory(prev => {
-                        return [...prev.slice(0, -1), {
-                            sender: 'ai',
-                            text: finalText,
-                            timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-                        }];
-                    });
-                    setIsTyping(false);
-                }
-            );
-        } catch (error) {
-            console.error("Error sending message:", error);
-            setIsTyping(false);
-            const errorResponse = {
-                sender: 'ai',
-                text: 'Sorry, I encountered an error. Please try again.',
-                timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-            };
-            setChatHistory(prev => [...prev.slice(0, -1), errorResponse]);
-        }
-    };
-
     const backToImport = () => {
         setView("import");
         setMode("editor");
@@ -144,49 +80,11 @@ const Home = () => {
         }
     };
 
-    const handleFileUpload = async (file: File) => {
-        setIsLoading(true);
-        try {
-            // Detect slide file types
-            const isSlideFile = file.name.endsWith('.pptx') || file.name.endsWith('.ppt') || file.name.endsWith('.key');
-
-            const data = await apiService.uploadFile(file);
-            setHtmlPreview(data.extractedText);
-            setFileId(data.fileId);
-            setView("editor");
-
-            console.log("Upload response data:", data); // DEBUG
-            if (data.slides && data.slides.length > 0) {
-                console.log("Setting slides:", data.slides); // DEBUG
-                // Use real slides from backend
-                setSlides(data.slides);
-                setIsSlideMode(true);
-                setLeftPanelView('slides');
-                setMode('editor');
-            } else if (isSlideFile) {
-                // Fallback if parsing failed but file extension was correct
-                setSlides([
-                    { title: "Processing Error", content: "Could not extract slides from this file." }
-                ]);
-                setIsSlideMode(true);
-                setLeftPanelView('slides');
-                setMode('editor');
-            } else {
-                setIsSlideMode(false);
-                setLeftPanelView('editor');
-                setMode('editor');
-            }
-        } catch (error) {
-            console.error("Error uploading file:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     const handleScrapeUrl = async (url: string) => {
         setIsLoading(true);
         try {
-            const response = await fetch(`/api/scrape?url=${encodeURIComponent(url)}`);
+            const response = await fetch(`/api/v1/scrape?url=${encodeURIComponent(url)}`);
             if (!response.ok) throw new Error("Failed to scrape URL");
             const data = await response.json();
             setHtmlPreview(data.html);

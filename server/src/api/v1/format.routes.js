@@ -1,16 +1,16 @@
 import express from 'express';
-import { generateFullDocumentTransformation } from '../../../services/aiGenerationService.js';
-import { getVectorStore } from '../../../services/vectorStoreService.js';
+import { generateFullDocumentTransformation } from '../../services/aiGenerationService.js';
+import { getVectorStore } from '../../services/vectorStoreService.js';
+import { aiGenerationLimiter } from '../../middleware/rateLimitMiddleware.js';
+import validate from '../../middleware/validate.js';
+import { formatSchema } from '../../validations/format.validation.js';
+import ApiError from '../../utils/ApiError.js';
 
 const router = express.Router();
 
-router.post('/format', async (req, res) => {
+router.post('/', aiGenerationLimiter, validate(formatSchema), async (req, res, next) => {
     const { html, fileId, prompt } = req.body;
     let fullText = html;
-
-    if (!fullText && !fileId) {
-        return res.status(400).json({ error: 'Either HTML content or fileId must be provided.' });
-    }
 
     try {
         if (fileId) {
@@ -19,7 +19,7 @@ router.post('/format', async (req, res) => {
                 const allDocs = await vectorStore.similaritySearch("", vectorStore.memoryVectors.length);
                 fullText = allDocs.map(doc => doc.pageContent).join('\n\n');
             } else {
-                return res.status(404).json({ error: `No document found for fileId: ${fileId}` });
+                throw new ApiError(404, `No document found for fileId: ${fileId}`);
             }
         }
 
@@ -42,8 +42,7 @@ router.post('/format', async (req, res) => {
 
         res.json({ formattedHtml: formattedHtml });
     } catch (error) {
-        console.error('Error formatting HTML:', error);
-        res.status(500).json({ error: 'Failed to format content' });
+        next(error);
     }
 });
 

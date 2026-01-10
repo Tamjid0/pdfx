@@ -1,17 +1,16 @@
 import express from 'express';
-import { generateFullDocumentTransformation } from '../../../services/aiGenerationService.js';
-import { getVectorStore } from '../../../services/vectorStoreService.js';
-import { aiGenerationLimiter } from '../../../middleware/rateLimitMiddleware.js';
+import { generateFullDocumentTransformation } from '../../services/aiGenerationService.js';
+import { getVectorStore } from '../../services/vectorStoreService.js';
+import { aiGenerationLimiter } from '../../middleware/rateLimitMiddleware.js';
+import validate from '../../middleware/validate.js';
+import { summarySchema } from '../../validations/summary.validation.js';
+import ApiError from '../../utils/ApiError.js';
 
 const router = express.Router();
 
-router.post('/summary', aiGenerationLimiter, async (req, res, next) => {
+router.post('/', aiGenerationLimiter, validate(summarySchema), async (req, res, next) => {
     const { text, fileId, settings } = req.body;
     let fullText = text;
-
-    if (!fullText && !fileId) {
-        return res.status(400).json({ error: 'Either text or fileId must be provided.' });
-    }
 
     try {
         // If a fileId is provided, retrieve the full text from the vector store
@@ -22,7 +21,7 @@ router.post('/summary', aiGenerationLimiter, async (req, res, next) => {
                 const allDocs = await vectorStore.similaritySearch("", 100);
                 fullText = allDocs.map(doc => doc.pageContent).join('\n\n');
             } else {
-                return res.status(404).json({ error: `No document found for fileId: ${fileId}` });
+                throw new ApiError(404, `No document found for fileId: ${fileId}`);
             }
         }
 

@@ -2,6 +2,7 @@ import './utils/polyfill.js';
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import logger from './utils/logger.js';
 import { errorConverter, errorHandler } from './middleware/errorMiddleware.js';
 import { apiLimiter, aiGenerationLimiter } from './middleware/rateLimitMiddleware.js';
@@ -11,8 +12,19 @@ import apiRoutes from './api/index.js';
 const app = express();
 
 // Security & Basic Middleware
+app.use(helmet()); // Add security headers
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Limit payload size
+
+// Structured Request Logging
+app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        logger.info(`${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`);
+    });
+    next();
+});
 
 // Apply global rate limiting
 app.use('/api', apiLimiter);
@@ -25,21 +37,6 @@ app.get('/health', (req, res) => {
 // Other API routes
 app.use('/api', apiRoutes);
 
-// Scrape route (under /api)
-app.get('/api/scrape', async (req, res, next) => {
-    const { url } = req.query;
-
-    if (!url) {
-        return res.status(400).send({ error: 'URL is required' });
-    }
-
-    try {
-        const html = await scrapeHtml(url);
-        res.json({ html });
-    } catch (error) {
-        next(error); // Pass to centralized error handler
-    }
-});
 
 // Error handling initialization
 app.use(errorConverter);

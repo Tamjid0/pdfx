@@ -1,12 +1,12 @@
 import logger from '../utils/logger.js';
+import ApiError from '../utils/ApiError.js';
 
 export const errorConverter = (err, req, res, next) => {
     let error = err;
-    if (!(error instanceof Error)) {
+    if (!(error instanceof ApiError)) {
         const statusCode = error.statusCode || 500;
         const message = error.message || 'Internal Server Error';
-        error = new Error(message);
-        error.statusCode = statusCode;
+        error = new ApiError(statusCode, message, false, err.stack);
     }
     next(error);
 };
@@ -24,7 +24,10 @@ export const errorHandler = (err, req, res, next) => {
     };
 
     if (process.env.NODE_ENV !== 'test') {
-        logger.error(err);
+        logger.error(`[${req.method}] ${req.originalUrl} - ${statusCode} - ${message}`);
+        if (statusCode === 500) {
+            logger.error(err.stack);
+        }
     }
 
     res.status(statusCode).send(response);

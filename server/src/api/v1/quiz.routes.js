@@ -1,16 +1,16 @@
 import express from 'express';
-import { generateFullDocumentTransformation } from '../../../services/aiGenerationService.js';
-import { getVectorStore } from '../../../services/vectorStoreService.js';
+import { generateFullDocumentTransformation } from '../../services/aiGenerationService.js';
+import { getVectorStore } from '../../services/vectorStoreService.js';
+import { aiGenerationLimiter } from '../../middleware/rateLimitMiddleware.js';
+import validate from '../../middleware/validate.js';
+import { quizSchema } from '../../validations/quiz.validation.js';
+import ApiError from '../../utils/ApiError.js';
 
 const router = express.Router();
 
-router.post('/quiz', async (req, res) => {
+router.post('/', aiGenerationLimiter, validate(quizSchema), async (req, res, next) => {
     const { text, fileId, settings } = req.body;
     let fullText = text;
-
-    if (!fullText && !fileId) {
-        return res.status(400).json({ error: 'Either text or fileId must be provided.' });
-    }
 
     try {
         if (fileId) {
@@ -19,7 +19,7 @@ router.post('/quiz', async (req, res) => {
                 const allDocs = await vectorStore.similaritySearch("", 100);
                 fullText = allDocs.map(doc => doc.pageContent).join('\n\n');
             } else {
-                return res.status(404).json({ error: `No document found for fileId: ${fileId}` });
+                throw new ApiError(404, `No document found for fileId: ${fileId}`);
             }
         }
 
@@ -68,8 +68,7 @@ router.post('/quiz', async (req, res) => {
 
         res.json(json);
     } catch (error) {
-        console.error('Error generating quiz:', error);
-        res.status(500).json({ error: 'Failed to generate quiz' });
+        next(error);
     }
 });
 

@@ -1,15 +1,12 @@
 import express from 'express';
-import { generateChunkBasedTransformation, generateChunkBasedStreamingTransformation } from '../../../services/aiGenerationService.js';
+import { generateChunkBasedTransformation, generateChunkBasedStreamingTransformation } from '../../services/aiGenerationService.js';
+import validate from '../../middleware/validate.js';
+import { chatSchema, chatStreamSchema } from '../../validations/chat.validation.js';
 
 const router = express.Router();
 
-router.post('/chat', async (req, res) => {
-    // ... (existing code remains as fallback)
+router.post('/', validate(chatSchema), async (req, res) => {
     const { fileId, message } = req.body;
-
-    if (!fileId || !message) {
-        return res.status(400).json({ error: 'fileId and message are required.' });
-    }
 
     try {
         const response = await generateChunkBasedTransformation(fileId, message);
@@ -24,12 +21,8 @@ router.post('/chat', async (req, res) => {
     }
 });
 
-router.post('/chat/stream', async (req, res) => {
+router.post('/stream', validate(chatStreamSchema), async (req, res) => {
     const { fileId, message } = req.body;
-
-    if (!fileId || !message) {
-        return res.status(400).json({ error: 'fileId and message are required.' });
-    }
 
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');

@@ -1,6 +1,6 @@
 // src/services/apiService.ts
 export async function formatContent(html: string, prompt: string) {
-    const response = await fetch('/api/format', {
+    const response = await fetch('/api/v1/format', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -24,7 +24,7 @@ function getPayload(arg1: GenerationPayload, arg2?: any) {
 
 export async function generateSummary(arg1: GenerationPayload, settings?: any) {
     const payload = getPayload(arg1, settings);
-    const response = await fetch('/api/summary', {
+    const response = await fetch('/api/v1/summary', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -38,7 +38,7 @@ export async function generateSummary(arg1: GenerationPayload, settings?: any) {
 }
 
 export async function fetchTemplates() {
-    const response = await fetch('/api/templates');
+    const response = await fetch('/api/v1/templates');
     if (!response.ok) {
         throw new Error('Failed to fetch templates');
     }
@@ -49,7 +49,7 @@ export async function uploadFile(file: File) {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch('/api/upload-document', {
+    const response = await fetch('/api/v1/upload/upload-document', {
         method: 'POST',
         body: formData,
     });
@@ -61,7 +61,7 @@ export async function uploadFile(file: File) {
 }
 
 export async function embedText(text: string, fileName?: string) {
-    const response = await fetch('/api/embed-text', {
+    const response = await fetch('/api/v1/upload/embed-text', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -77,7 +77,7 @@ export async function embedText(text: string, fileName?: string) {
 
 export async function fetchNotes(arg1: GenerationPayload, settings?: any) {
     const payload = getPayload(arg1, settings);
-    const response = await fetch('/api/notes', {
+    const response = await fetch('/api/v1/notes', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -92,7 +92,7 @@ export async function fetchNotes(arg1: GenerationPayload, settings?: any) {
 
 export async function fetchFlashcards(arg1: GenerationPayload, settings?: any) {
     const payload = getPayload(arg1, settings);
-    const response = await fetch('/api/flashcards', {
+    const response = await fetch('/api/v1/flashcards', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -107,7 +107,7 @@ export async function fetchFlashcards(arg1: GenerationPayload, settings?: any) {
 
 export async function fetchQuiz(arg1: GenerationPayload, settings?: any) {
     const payload = getPayload(arg1, settings);
-    const response = await fetch('/api/quiz', {
+    const response = await fetch('/api/v1/quiz', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -122,7 +122,7 @@ export async function fetchQuiz(arg1: GenerationPayload, settings?: any) {
 
 export async function fetchMindmap(arg1: GenerationPayload, settings?: any) {
     const payload = getPayload(arg1, settings);
-    const response = await fetch('/api/mindmap', {
+    const response = await fetch('/api/v1/mindmap', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -137,7 +137,7 @@ export async function fetchMindmap(arg1: GenerationPayload, settings?: any) {
 
 export async function fetchInsights(arg1: GenerationPayload, settings?: any) {
     const payload = getPayload(arg1, settings);
-    const response = await fetch('/api/insights', {
+    const response = await fetch('/api/v1/insights', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -151,7 +151,7 @@ export async function fetchInsights(arg1: GenerationPayload, settings?: any) {
 }
 
 export async function exportContent(content: string, format: string, mode: string) {
-    const response = await fetch('/api/export', {
+    const response = await fetch('/api/v1/export', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -166,7 +166,7 @@ export async function exportContent(content: string, format: string, mode: strin
 }
 
 export async function chatWithDocument(message: string, fileId: string) {
-    const response = await fetch('/api/chat', {
+    const response = await fetch('/api/v1/chat', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -180,7 +180,7 @@ export async function chatWithDocument(message: string, fileId: string) {
 }
 
 export async function chatWithDocumentStream(message: string, fileId: string, onChunk: (text: string) => void, onComplete: (fullText: string) => void) {
-    const response = await fetch('/api/chat/stream', {
+    const response = await fetch('/api/v1/chat/stream', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

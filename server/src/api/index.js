@@ -1,40 +1,44 @@
 import { Router } from 'express';
+// API v1
+import v1Routes from './v1/index.js';
+
 // Legacy API Routes
-import formatRoutes from './legacy_routes/api/formatRoutes.js';
-import summaryRoutes from './legacy_routes/api/summaryRoutes.js';
-import templateRoutes from './legacy_routes/api/templateRoutes.js';
-import insightsRoutes from './legacy_routes/api/insightsRoutes.js';
-import notesRoutes from './legacy_routes/api/notesRoutes.js';
-import quizRoutes from './legacy_routes/api/quizRoutes.js';
-import flashcardsRoutes from './legacy_routes/api/flashcardsRoutes.js';
-import mindmapRoutes from './legacy_routes/api/mindmapRoutes.js';
-import uploadRoutes from './legacy_routes/api/uploadRoutes.js';
-import chatRoutes from './legacy_routes/api/chatRoutes.js';
-import exportRoutes from './legacy_routes/api/exportRoutes.js';
+import legacyUploadRoutes from './legacy_routes/api/uploadRoutes.js';
 
-// New pipeline routes
-import fileUploadRoutes from './fileUploadRoutes.js';
-import documentRoutes from './documentRoutes.js';
-
+// Maintain old paths for backward compatibility during transition
+import uploadRoutes from './v1/upload.routes.js';
+import documentRoutes from './v1/document.routes.js';
+import v1ChatRoutes from './v1/chat.routes.js';
+import v1SummaryRoutes from './v1/summary.routes.js';
+import v1InsightsRoutes from './v1/insights.routes.js';
+import v1QuizRoutes from './v1/quiz.routes.js';
+import v1FlashcardsRoutes from './v1/flashcards.routes.js';
+import v1NotesRoutes from './v1/notes.routes.js';
+import v1MindmapRoutes from './v1/mindmap.routes.js';
+import v1FormatRoutes from './v1/format.routes.js';
+import v1TemplateRoutes from './v1/template.routes.js';
+import v1ExportRoutes from './v1/export.routes.js';
+import v1ScrapeRoutes from './v1/scrape.routes.js';
 
 const router = Router();
 
-// Legacy Routes
-router.use(formatRoutes);
-router.use(summaryRoutes);
-router.use(templateRoutes);
-router.use(insightsRoutes);
-router.use(notesRoutes);
-router.use(quizRoutes);
-router.use(flashcardsRoutes);
-router.use(mindmapRoutes);
+// API v1
+router.use('/v1', v1Routes);
+
+// Maintain old paths for backward compatibility during transition
+router.use(legacyUploadRoutes);
 router.use(uploadRoutes);
-router.use(chatRoutes);
-router.use(exportRoutes);
-
-// New pipeline routes
-router.use(fileUploadRoutes);
 router.use('/documents', documentRoutes);
-
+router.use(v1ChatRoutes);
+router.use(v1SummaryRoutes);
+router.use(v1InsightsRoutes);
+router.use(v1QuizRoutes);
+router.use(v1FlashcardsRoutes);
+router.use(v1NotesRoutes);
+router.use(v1MindmapRoutes);
+router.use(v1FormatRoutes);
+router.use(v1TemplateRoutes);
+router.use(v1ExportRoutes);
+router.use(v1ScrapeRoutes);
 
 export default router;

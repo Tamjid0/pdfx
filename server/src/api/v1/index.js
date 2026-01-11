@@ -12,6 +12,7 @@ import formatRoutes from './format.routes.js';
 import templateRoutes from './template.routes.js';
 import exportRoutes from './export.routes.js';
 import scrapeRoutes from './scrape.routes.js';
+import jobRoutes from './job.routes.js';
 
 const router = Router();
 
@@ -28,5 +29,6 @@ router.use('/format', formatRoutes);
 router.use('/templates', templateRoutes);
 router.use('/export', exportRoutes);
 router.use('/scrape', scrapeRoutes);
+router.use('/jobs', jobRoutes);
 
 export default router;

@@ -26,6 +26,36 @@ router.get('/:documentId/images/:filename', validate(getDocumentImageSchema), (r
 });
 
 /**
+ * GET /api/v1/documents/:documentId/pdf
+ * Serves the converted PDF of a presentation
+ */
+router.get('/:documentId/pdf', validate(getDocumentSchema), (req, res) => {
+    const { documentId } = req.params;
+    const jsonPath = path.join(DOCUMENTS_DIR, `${documentId}.json`);
+
+    if (!fs.existsSync(jsonPath)) {
+        return res.status(404).json({ error: 'Document not found' });
+    }
+
+    try {
+        const docGraph = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+        if (!docGraph.convertedPdfPath) {
+            return res.status(404).json({ error: 'Converted PDF not found for this document' });
+        }
+
+        const pdfPath = path.join(DOCUMENTS_DIR, docGraph.convertedPdfPath);
+        if (!fs.existsSync(pdfPath)) {
+            return res.status(404).json({ error: 'PDF file missing on disk' });
+        }
+
+        res.sendFile(pdfPath);
+    } catch (error) {
+        console.error('[DocumentRoutes] Error serving PDF:', error);
+        res.status(500).json({ error: 'Failed to serve PDF' });
+    }
+});
+
+/**
  * GET /api/documents/:documentId
  * Retrieves the full DocumentGraph JSON
  */

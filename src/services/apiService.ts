@@ -226,3 +226,11 @@ export async function chatWithDocumentStream(message: string, fileId: string, on
         reader.releaseLock();
     }
 }
+
+export async function getJobStatus(jobId: string) {
+    const response = await fetch(`/api/v1/jobs/${jobId}`);
+    if (!response.ok) {
+        throw new Error('Failed to fetch job status');
+    }
+    return response.json();
+}

@@ -8,6 +8,10 @@ import { errorConverter, errorHandler } from './middleware/errorMiddleware.js';
 import { apiLimiter, aiGenerationLimiter } from './middleware/rateLimitMiddleware.js';
 import { scrapeHtml } from './services/scraper.js';
 import apiRoutes from './api/index.js';
+import { initDocumentWorker } from './workers/documentWorker.js';
+
+// Start Background Worker
+initDocumentWorker();
 
 const app = express();
 

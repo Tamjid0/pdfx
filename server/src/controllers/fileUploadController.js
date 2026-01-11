@@ -38,65 +38,46 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 import { DocumentProcessor } from '../services/DocumentProcessor.js';
+import { addDocumentJob } from '../services/queueService.js';
 
-// ... (keep imports)
 const documentProcessor = new DocumentProcessor();
 
-export const uploadFile = async (req, res) => {
+/**
+ * Shared embedding logic for background worker
+ */
+export const embedStructuredChunks = async (documentId, docsWithMetadata) => {
+    const vectorStore = await FaissStore.fromDocuments(docsWithMetadata, hfEmbeddings);
+    const indexPath = path.join(indexesDir, documentId);
+    await vectorStore.save(indexPath);
+    return indexPath;
+};
+
+export const uploadFile = async (req, res, next) => {
     if (!req.file) {
         return res.status(400).send({ error: 'No file uploaded.' });
     }
 
-    const { filename, path: filePath } = req.file;
-    // We can use the processor's ID or keep the fileId from filename for now to match Multer
-    // Let's use the DocumentProcessor's ID for the DB, but we might need to relate them.
-    // Ideally, we move to the new ID.
-    const fileId = path.parse(filename).name;
+    const { filename, path: filePath, originalname } = req.file;
+    const documentId = crypto.randomUUID(); // Consistent with DocumentProcessor's behavior if it generates one
 
     try {
-        console.log(`[+] Uploading file: ${req.file.originalname}`);
-
-        // UNIFIED PIPELINE EXECUTION
-        const result = await documentProcessor.processFile(req.file);
-
-        const { documentId, documentGraph, chunks, extractedText } = result;
-
-        // Phase 2: Use structured chunks with metadata for embedding
-        console.log(`[Phase 2] Embedding ${chunks.length} structured chunks with metadata`);
-
-        const docsWithMetadata = chunks.map(chunk => ({
-            pageContent: chunk.content,
-            metadata: {
-                ...chunk.metadata,
-                source: documentId,
-                fileName: req.file.originalname
-            }
-        }));
-
-        const vectorStore = await FaissStore.fromDocuments(docsWithMetadata, hfEmbeddings);
-
-        // Save index using the NEW documentId to align with the new storage
-        const indexPath = path.join(indexesDir, documentId);
-        await vectorStore.save(indexPath);
-
-        console.log(`[+] FAISS index created successfully for documentId: ${documentId}`);
-        console.log(`[+] Metadata preserved: pageIndex, documentType, imageCount, etc.`);
-
-        // Clean text for response (legacy compatibility)
-        const cleanedText = cleanText(extractedText);
+        // Offload to background queue
+        const job = await addDocumentJob({
+            documentId,
+            filePath,
+            fileName: originalname, // For the worker metadata
+            originalName: originalname, // Consistent with worker expectation
+            mimeType: req.file.mimetype,
+        });
 
         res.json({
-            fileId: documentId, // Returning the NEW unified ID
-            originalFileId: fileId, // Keep reference if needed
-            fileName: req.file.originalname,
-            extractedText: cleanedText,
-            chunkCount: chunks.length,
-            message: 'File processed via Unified Pipeline (Phase 2: Structured Chunks).'
+            jobId: job.id,
+            documentId: documentId,
+            message: 'File upload successful. Processing started in background.'
         });
 
     } catch (error) {
-        console.error('File processing failed:', error);
-        res.status(500).send({ error: error.message || 'Failed to process file.' });
+        next(error);
     }
 };
 

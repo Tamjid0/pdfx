@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Backend Server
   server:
@@ -28,7 +26,6 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-
   # Frontend (Optionally containerized, or run locally)
   # web:
   #   build: ./

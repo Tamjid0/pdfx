@@ -49,50 +49,52 @@ export class DocumentProcessor {
             // Store reference to converted PDF for frontend rendering
             documentGraph.convertedPdfPath = path.relative(STORAGE_DIR, pdfPath);
         } else {
-
-            const documentId = documentGraph.documentId;
-
-            // Save JSON to disk (Single Source of Truth)
-            const jsonPath = path.join(STORAGE_DIR, `${documentId}.json`);
-            fs.writeFileSync(jsonPath, JSON.stringify(documentGraph, null, 2));
-            console.log(`[DocumentProcessor] Saved graph to ${jsonPath}`);
-
-            // Phase 2: Extract images to disk and update JSON
-            const imageResult = await ImageExtractor.extractAndSave(
-                documentId,
-                documentGraph
-            );
-            if (imageResult.extractedCount > 0) {
-                console.log(`[DocumentProcessor] Extracted ${imageResult.extractedCount} images to disk`);
-            }
-
-            // Phase 2: Generate structured chunks with metadata
-            const chunks = StructuredChunker.chunkByStructure(documentGraph);
-            console.log(`[DocumentProcessor] Created ${chunks.length} structured chunks`);
-
-            // Legacy compatibility: Derive plain text for existing systems
-            const flatText = StructuredChunker.deriveTextFromGraph(documentGraph);
-
-            return {
-                documentId,
-                documentGraph,
-                chunks,
-                extractedText: flatText
-            };
+            throw new Error(`Unsupported MIME type: ${mime}`);
         }
+
+        const documentId = documentGraph.documentId;
+
+        // Save JSON to disk (Single Source of Truth)
+        const jsonPath = path.join(STORAGE_DIR, `${documentId}.json`);
+        fs.writeFileSync(jsonPath, JSON.stringify(documentGraph, null, 2));
+        console.log(`[DocumentProcessor] Saved graph to ${jsonPath}`);
+
+        // Phase 2: Extract images to disk and update JSON
+        const imageResult = await ImageExtractor.extractAndSave(
+            documentId,
+            documentGraph
+        );
+        if (imageResult.extractedCount > 0) {
+            console.log(`[DocumentProcessor] Extracted ${imageResult.extractedCount} images to disk`);
+        }
+
+        // Phase 2: Generate structured chunks with metadata
+        const chunks = StructuredChunker.chunkByStructure(documentGraph);
+        console.log(`[DocumentProcessor] Created ${chunks.length} structured chunks`);
+
+        // Legacy compatibility: Derive plain text for existing systems
+        const flatText = StructuredChunker.deriveTextFromGraph(documentGraph);
+
+        return {
+            documentId,
+            documentGraph,
+            chunks,
+            extractedText: flatText
+        };
+    }
 
     /**
      * Processes a file from a Multer object.
      */
     async processFile(file) {
-            return this.process(file.path, file.mimetype, file.originalname);
-        }
-
-        /**
-         * Legacy method - kept for backward compatibility
-         * Use StructuredChunker.deriveTextFromGraph() for new code
-         */
-        derivePlainText(docGraph) {
-            return StructuredChunker.deriveTextFromGraph(docGraph);
-        }
+        return this.process(file.path, file.mimetype, file.originalname);
     }
+
+    /**
+     * Legacy method - kept for backward compatibility
+     * Use StructuredChunker.deriveTextFromGraph() for new code
+     */
+    derivePlainText(docGraph) {
+        return StructuredChunker.deriveTextFromGraph(docGraph);
+    }
+}

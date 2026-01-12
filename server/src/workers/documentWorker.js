@@ -29,7 +29,7 @@ export const initDocumentWorker = () => {
                     metadata: {
                         ...chunk.metadata,
                         source: documentId,
-                        fileName: originalName
+                        fileName: fileName
                     }
                 }));
 

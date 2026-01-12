@@ -12,6 +12,8 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - NODE_ENV=production
+    env_file:
+      - ./server/.env
     volumes:
       - ./server/src/database:/app/src/database
       - ./server/uploads:/app/uploads
@@ -23,7 +25,7 @@ services:
     image: redis:alpine
     container_name: pdfx-redis
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_data:/data
   # Frontend (Optionally containerized, or run locally)

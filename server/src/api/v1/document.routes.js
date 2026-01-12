@@ -48,6 +48,8 @@ router.get('/:documentId/pdf', validate(getDocumentSchema), (req, res) => {
             return res.status(404).json({ error: 'PDF file missing on disk' });
         }
 
+        // Ensure browser doesn't cache the PDF too aggressively to assist fragment navigation
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         res.sendFile(pdfPath);
     } catch (error) {
         console.error('[DocumentRoutes] Error serving PDF:', error);

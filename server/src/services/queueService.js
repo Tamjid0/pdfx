@@ -14,7 +14,10 @@ export const documentQueue = new Queue('document-processing', {
             type: 'exponential',
             delay: 1000,
         },
-        removeOnComplete: true, // Keep it lean for now
+        removeOnComplete: {
+            count: 100, // Keep last 100 completed jobs
+            age: 24 * 3600 // Keep for 24 hours
+        },
         removeOnFail: false,   // Keep failed jobs for debugging
     }
 });

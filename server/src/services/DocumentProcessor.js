@@ -38,26 +38,24 @@ export class DocumentProcessor {
             const docId = forcedDocumentId || crypto.randomUUID();
             const outputDir = path.join(STORAGE_DIR, docId);
 
-            // Phase 7: Convert PPTX to PDF for professional rendering
-            const pdfPath = await LibreOfficeService.convertToPdf(filePath, outputDir);
-
-            // Use PdfExtractor on the newly created PDF
-            documentGraph = await this.pdfExtractor.extract(pdfPath, originalName);
+            // 1. Extract clean structured text (Old Design needs this)
+            const buffer = fs.readFileSync(filePath);
+            documentGraph = await this.pptxExtractor.extract(buffer, originalName);
             documentGraph.documentId = docId;
             documentGraph.type = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
 
-            // Store reference to converted PDF for frontend rendering
-            documentGraph.convertedPdfPath = path.relative(STORAGE_DIR, pdfPath);
+            // 2. Also convert to PDF for professional high-fidelity rendering (optional backup)
+            try {
+                const pdfPath = await LibreOfficeService.convertToPdf(filePath, outputDir);
+                documentGraph.convertedPdfPath = path.relative(STORAGE_DIR, pdfPath);
+            } catch (e) {
+                console.warn("[DocumentProcessor] LibreOffice conversion failed, falling back to text extraction only", e);
+            }
         } else {
             throw new Error(`Unsupported MIME type: ${mime}`);
         }
 
         const documentId = documentGraph.documentId;
-
-        // Save JSON to disk (Single Source of Truth)
-        const jsonPath = path.join(STORAGE_DIR, `${documentId}.json`);
-        fs.writeFileSync(jsonPath, JSON.stringify(documentGraph, null, 2));
-        console.log(`[DocumentProcessor] Saved graph to ${jsonPath}`);
 
         // Phase 2: Extract images to disk and update JSON
         const imageResult = await ImageExtractor.extractAndSave(
@@ -74,6 +72,16 @@ export class DocumentProcessor {
 
         // Legacy compatibility: Derive plain text for existing systems
         const flatText = StructuredChunker.deriveTextFromGraph(documentGraph);
+
+        // Save JSON to disk (Single Source of Truth) - Updated to include chunks
+        const jsonPath = path.join(STORAGE_DIR, `${documentId}.json`);
+        const fullPersistentData = {
+            ...documentGraph,
+            chunks,
+            extractedText: flatText
+        };
+        fs.writeFileSync(jsonPath, JSON.stringify(fullPersistentData, null, 2));
+        console.log(`[DocumentProcessor] Saved graph to ${jsonPath}`);
 
         return {
             documentId,

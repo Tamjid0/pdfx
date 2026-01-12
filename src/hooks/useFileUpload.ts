@@ -31,8 +31,7 @@ export const useFileUpload = () => {
                         resolve({
                             ...docData,
                             fileId: documentId,
-                            // Map DocumentGraph structure to what the UI expects
-                            extractedText: docData.nodes?.filter((n: any) => n.type === 'Text' || n.type === 'Heading').map((n: any) => n.content.text).join('\n') || ''
+                            extractedText: docData.extractedText || ''
                         });
                     } else if (status.state === 'failed') {
                         clearInterval(interval);
@@ -60,8 +59,13 @@ export const useFileUpload = () => {
             setFileId(data.fileId);
             setView("editor");
 
-            if (data.slides && data.slides.length > 0) {
-                setSlides(data.slides);
+            // Correctly map structured chunks to the slides store
+            if (data.chunks && data.chunks.length > 0) {
+                const slides = data.chunks.map((chunk: any) => ({
+                    title: chunk.metadata.slideTitle || `Slide ${chunk.metadata.pageIndex}`,
+                    content: chunk.content
+                }));
+                setSlides(slides);
                 setIsSlideMode(true);
                 setLeftPanelView('slides');
                 setMode('editor');

@@ -32,7 +32,8 @@
     "react-syntax-highlighter": "^16.1.0",
     "reactflow": "^11.11.4",
     "remark-gfm": "^4.0.1",
-    "zustand": "^5.0.9"
+    "zustand": "^5.0.9",
+    "pdfjs-dist": "4.4.168"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

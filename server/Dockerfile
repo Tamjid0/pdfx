@@ -1,13 +1,35 @@
 # Production Hardware Configuration for PPTX Rendering & PDF Processing
 
-# Use a lean Node.js image
-FROM node:20-slim
+# Use a full Node.js image to ensure all build tools are available
+FROM node:20
 
 # Install system dependencies
-# 1. LibreOffice for PPTX -> PDF conversion
-# 2. Fonts for professional rendering
-# 3. Canvas dependencies (for any image processing)
 RUN apt-get update && apt-get install -y \
+    pkg-config \
+    build-essential \
+    libcairo2-dev \
+    libpango1.0-dev \
+    libjpeg-dev \
+    libgif-dev \
+    librsvg2-dev \
+    libnss3 \
+    libatk-bridge2.0-0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libasound2 \
+    libpangocairo-1.0-0 \
+    libcups2 \
+    libdrm2 \
+    libgtk-3-0 \
+    libx11-xcb1 \
+    libxcb-dri3-0 \
+    libxshmfence1 \
+    libomp-dev \
+    libblas-dev \
+    liblapack-dev \
     libreoffice \
     libreoffice-java-common \
     fonts-liberation \
@@ -25,7 +47,13 @@ WORKDIR /app
 
 # Install app dependencies
 COPY package*.json ./
-RUN npm install
+
+# Skip Puppeteer browser download to avoid failures and reduce size
+# We will use the system-installed chrome or configure Puppeteer later
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+
+# Switch back to npm install for better cross-platform compatibility
+RUN npm install --legacy-peer-deps
 
 # Copy source code
 COPY . .

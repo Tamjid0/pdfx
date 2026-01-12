@@ -1,0 +1,28 @@
+node_modules
+npm-debug.log
+.git
+.next
+.env
+dist
+build
+.dockerignore
+Dockerfile
+docker-compose.yml
+README.md
+architecture
+build_log.txt
+build_out.txt
+server_out.txt
+git_status.txt
+git_status_new.txt
+improvement.md
+plan.md
+migrate_sucrase.py
+strip_types.py
+# Exclude local data and secrets
+src/database/documents/*
+uploads/*
+.env
+
+# Exclude specific large/unwanted json files but NOT package.json
+# (Add specific ones here if needed, like large test data)

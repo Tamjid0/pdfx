@@ -48,24 +48,34 @@ const PdfSlideRenderer: React.FC<PdfSlideRendererProps> = ({ url, pageNumber, cl
         };
     }, [url]);
 
+    const renderTaskRef = useRef<any>(null);
+
     // Render Page to Canvas
     useEffect(() => {
         if (!pdf || !canvasRef.current) return;
 
-        let renderTask: any = null;
+        let isCurrentRender = true;
+        const canvas = canvasRef.current;
+        const context = canvas.getContext('2d');
 
         const renderPage = async () => {
+            if (!context || !isCurrentRender) return;
+
             try {
+                // 1. Cancel any existing render task for this canvas
+                if (renderTaskRef.current) {
+                    await renderTaskRef.current.cancel();
+                    renderTaskRef.current = null;
+                }
+
+                // 2. Clear canvas before new render
+                context.clearRect(0, 0, canvas.width, canvas.height);
+
                 const page = await pdf.getPage(pageNumber);
-                const canvas = canvasRef.current;
-                if (!canvas) return;
+                if (!isCurrentRender) return;
 
-                const context = canvas.getContext('2d');
-                if (!context) return;
-
-                // Adjust scale to fit the container precisely
-                const viewport = page.getViewport({ scale: 2.0 }); // Render at 2x for sharpness
-
+                // 3. Setup Viewport (2x scale for sharpness)
+                const viewport = page.getViewport({ scale: 2.0 });
                 const containerWidth = canvas.parentElement?.clientWidth || 800;
                 const containerHeight = canvas.parentElement?.clientHeight || 450;
 
@@ -75,7 +85,6 @@ const PdfSlideRenderer: React.FC<PdfSlideRendererProps> = ({ url, pageNumber, cl
                 ) * 2.0;
 
                 const finalViewport = page.getViewport({ scale });
-
                 canvas.height = finalViewport.height;
                 canvas.width = finalViewport.width;
 
@@ -84,8 +93,11 @@ const PdfSlideRenderer: React.FC<PdfSlideRendererProps> = ({ url, pageNumber, cl
                     viewport: finalViewport,
                 };
 
-                renderTask = page.render(renderContext);
-                await renderTask.promise;
+                // 4. Start Render and track it in Ref
+                renderTaskRef.current = page.render(renderContext);
+
+                await renderTaskRef.current.promise;
+                renderTaskRef.current = null;
             } catch (err: any) {
                 if (err.name !== 'RenderingCancelledException') {
                     console.error("Error rendering page:", err);
@@ -96,8 +108,9 @@ const PdfSlideRenderer: React.FC<PdfSlideRendererProps> = ({ url, pageNumber, cl
         renderPage();
 
         return () => {
-            if (renderTask) {
-                renderTask.cancel();
+            isCurrentRender = false;
+            if (renderTaskRef.current) {
+                renderTaskRef.current.cancel();
             }
         };
     }, [pdf, pageNumber]);

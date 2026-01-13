@@ -1,5 +1,5 @@
 import express from 'express';
-import { documentQueue } from '../../services/queueService.js';
+import { getDocumentQueue } from '../../services/queueService.js';
 import validate from '../../middleware/validate.js';
 import { z } from 'zod';
 import ApiError from '../../utils/ApiError.js';
@@ -14,7 +14,12 @@ const jobStatusSchema = {
 
 router.get('/:id', validate(jobStatusSchema), async (req, res, next) => {
     try {
-        const job = await documentQueue.getJob(req.params.id);
+        const queue = await getDocumentQueue();
+        if (!queue) {
+            throw new ApiError(503, 'Background processing service is currently unavailable.');
+        }
+
+        const job = await queue.getJob(req.params.id);
 
         if (!job) {
             throw new ApiError(404, 'Job not found');

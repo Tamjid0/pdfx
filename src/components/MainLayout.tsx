@@ -41,6 +41,7 @@ interface MainLayoutProps {
     isFlashcardsGenerated: boolean;
     isQuizGenerated: boolean;
     isMindmapGenerated: boolean;
+    isSlideMode: boolean;
     backToImport: () => void;
     setLeftPanelView: (view: string) => void;
     setMode: (mode: any) => void;
@@ -59,7 +60,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     view, mode, isMounted, isLoading, leftPanelView, isPreviewMode, htmlPreview,
     activeNotesToggles, activeInsightsToggles, chatHistory, isTyping, mindmapData,
     isSummaryGenerated, isInsightsGenerated, isNotesGenerated, isFlashcardsGenerated,
-    isQuizGenerated, isMindmapGenerated, backToImport, setLeftPanelView, setMode,
+    isQuizGenerated, isMindmapGenerated, isSlideMode, backToImport, setLeftPanelView, setMode,
     setPreviewMode, handleEditorChange, handleFileUpload, handlePasteContent,
     handleScrapeUrl, handleGenerate, handleExport, handleSendMessage, getHasGenerated
 }) => {
@@ -91,7 +92,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                                     <div className={`inline-flex bg-[#1a1a1a] p-1 rounded-md border border-[#333] ${mode === 'editor' ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                         <button onClick={() => { if (mode !== 'editor') setLeftPanelView('editor') }} className={`px-4 py-2 text-sm font-medium rounded ${leftPanelView === 'editor' && mode !== 'editor' ? 'bg-[#00ff88] text-black' : 'text-white'}`} disabled={mode === 'editor'}>Editor</button>
                                         <button onClick={() => { if (mode !== 'editor') setLeftPanelView('artboard') }} className={`px-4 py-2 text-sm font-medium rounded ${leftPanelView === 'artboard' && mode !== 'editor' ? 'bg-[#00ff88] text-black' : 'text-white'}`} disabled={mode === 'editor'}>Artboard</button>
-                                        <button onClick={() => { if (mode !== 'editor') setLeftPanelView('slides') }} className={`px-4 py-2 text-sm font-medium rounded ${leftPanelView === 'slides' && mode !== 'editor' ? 'bg-[#00ff88] text-black' : 'text-white'}`} disabled={mode === 'editor'}>Slides</button>
+                                        {isSlideMode && (
+                                            <button onClick={() => { if (mode !== 'editor') setLeftPanelView('slides') }} className={`px-4 py-2 text-sm font-medium rounded ${leftPanelView === 'slides' && mode !== 'editor' ? 'bg-[#00ff88] text-black' : 'text-white'}`} disabled={mode === 'editor'}>Slides</button>
+                                        )}
                                     </div>
                                     <ModeSwitcher currentMode={mode} onModeChange={(newMode) => setMode(newMode)} />
                                 </div>

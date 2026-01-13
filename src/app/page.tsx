@@ -51,7 +51,7 @@ const Home = () => {
         stats, setStats,
         openExportModal,
         summaryData, insightsData, notesData, quizData, flashcardsData,
-        setIsSlideMode, setSlides,
+        isSlideMode, setIsSlideMode, setSlides,
     } = useStore();
 
     const backToImport = () => {
@@ -236,6 +236,7 @@ const Home = () => {
                 isFlashcardsGenerated={isFlashcardsGenerated}
                 isQuizGenerated={isQuizGenerated}
                 isMindmapGenerated={isMindmapGenerated}
+                isSlideMode={isSlideMode}
                 backToImport={backToImport}
                 setLeftPanelView={setLeftPanelView}
                 setMode={setMode}

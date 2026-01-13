@@ -10,8 +10,10 @@ import { scrapeHtml } from './services/scraper.js';
 import apiRoutes from './api/index.js';
 import { initDocumentWorker } from './workers/documentWorker.js';
 
-// Start Background Worker
-initDocumentWorker();
+// Start Background Worker (Safe Initialization)
+initDocumentWorker().catch(err => {
+    logger.error('Background worker failed to initialize:', err);
+});
 
 const app = express();
 

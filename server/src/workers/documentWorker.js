@@ -1,7 +1,8 @@
 import { Worker } from 'bullmq';
 import logger from '../utils/logger.js';
 import { DocumentProcessor } from '../services/DocumentProcessor.js';
-import { embedStructuredChunks } from '../controllers/fileUploadController.js'; // I might need to refactor this to a service
+import { embedStructuredChunks } from '../controllers/fileUploadController.js';
+import { isRedisConnected } from '../services/queueService.js';
 
 const connection = {
     host: process.env.REDIS_HOST || '127.0.0.1',
@@ -9,59 +10,76 @@ const connection = {
 };
 
 const documentProcessor = new DocumentProcessor();
+let _worker = null;
 
-export const initDocumentWorker = () => {
-    const worker = new Worker('document-processing', async (job) => {
-        const { filePath, mimeType, fileName, documentId } = job.data;
+export const initDocumentWorker = async () => {
+    if (_worker) return _worker;
 
-        logger.info(`Processing job ${job.id}: ${fileName}`);
+    const available = await isRedisConnected();
+    if (!available) {
+        logger.warn('[Worker] Redis not reachable. Worker initialization skipped.');
+        return null;
+    }
 
-        try {
-            // 1. Process Document (Extraction & Chunking)
-            await job.updateProgress(10);
-            const result = await documentProcessor.process(filePath, mimeType, fileName, documentId);
+    try {
+        _worker = new Worker('document-processing', async (job) => {
+            const { filePath, mimeType, fileName, documentId } = job.data;
+            logger.info(`Processing job ${job.id}: ${fileName}`);
 
-            // 2. Embedding
-            await job.updateProgress(50);
-            if (result.chunks && result.chunks.length > 0) {
-                const docsWithMetadata = result.chunks.map(chunk => ({
-                    pageContent: chunk.content,
-                    metadata: {
-                        ...chunk.metadata,
-                        source: documentId,
-                        fileName: fileName
-                    }
-                }));
+            try {
+                await job.updateProgress(10);
+                const result = await documentProcessor.process(filePath, mimeType, fileName, documentId);
 
-                await embedStructuredChunks(documentId, docsWithMetadata);
+                await job.updateProgress(50);
+                if (result.chunks && result.chunks.length > 0) {
+                    const docsWithMetadata = result.chunks.map(chunk => ({
+                        pageContent: chunk.content,
+                        metadata: {
+                            ...chunk.metadata,
+                            source: documentId,
+                            fileName: fileName
+                        }
+                    }));
+                    await embedStructuredChunks(documentId, docsWithMetadata);
+                }
+
+                await job.updateProgress(100);
+                logger.info(`Job ${job.id} completed successfully`);
+
+                return {
+                    documentId,
+                    chunkCount: result.chunks?.length || 0,
+                    success: true
+                };
+            } catch (error) {
+                logger.error(`Error processing job ${job.id}: ${error.message}`);
+                throw error;
             }
+        }, {
+            connection: {
+                ...connection,
+                maxRetriesPerRequest: null
+            }
+        });
 
-            await job.updateProgress(100);
-            logger.info(`Job ${job.id} completed successfully`);
+        _worker.on('completed', (job) => {
+            logger.info(`Worker: Job ${job.id} has completed!`);
+        });
 
-            return {
-                documentId,
-                chunkCount: result.chunks?.length || 0,
-                success: true
-            };
-        } catch (error) {
-            logger.error(`Error processing job ${job.id}: ${error.message}`);
-            throw error;
-        }
-    }, { connection });
+        _worker.on('failed', (job, err) => {
+            logger.error(`Worker: Job ${job?.id} has failed with ${err.message}`);
+        });
 
-    worker.on('completed', (job) => {
-        logger.info(`Worker: Job ${job.id} has completed!`);
-    });
+        _worker.on('error', (err) => {
+            if (!err.message.includes('ECONNREFUSED')) {
+                logger.error(`Worker Error: ${err.message}`);
+            }
+        });
 
-    worker.on('failed', (job, err) => {
-        logger.error(`Worker: Job ${job?.id} has failed with ${err.message}`);
-    });
-
-    // Add error listener to prevent unhandled rejections if Redis is down
-    worker.on('error', (err) => {
-        logger.error(`Worker Error: ${err.message}`);
-    });
-
-    return worker;
+        logger.info('[Worker] Document processing worker initialized successfully.');
+        return _worker;
+    } catch (error) {
+        logger.error(`[Worker] Failed to initialize: ${error.message}`);
+        return null;
+    }
 };

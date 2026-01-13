@@ -1,4 +1,5 @@
 import multer from 'multer';
+import logger from '../utils/logger.js';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import fs from 'fs';
@@ -38,7 +39,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 import { DocumentProcessor } from '../services/DocumentProcessor.js';
-import { addDocumentJob } from '../services/queueService.js';
+import { addDocumentJob, isRedisConnected } from '../services/queueService.js';
 
 const documentProcessor = new DocumentProcessor();
 
@@ -57,26 +58,66 @@ export const uploadFile = async (req, res, next) => {
         return res.status(400).send({ error: 'No file uploaded.' });
     }
 
-    const { filename, path: filePath, originalname } = req.file;
-    const documentId = crypto.randomUUID(); // Consistent with DocumentProcessor's behavior if it generates one
+    const { filename, path: filePath, originalname, mimetype } = req.file;
+    const documentId = crypto.randomUUID();
 
     try {
-        // Offload to background queue
-        const job = await addDocumentJob({
-            documentId,
-            filePath,
-            fileName: originalname, // For the worker metadata
-            originalName: originalname, // Consistent with worker expectation
-            mimeType: req.file.mimetype,
-        });
+        const redisAvailable = await isRedisConnected();
 
-        res.json({
-            jobId: job.id,
+        if (redisAvailable) {
+            // Standard Path: Offload to background queue
+            const job = await addDocumentJob({
+                documentId,
+                filePath,
+                fileName: originalname,
+                originalName: originalname,
+                mimeType: mimetype,
+            });
+
+            return res.json({
+                jobId: job.id,
+                documentId: documentId,
+                message: 'File upload successful. Processing started in background.'
+            });
+        }
+
+        // --- FALLBACK PATH: Redis is Down ---
+
+        // 1. If it's a PPTX, we CANNOT process it synchronously easily (too slow/unstable)
+        if (mimetype.includes('presentation') || mimetype.includes('powerpoint')) {
+            logger.warn(`[FileUpload] Redis is down. PPTX processing rejected.`);
+            return res.status(503).json({
+                error: 'Service temporarily unavailable (Redis).',
+                message: 'PowerPoint processing requires the background worker. Please ensure Docker is running.',
+                code: 'REDIS_DOWN'
+            });
+        }
+
+        // 2. If it's a standard PDF, we can fallback to SYNCHRONOUS processing
+        // This keeps the app working locally without Docker for basic PDF tasks.
+        logger.info(`[FileUpload] Redis down. Falling back to synchronous processing for PDF: ${originalname}`);
+
+        const result = await documentProcessor.process(filePath, mimetype, originalname, documentId);
+
+        // Auto-embed for the synchronous result
+        if (result.chunks && result.chunks.length > 0) {
+            const docsWithMetadata = result.chunks.map(chunk => ({
+                pageContent: chunk.content,
+                metadata: { ...chunk.metadata, source: documentId, fileName: originalname }
+            }));
+            await embedStructuredChunks(documentId, docsWithMetadata);
+        }
+
+        return res.json({
             documentId: documentId,
-            message: 'File upload successful. Processing started in background.'
+            message: 'Processed synchronously (Redis was unavailable).',
+            // Return enough data for the frontend to render immediately
+            extractedText: result.extractedText,
+            chunks: result.chunks
         });
 
     } catch (error) {
+        logger.error(`[FileUpload] Upload/Processing failed: ${error.message}`);
         next(error);
     }
 };

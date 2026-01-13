@@ -31,6 +31,7 @@ export class DocumentProcessor {
 
         if (mime === 'application/pdf') {
             documentGraph = await this.pdfExtractor.extract(filePath, originalName);
+            documentGraph.documentId = forcedDocumentId || crypto.randomUUID();
         } else if (
             mime.includes('presentation') ||
             mime.includes('powerpoint')

@@ -50,36 +50,44 @@ export const useFileUpload = () => {
         setIsLoading(true);
         try {
             const isSlideFile = file.name.endsWith('.pptx') || file.name.endsWith('.ppt') || file.name.endsWith('.key');
-            const { jobId, documentId } = await apiService.uploadFile(file);
+            const response = await apiService.uploadFile(file);
+            const { jobId, documentId } = response;
 
-            // Start Polling
-            const data = await pollJobStatus(jobId, documentId);
+            let data;
+            if (jobId) {
+                // Background Path: Start Polling
+                data = await pollJobStatus(jobId, documentId);
+            } else {
+                // Synchronous Fallback Path: Data is already in the response
+                console.log("[useFileUpload] Processed synchronously (Redis unavailable)");
+                data = {
+                    ...response,
+                    fileId: documentId,
+                    extractedText: response.extractedText || ''
+                };
+            }
 
             setHtmlPreview(data.extractedText);
             setFileId(data.fileId);
-            setView("editor");
 
-            // Correctly map structured chunks to the slides store
-            if (data.chunks && data.chunks.length > 0) {
+            // DEFAULT: Always go to Editor view after upload
+            setView("editor");
+            setMode('editor');
+
+            // Only enable Slide Mode if it's explicitly a presentation file
+            if (isSlideFile && data.chunks && data.chunks.length > 0) {
                 const slides = data.chunks.map((chunk: any) => ({
                     title: chunk.metadata.slideTitle || `Slide ${chunk.metadata.pageIndex}`,
                     content: chunk.content
                 }));
                 setSlides(slides);
                 setIsSlideMode(true);
-                setLeftPanelView('slides');
-                setMode('editor');
-            } else if (isSlideFile) {
-                setSlides([
-                    { title: "Processing Error", content: "Could not extract slides from this file." }
-                ]);
-                setIsSlideMode(true);
-                setLeftPanelView('slides');
-                setMode('editor');
+                // We keep the left panel as editor by default as requested
+                setLeftPanelView('editor');
             } else {
                 setIsSlideMode(false);
                 setLeftPanelView('editor');
-                setMode('editor');
+                setSlides([]);
             }
             return data;
         } catch (error) {

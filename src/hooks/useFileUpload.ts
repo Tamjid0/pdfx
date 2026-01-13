@@ -11,7 +11,9 @@ export const useFileUpload = () => {
         setSlides,
         setIsSlideMode,
         setLeftPanelView,
-        setMode
+        setMode,
+        setIsProcessingSlides,
+        setRenderingProgress
     } = useStore();
 
     const pollJobStatus = async (jobId: string, documentId: string): Promise<any> => {
@@ -19,11 +21,17 @@ export const useFileUpload = () => {
             const interval = setInterval(async () => {
                 try {
                     const status = await apiService.getJobStatus(jobId);
+
+                    // Update progress if available
+                    if (status.progress) {
+                        setRenderingProgress(status.progress);
+                    }
+
                     if (status.state === 'completed') {
                         clearInterval(interval);
+                        setIsProcessingSlides(false);
+                        setRenderingProgress(100);
 
-                        // After completion, we can fetch the full document data if needed
-                        // or just return the final result if worker returns enough info
                         const docDataResponse = await fetch(`/api/v1/documents/${documentId}`);
                         if (!docDataResponse.ok) throw new Error('Failed to fetch processed document');
                         const docData = await docDataResponse.json();
@@ -35,14 +43,15 @@ export const useFileUpload = () => {
                         });
                     } else if (status.state === 'failed') {
                         clearInterval(interval);
+                        setIsProcessingSlides(false);
                         reject(new Error(status.failedReason || 'Job failed'));
                     }
-                    // Optional: Update global loading state or progress bar here
                 } catch (error) {
                     clearInterval(interval);
+                    setIsProcessingSlides(false);
                     reject(error);
                 }
-            }, 1500); // Poll every 1.5 seconds
+            }, 1500);
         });
     };
 
@@ -53,43 +62,49 @@ export const useFileUpload = () => {
             const response = await apiService.uploadFile(file);
             const { jobId, documentId } = response;
 
-            let data;
-            if (jobId) {
-                // Background Path: Start Polling
-                data = await pollJobStatus(jobId, documentId);
-            } else {
-                // Synchronous Fallback Path: Data is already in the response
-                console.log("[useFileUpload] Processed synchronously (Redis unavailable)");
-                data = {
-                    ...response,
-                    fileId: documentId,
-                    extractedText: response.extractedText || ''
-                };
-            }
-
-            setHtmlPreview(data.extractedText);
-            setFileId(data.fileId);
+            setHtmlPreview(response.extractedText || "");
+            setFileId(documentId);
 
             // DEFAULT: Always go to Editor view after upload
             setView("editor");
             setMode('editor');
 
-            // Only enable Slide Mode if it's explicitly a presentation file
-            if (isSlideFile && data.chunks && data.chunks.length > 0) {
-                const slides = data.chunks.map((chunk: any) => ({
-                    title: chunk.metadata.slideTitle || `Slide ${chunk.metadata.pageIndex}`,
-                    content: chunk.content
-                }));
-                setSlides(slides);
+            if (isSlideFile) {
+                // IMMEDIATE TRANSITION for PPTX
                 setIsSlideMode(true);
-                // We keep the left panel as editor by default as requested
-                setLeftPanelView('editor');
+                setLeftPanelView('slides');
+                setMode('chat'); // Open chat by default so they can interact
+
+                if (jobId) {
+                    setIsProcessingSlides(true);
+                    setRenderingProgress(5);
+                    pollJobStatus(jobId, documentId).then(data => {
+                        if (data.chunks) {
+                            const slides = data.chunks.map((chunk: any) => ({
+                                title: chunk.metadata.slideTitle || `Slide ${chunk.metadata.pageIndex}`,
+                                content: chunk.content
+                            }));
+                            setSlides(slides);
+                        }
+                    }).catch(err => {
+                        console.error("Delayed slide processing failed:", err);
+                    });
+                } else if (response.chunks) {
+                    // Synchronous case (if someone tweaked backend or direct PDF)
+                    const slides = response.chunks.map((chunk: any) => ({
+                        title: chunk.metadata.slideTitle || `Slide ${chunk.metadata.pageIndex}`,
+                        content: chunk.content
+                    }));
+                    setSlides(slides);
+                }
             } else {
+                // PDF Path
                 setIsSlideMode(false);
                 setLeftPanelView('editor');
                 setSlides([]);
             }
-            return data;
+
+            return response;
         } catch (error) {
             console.error("Error uploading file:", error);
             throw error;

@@ -24,12 +24,13 @@ export class DocumentProcessor {
      * Processes a file using its system path and metadata.
      * Useful for background jobs where the Multer object is lost.
      */
-    async process(filePath, mime, originalName, forcedDocumentId = null) {
+    async process(filePath, mime, originalName, forcedDocumentId = null, onProgress = null) {
         let documentGraph;
 
         console.log(`[DocumentProcessor] Processing ${originalName} (${mime})`);
 
         if (mime === 'application/pdf') {
+            if (onProgress) await onProgress(20);
             documentGraph = await this.pdfExtractor.extract(filePath, originalName);
             documentGraph.documentId = forcedDocumentId || crypto.randomUUID();
         } else if (
@@ -47,8 +48,10 @@ export class DocumentProcessor {
 
             // 2. Also convert to PDF for professional high-fidelity rendering (optional backup)
             try {
+                if (onProgress) await onProgress(30);
                 const pdfPath = await LibreOfficeService.convertToPdf(filePath, outputDir);
                 documentGraph.convertedPdfPath = path.relative(STORAGE_DIR, pdfPath);
+                if (onProgress) await onProgress(70);
             } catch (e) {
                 console.warn("[DocumentProcessor] LibreOffice conversion failed, falling back to text extraction only", e);
             }

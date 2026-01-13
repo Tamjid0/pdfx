@@ -27,10 +27,17 @@ export const initDocumentWorker = async () => {
             logger.info(`Processing job ${job.id}: ${fileName}`);
 
             try {
-                await job.updateProgress(10);
-                const result = await documentProcessor.process(filePath, mimeType, fileName, documentId);
+                const result = await documentProcessor.process(
+                    filePath,
+                    mimeType,
+                    fileName,
+                    documentId,
+                    async (progress) => {
+                        await job.updateProgress(progress);
+                    }
+                );
 
-                await job.updateProgress(50);
+                await job.updateProgress(80); // Processing done, starting embedding
                 if (result.chunks && result.chunks.length > 0) {
                     const docsWithMetadata = result.chunks.map(chunk => ({
                         pageContent: chunk.content,

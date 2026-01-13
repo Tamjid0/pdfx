@@ -90,8 +90,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                                 </div>
                                 <div className="flex-1 flex justify-center items-center gap-4">
                                     <div className={`inline-flex bg-[#1a1a1a] p-1 rounded-md border border-[#333] ${mode === 'editor' ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                                        <button onClick={() => { if (mode !== 'editor') setLeftPanelView('editor') }} className={`px-4 py-2 text-sm font-medium rounded ${leftPanelView === 'editor' && mode !== 'editor' ? 'bg-[#00ff88] text-black' : 'text-white'}`} disabled={mode === 'editor'}>Editor</button>
-                                        <button onClick={() => { if (mode !== 'editor') setLeftPanelView('artboard') }} className={`px-4 py-2 text-sm font-medium rounded ${leftPanelView === 'artboard' && mode !== 'editor' ? 'bg-[#00ff88] text-black' : 'text-white'}`} disabled={mode === 'editor'}>Artboard</button>
+                                        {!isSlideMode && (
+                                            <>
+                                                <button onClick={() => { if (mode !== 'editor') setLeftPanelView('editor') }} className={`px-4 py-2 text-sm font-medium rounded ${leftPanelView === 'editor' && mode !== 'editor' ? 'bg-[#00ff88] text-black' : 'text-white'}`} disabled={mode === 'editor'}>Editor</button>
+                                                <button onClick={() => { if (mode !== 'editor') setLeftPanelView('artboard') }} className={`px-4 py-2 text-sm font-medium rounded ${leftPanelView === 'artboard' && mode !== 'editor' ? 'bg-[#00ff88] text-black' : 'text-white'}`} disabled={mode === 'editor'}>Artboard</button>
+                                            </>
+                                        )}
                                         {isSlideMode && (
                                             <button onClick={() => { if (mode !== 'editor') setLeftPanelView('slides') }} className={`px-4 py-2 text-sm font-medium rounded ${leftPanelView === 'slides' && mode !== 'editor' ? 'bg-[#00ff88] text-black' : 'text-white'}`} disabled={mode === 'editor'}>Slides</button>
                                         )}

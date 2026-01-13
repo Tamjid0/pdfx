@@ -30,6 +30,8 @@ interface AppState {
 
     // Slide State
     isSlideMode: boolean;
+    isProcessingSlides: boolean;
+    renderingProgress: number;
     slides: any[];
     currentSlideIndex: number;
 
@@ -86,6 +88,8 @@ interface AppState {
 
     // Slide Actions
     setIsSlideMode: (isSlideMode: boolean) => void;
+    setIsProcessingSlides: (isProcessing: boolean) => void;
+    setRenderingProgress: (progress: number) => void;
     setSlides: (slides: any[]) => void;
     setCurrentSlideIndex: (index: number) => void;
     nextSlide: () => void;
@@ -120,6 +124,8 @@ export const useStore = create<AppState>((set) => ({
     exportContent: null,
 
     isSlideMode: false,
+    isProcessingSlides: false,
+    renderingProgress: 0,
     slides: [],
     currentSlideIndex: 0,
 
@@ -202,6 +208,8 @@ export const useStore = create<AppState>((set) => ({
     setMindmapSettings: (settings) => set({ mindmapSettings: settings }),
 
     setIsSlideMode: (isSlideMode) => set({ isSlideMode }),
+    setIsProcessingSlides: (isProcessing) => set({ isProcessingSlides: isProcessing }),
+    setRenderingProgress: (progress) => set({ renderingProgress: progress }),
     setSlides: (slides) => set({ slides }),
     setCurrentSlideIndex: (index) => set({ currentSlideIndex: index }),
     nextSlide: () => set((state) => ({

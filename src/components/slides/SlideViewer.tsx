@@ -15,13 +15,23 @@ const IconChevronRight = () => (
 );
 
 const SlideViewer: React.FC = () => {
-    const { slides, currentSlideIndex, nextSlide, prevSlide, fileId, isSlideMode } = useStore();
+    const {
+        currentSlideIndex,
+        setCurrentSlideIndex,
+        slides,
+        fileId,
+        isProcessingSlides,
+        renderingProgress,
+        nextSlide, // Keep existing nextSlide
+        prevSlide, // Keep existing prevSlide
+        isSlideMode // Keep existing isSlideMode
+    } = useStore();
     const [showHighFidelity, setShowHighFidelity] = React.useState(false);
     const currentSlide = slides[currentSlideIndex];
 
     const pdfUrl = fileId ? `/api/v1/documents/${fileId}/pdf` : null;
 
-    if (!currentSlide && !isSlideMode) {
+    if (!currentSlide && !isSlideMode && !isProcessingSlides) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-[#666]">
                 <p className="text-lg">No slides loaded</p>
@@ -31,6 +41,63 @@ const SlideViewer: React.FC = () => {
 
     return (
         <div className="slide-viewer flex flex-col h-full bg-[#0a0a0a] relative group overflow-hidden animate-in fade-in duration-500">
+            {/* Loading Overlay for Background Processing */}
+            {isProcessingSlides && (
+                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0a0a]/90 backdrop-blur-xl animate-in fade-in duration-700">
+                    <div className="relative w-32 h-32 mb-8">
+                        {/* Outer Glow Ring */}
+                        <div className="absolute inset-0 rounded-full border-2 border-[#00ff88]/10 animate-[ping_3s_infinite]" />
+                        {/* Progress Circle */}
+                        <svg className="w-full h-full -rotate-90">
+                            <circle
+                                cx="64"
+                                cy="64"
+                                r="60"
+                                fill="transparent"
+                                stroke="rgba(255,255,255,0.05)"
+                                strokeWidth="4"
+                            />
+                            <circle
+                                cx="64"
+                                cy="64"
+                                r="60"
+                                fill="transparent"
+                                stroke="#00ff88"
+                                strokeWidth="4"
+                                strokeDasharray={377}
+                                strokeDashoffset={377 - (377 * renderingProgress) / 100}
+                                strokeLinecap="round"
+                                className="transition-all duration-1000 ease-out"
+                            />
+                        </svg>
+                        {/* Percentage Text */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-3xl font-bold text-white font-mono">
+                                {Math.round(renderingProgress)}%
+                            </span>
+                        </div>
+                    </div>
+
+                    <h3 className="text-2xl font-semibold text-white mb-3 tracking-tight">
+                        Optimizing Your Slides
+                    </h3>
+                    <p className="text-[#888] text-center max-w-md px-8 leading-relaxed">
+                        We're converting your presentation for a high-fidelity experience.
+                        <br />
+                        <span className="text-[#00ff88]/80 mt-2 block font-medium">
+                            Feel free to start chatting with the document content right now!
+                        </span>
+                    </p>
+
+                    <div className="mt-12 flex items-center gap-3 bg-white/5 px-5 py-2.5 rounded-full border border-white/10">
+                        <div className="w-2 h-2 rounded-full bg-[#00ff88] animate-pulse" />
+                        <span className="text-xs font-medium text-[#ccc] uppercase tracking-widest">
+                            Processing Backend Queue
+                        </span>
+                    </div>
+                </div>
+            )}
+
             {/* Main Slide Area */}
             <div className="flex-1 flex items-center justify-center p-4 relative">
                 <div className="slide-content-container aspect-[16/9] w-full max-w-[950px] bg-[#1a1a1a] rounded-xl border border-[#333] shadow-2xl relative flex flex-col items-center justify-center overflow-hidden transition-all duration-300 hover:border-[#00ff88]/30">

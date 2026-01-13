@@ -102,7 +102,7 @@ const SlideViewer: React.FC = () => {
             <div className="flex-1 flex items-center justify-center p-4 relative">
                 <div className="slide-content-container aspect-[16/9] w-full max-w-[950px] bg-[#1a1a1a] rounded-xl border border-[#333] shadow-2xl relative flex flex-col items-center justify-center overflow-hidden transition-all duration-300 hover:border-[#00ff88]/30">
 
-                    {pdfUrl ? (
+                    {pdfUrl && !isProcessingSlides ? (
                         // HIGH FIDELITY PDF PAGE (Inside the Card) - Custom Canvas Renderer
                         <div className="w-full h-full relative group/pdf overflow-hidden flex items-center justify-center">
                             <PdfSlideRenderer
@@ -114,10 +114,10 @@ const SlideViewer: React.FC = () => {
                             <div className="absolute inset-0 pointer-events-none border-4 border-[#1a1a1a] rounded-xl ring-1 ring-[#333]/50" />
                         </div>
                     ) : (
-                        // CONTENT FALLBACK
+                        // CONTENT FALLBACK or EMPTY STATE while processing
                         <div className="p-12 flex flex-col items-center justify-center">
                             <h2 className="text-4xl font-bold text-white mb-6 text-center leading-tight">
-                                {currentSlide?.title}
+                                {currentSlide?.title || (isProcessingSlides ? "Preparing Presentation..." : "")}
                             </h2>
                             <div className="slide-body w-full max-w-[600px] overflow-y-auto max-h-[60%]">
                                 {currentSlide?.content?.split('\n').map((line: string, i: number) => (

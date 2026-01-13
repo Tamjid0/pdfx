@@ -62,10 +62,26 @@ export const uploadFile = async (req, res, next) => {
     const documentId = crypto.randomUUID();
 
     try {
-        const redisAvailable = await isRedisConnected();
+        // --- PHASE 1: Fast JSON Extraction (Synchronous) ---
+        // This extracts the DocumentGraph (Nodes) immediately so Chat and UI work instantly.
+        const extractionResult = await documentProcessor.extract(filePath, mimetype, originalname, documentId);
 
-        if (redisAvailable) {
-            // Standard Path: Offload to background queue
+        // --- PHASE 2: Immediate Embedding (Synchronous) ---
+        // We use the chunks generated from the JSON graph for the vector store.
+        if (extractionResult.chunks && extractionResult.chunks.length > 0) {
+            const docsWithMetadata = extractionResult.chunks.map(chunk => ({
+                pageContent: chunk.content,
+                metadata: { ...chunk.metadata, source: documentId, fileName: originalname }
+            }));
+            await embedStructuredChunks(documentId, docsWithMetadata);
+        }
+
+        const redisAvailable = await isRedisConnected();
+        let jobId = null;
+
+        // --- PHASE 3: Background PDF Conversion (Only for Slides) ---
+        if (redisAvailable && (mimetype.includes('presentation') || mimetype.includes('powerpoint'))) {
+            // Standard Path: Offload slow PDF conversion to background queue
             const job = await addDocumentJob({
                 documentId,
                 filePath,
@@ -73,48 +89,23 @@ export const uploadFile = async (req, res, next) => {
                 originalName: originalname,
                 mimeType: mimetype,
             });
-
-            return res.json({
-                jobId: job.id,
-                documentId: documentId,
-                message: 'File upload successful. Processing started in background.'
-            });
+            jobId = job.id;
         }
 
-        // --- FALLBACK PATH: Redis is Down ---
-
-        // 1. If it's a PPTX, we CANNOT process it synchronously easily (too slow/unstable)
-        if (mimetype.includes('presentation') || mimetype.includes('powerpoint')) {
-            logger.warn(`[FileUpload] Redis is down. PPTX processing rejected.`);
-            return res.status(503).json({
-                error: 'Service temporarily unavailable (Redis).',
-                message: 'PowerPoint processing requires the background worker. Please ensure Docker is running.',
-                code: 'REDIS_DOWN'
-            });
-        }
-
-        // 2. If it's a standard PDF, we can fallback to SYNCHRONOUS processing
-        // This keeps the app working locally without Docker for basic PDF tasks.
-        logger.info(`[FileUpload] Redis down. Falling back to synchronous processing for PDF: ${originalname}`);
-
-        const result = await documentProcessor.process(filePath, mimetype, originalname, documentId);
-
-        // Auto-embed for the synchronous result
-        if (result.chunks && result.chunks.length > 0) {
-            const docsWithMetadata = result.chunks.map(chunk => ({
-                pageContent: chunk.content,
-                metadata: { ...chunk.metadata, source: documentId, fileName: originalname }
-            }));
-            await embedStructuredChunks(documentId, docsWithMetadata);
-        }
-
+        // Return immediately with extraction data - UI transitions to workspace NOW
         return res.json({
             documentId: documentId,
-            message: 'Processed synchronously (Redis was unavailable).',
-            // Return enough data for the frontend to render immediately
-            extractedText: result.extractedText,
-            chunks: result.chunks
+            jobId: jobId,
+            extractedText: extractionResult.extractedText,
+            chunks: extractionResult.chunks,
+            message: jobId
+                ? 'JSON extraction complete. High-fidelity rendering processing in background.'
+                : 'Processed successfully.'
         });
+
+        // --- FALLBACK PATH: Redis is Down (Old logic preserved for reference) ---
+        // Note: With Phase 1 & 2 now synchronous, the "fallback" is mostly redundant 
+        // for extraction, but we keep it safe.
 
     } catch (error) {
         logger.error(`[FileUpload] Upload/Processing failed: ${error.message}`);

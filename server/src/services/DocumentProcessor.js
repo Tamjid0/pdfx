@@ -21,78 +21,78 @@ export class DocumentProcessor {
     }
 
     /**
-     * Processes a file using its system path and metadata.
-     * Useful for background jobs where the Multer object is lost.
+     * Phase 1: FAST extraction. Returns the DocumentGraph (JSON Nodes) and saves it.
+     * This is the "JSON Extraction" the user is referring to.
      */
-    async process(filePath, mime, originalName, forcedDocumentId = null, onProgress = null) {
+    async extract(filePath, mime, originalName, forcedDocumentId = null) {
         let documentGraph;
+        const documentId = forcedDocumentId || crypto.randomUUID();
 
-        console.log(`[DocumentProcessor] Processing ${originalName} (${mime})`);
+        console.log(`[DocumentProcessor] Fast JSON Extraction: ${originalName} (${mime})`);
 
         if (mime === 'application/pdf') {
-            if (onProgress) await onProgress(20);
             documentGraph = await this.pdfExtractor.extract(filePath, originalName);
-            documentGraph.documentId = forcedDocumentId || crypto.randomUUID();
         } else if (
             mime.includes('presentation') ||
             mime.includes('powerpoint')
         ) {
-            const docId = forcedDocumentId || crypto.randomUUID();
-            const outputDir = path.join(STORAGE_DIR, docId);
-
-            // 1. Extract clean structured text (Old Design needs this)
             const buffer = fs.readFileSync(filePath);
             documentGraph = await this.pptxExtractor.extract(buffer, originalName);
-            documentGraph.documentId = docId;
             documentGraph.type = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
-
-            // 2. Also convert to PDF for professional high-fidelity rendering (optional backup)
-            try {
-                if (onProgress) await onProgress(30);
-                const pdfPath = await LibreOfficeService.convertToPdf(filePath, outputDir);
-                documentGraph.convertedPdfPath = path.relative(STORAGE_DIR, pdfPath);
-                if (onProgress) await onProgress(70);
-            } catch (e) {
-                console.warn("[DocumentProcessor] LibreOffice conversion failed, falling back to text extraction only", e);
-            }
         } else {
             throw new Error(`Unsupported MIME type: ${mime}`);
         }
 
-        const documentId = documentGraph.documentId;
+        documentGraph.documentId = documentId;
 
-        // Phase 2: Extract images to disk and update JSON
-        const imageResult = await ImageExtractor.extractAndSave(
-            documentId,
-            documentGraph
-        );
-        if (imageResult.extractedCount > 0) {
-            console.log(`[DocumentProcessor] Extracted ${imageResult.extractedCount} images to disk`);
-        }
-
-        // Phase 2: Generate structured chunks with metadata
+        // Extract images and chunks from the JSON graph
+        await ImageExtractor.extractAndSave(documentId, documentGraph);
         const chunks = StructuredChunker.chunkByStructure(documentGraph);
-        console.log(`[DocumentProcessor] Created ${chunks.length} structured chunks`);
-
-        // Legacy compatibility: Derive plain text for existing systems
         const flatText = StructuredChunker.deriveTextFromGraph(documentGraph);
 
-        // Save JSON to disk (Single Source of Truth) - Updated to include chunks
+        // Save JSON to disk immediately - this is the source of truth for Chat
         const jsonPath = path.join(STORAGE_DIR, `${documentId}.json`);
-        const fullPersistentData = {
-            ...documentGraph,
-            chunks,
-            extractedText: flatText
-        };
-        fs.writeFileSync(jsonPath, JSON.stringify(fullPersistentData, null, 2));
-        console.log(`[DocumentProcessor] Saved graph to ${jsonPath}`);
+        const data = { ...documentGraph, chunks, extractedText: flatText };
+        fs.writeFileSync(jsonPath, JSON.stringify(data, null, 2));
 
-        return {
-            documentId,
-            documentGraph,
-            chunks,
-            extractedText: flatText
-        };
+        return { documentId, documentGraph, chunks, extractedText: flatText };
+    }
+
+    /**
+     * Phase 2: SLOW conversion. Updates the existing JSON with PDF path.
+     * This is for high-fidelity rendering only, Chat doesn't depend on this.
+     */
+    async convert(documentId, filePath, onProgress = null) {
+        const jsonPath = path.join(STORAGE_DIR, `${documentId}.json`);
+        if (!fs.existsSync(jsonPath)) throw new Error('Document JSON not found for conversion');
+
+        const data = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+        const outputDir = path.join(STORAGE_DIR, documentId);
+
+        try {
+            if (onProgress) await onProgress(30);
+            const pdfPath = await LibreOfficeService.convertToPdf(filePath, outputDir);
+            data.convertedPdfPath = path.relative(STORAGE_DIR, pdfPath);
+            fs.writeFileSync(jsonPath, JSON.stringify(data, null, 2));
+            if (onProgress) await onProgress(100);
+            return data.convertedPdfPath;
+        } catch (e) {
+            console.warn("[DocumentProcessor] LibreOffice conversion failed", e);
+            throw e;
+        }
+    }
+
+    /**
+     * Legacy/Unified method
+     */
+    async process(filePath, mime, originalName, forcedDocumentId = null, onProgress = null) {
+        const result = await this.extract(filePath, mime, originalName, forcedDocumentId);
+        if (mime.includes('presentation') || mime.includes('powerpoint')) {
+            await this.convert(result.documentId, filePath, onProgress);
+        } else if (onProgress) {
+            await onProgress(100);
+        }
+        return result;
     }
 
     /**

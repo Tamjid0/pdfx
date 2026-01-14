@@ -11,9 +11,10 @@ interface PdfSlideRendererProps {
     url: string;
     pageNumber: number;
     className?: string;
+    scale?: number; // Optional scale override for thumbnails
 }
 
-const PdfSlideRenderer: React.FC<PdfSlideRendererProps> = ({ url, pageNumber, className }) => {
+const PdfSlideRenderer: React.FC<PdfSlideRendererProps> = ({ url, pageNumber, className, scale: forcedScale }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [pdf, setPdf] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -25,8 +26,6 @@ const PdfSlideRenderer: React.FC<PdfSlideRendererProps> = ({ url, pageNumber, cl
         setLoading(true);
         setError(null);
 
-        // Fetch the PDF using standard fetch to handle headers if needed, 
-        // or let PDF.js handle it
         const loadingTask = pdfjsLib.getDocument(url);
 
         loadingTask.promise.then(
@@ -64,38 +63,43 @@ const PdfSlideRenderer: React.FC<PdfSlideRendererProps> = ({ url, pageNumber, cl
             if (!context || !isCurrentRender) return;
 
             try {
-                // 1. Cancel any existing render task for this canvas
+                // 1. Fetch the page FIRST before touching the canvas to avoid flicker
+                const page = await pdf.getPage(pageNumber);
+                if (!isCurrentRender) return;
+
+                // 2. Setup Viewport
+                const containerWidth = canvas.parentElement?.clientWidth || 800;
+                const containerHeight = canvas.parentElement?.clientHeight || 450;
+
+                // Use forcedScale (for thumbnails) or calculate based on container
+                const baseScale = forcedScale || 2.0;
+                const viewport = page.getViewport({ scale: baseScale });
+
+                const ratio = Math.min(
+                    containerWidth / viewport.width,
+                    containerHeight / viewport.height
+                );
+
+                const finalScale = baseScale * ratio;
+                const finalViewport = page.getViewport({ scale: finalScale });
+
+                // 3. Cancel any existing render task
                 if (renderTaskRef.current) {
                     await renderTaskRef.current.cancel();
                     renderTaskRef.current = null;
                 }
 
-                // 2. Clear canvas before new render
-                context.clearRect(0, 0, canvas.width, canvas.height);
-
-                const page = await pdf.getPage(pageNumber);
-                if (!isCurrentRender) return;
-
-                // 3. Setup Viewport (2x scale for sharpness)
-                const viewport = page.getViewport({ scale: 2.0 });
-                const containerWidth = canvas.parentElement?.clientWidth || 800;
-                const containerHeight = canvas.parentElement?.clientHeight || 450;
-
-                const scale = Math.min(
-                    containerWidth / viewport.width,
-                    containerHeight / viewport.height
-                ) * 2.0;
-
-                const finalViewport = page.getViewport({ scale });
+                // 4. Update canvas dimensions and clear just before new render
                 canvas.height = finalViewport.height;
                 canvas.width = finalViewport.width;
+                context.clearRect(0, 0, canvas.width, canvas.height);
 
                 const renderContext = {
                     canvasContext: context,
                     viewport: finalViewport,
                 };
 
-                // 4. Start Render and track it in Ref
+                // 5. Start Render and track it
                 renderTaskRef.current = page.render(renderContext);
 
                 await renderTaskRef.current.promise;
@@ -115,7 +119,7 @@ const PdfSlideRenderer: React.FC<PdfSlideRendererProps> = ({ url, pageNumber, cl
                 renderTaskRef.current.cancel();
             }
         };
-    }, [pdf, pageNumber]);
+    }, [pdf, pageNumber, forcedScale]);
 
     if (error) return <div className="text-red-500 p-4">{error}</div>;
     if (loading) return (

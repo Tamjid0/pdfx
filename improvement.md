@@ -56,7 +56,21 @@ This document tracks the strategic phases remaining to transition from a prototy
 - [ ] **Automated Testing**: CI/CD pipeline with Jest and Playwright for end-to-end verification.
 
 ---
+(gemini recoomandation Recommended Next Step: Visual Grounding & Citations
+Since you just perfected the rendering engine, the most high-impact move is to leverage it. Now that you have stable page images, you should make the AI smart enough to point to them.
 
+Why this?
+
+It directly builds on your new Server-Side Rendering work.
+It turns "Chat" into "Analysis" by visually proving the AI's answers.
+It is the defining feature of premium AI document apps.
+What it involves (from 
+improvement.md
+):
+
+Update Chat UI: When the AI answers, it should return [Page 2] or [Slide 5] references.
+Coordinate System: Map the text segments (which we have in JSON) to the new static images.
+Highlight Overlay: Draw a simple CSS box over the static image when a user clicks a citation.)
 ## 👁️ Visual Grounding & Citations (Future - On Hold)
 **Goal:** Connect AI answers directly to document visuals.
 - [ ] **Visual Citations**: Return `[Page X]` references in chat.

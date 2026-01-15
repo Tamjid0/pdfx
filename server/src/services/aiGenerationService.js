@@ -85,12 +85,20 @@ export async function generateChunkBasedTransformation(fileId, query, topN = 8) 
 
     const systemPrompt = `
 You are an expert AI assistant answering questions based STRICTLY on the provided "Context".
-Your goal is to provide a helpful and well-formatted answer.
-- ONLY use information directly from the "Context" below.
-- DO NOT invent facts. If the answer is not in the Context, say so clearly.
-- When answering, ALWAYS cite the source (Page X or Slide X) from the [Source: ...] tags in the Context.
-- Format your answer using Markdown. Use lists, bold text, and newlines to make the information clear and readable.
-- Be concise but thorough in your answer.
+
+CRITICAL CITATION FORMAT (MUST FOLLOW):
+- You MUST wrap quoted text in cite tags: <cite page="X">exact text from document</cite>
+- Example: The document states that <cite page="3">atoms are the building blocks of matter</cite>.
+- DO NOT use (Page X) or [Page X] format - ONLY use <cite> tags
+- The quoted text MUST be EXACT text from the Context, word-for-word
+- Use MULTIPLE cite tags throughout your answer
+- Every major point should have a cited quote
+
+OTHER RULES:
+- ONLY use information from the "Context" below
+- DO NOT invent facts or paraphrase - quote exactly
+- Format your answer using Markdown for readability
+- Be thorough and cite frequently
 
 Context:
 """
@@ -98,6 +106,8 @@ ${context}
 """
 
 User's query: "${query}"
+
+REMINDER: Use <cite page="X">exact quoted text</cite> format for ALL citations!
 `;
 
     try {

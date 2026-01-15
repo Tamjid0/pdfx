@@ -102,6 +102,10 @@ interface AppState {
     closeExportModal: () => void;
 
     setFileId: (id: string | null) => void;
+    templates: any[];
+    setTemplates: (templates: any[]) => void;
+    pdfSearchText: string | null;
+    setPdfSearchText: (text: string | null) => void;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -227,4 +231,12 @@ export const useStore = create<AppState>((set) => ({
     closeExportModal: () => set({ showExportModal: false }),
 
     setPreviewPreset: (preset) => set({ previewPreset: preset }),
+
+    // Templates State
+    templates: [],
+    setTemplates: (templates) => set({ templates }),
+
+    // PDF Search State
+    pdfSearchText: null,
+    setPdfSearchText: (text) => set({ pdfSearchText: text }),
 }));

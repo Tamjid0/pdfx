@@ -21,11 +21,14 @@ const LeftSidebar: React.FC = () => {
         htmlPreview,
         setHtmlPreview,
         setIsLoading,
+        templates, // From store
+        setTemplates, // From store
     } = useStore();
 
     const [activeTab, setActiveTab] = useState<"stats" | "format">("stats");
-    const [templates, setTemplates] = useState<Template[]>([]);
-    const [filteredTemplates, setFilteredTemplates] = useState<Template[]>([]);
+    // const [templates, setTemplates] = useState<Template[]>([]); // Removed local state
+    // Initialize filtered templates with store templates immediately if available
+    const [filteredTemplates, setFilteredTemplates] = useState<Template[]>(templates || []);
     const [searchTerm, setSearchTerm] = useState<string>("");
 
     const backToImport = () => {
@@ -61,16 +64,22 @@ const LeftSidebar: React.FC = () => {
 
     useEffect(() => {
         const getTemplates = async () => {
+            // Use minimal cache: if we already have templates in store, don't fetch again
+            if (templates.length > 0) {
+                setFilteredTemplates(templates);
+                return;
+            }
+
             try {
                 const fetchedTemplates = await fetchTemplates();
-                setTemplates(fetchedTemplates);
+                setTemplates(fetchedTemplates); // Save to store
                 setFilteredTemplates(fetchedTemplates);
             } catch (error) {
                 console.error("Error fetching templates:", error);
             }
         };
         getTemplates();
-    }, []);
+    }, []); // Still only run on mount, but now won't re-fetch if store has data
 
     useEffect(() => {
         let currentFiltered = templates;

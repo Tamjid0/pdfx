@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { parseCitations } from '../utils/citationParser';
 
 interface ChatMessage {
     sender: 'user' | 'ai';
@@ -13,10 +14,11 @@ interface ChatMessage {
 interface ChatProps {
     history: ChatMessage[];
     onSendMessage: (message: string) => void;
+    onCitationClick?: (pageIndex: number, searchText?: string | null) => void;
     isTyping?: boolean;
 }
 
-const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
+const Chat: React.FC<ChatProps> = ({ history, onSendMessage, onCitationClick, isTyping }) => {
     const [inputValue, setInputValue] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -92,6 +94,10 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                         </div>
                     </div>
                 ) : (
+
+
+                    // ... inside Chat component
+
                     history.map((msg, index) => (
                         <div key={index} className={`chat-message flex gap-3 max-w-[95%] ${msg.sender === 'user' ? 'ml-auto flex-row-reverse' : ''}`}>
                             <div className={`chat-message-avatar w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center font-semibold text-sm ${msg.sender === 'user' ? 'bg-gradient-to-br from-[#00ff88] to-[#00cc66] text-black' : 'bg-[#1a1a1a] border-2 border-[#333]'}`}>
@@ -101,53 +107,35 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                                 <div className={`chat-message-bubble p-3 px-4 text-sm leading-relaxed rounded-2xl w-fit max-w-full ${msg.sender === 'user' ? 'bg-[#00ff88] text-black rounded-br-lg ml-auto' : 'bg-[#1a1a1a] text-[#ddd] border border-[#333] rounded-bl-lg'}`}>
                                     {msg.sender === 'ai' ? (
                                         <div className="markdown-content prose prose-invert prose-emerald prose-sm max-w-none">
-                                            <ReactMarkdown
-                                                remarkPlugins={[remarkGfm]}
-                                                components={{
-                                                    code({ node, inline, className, children, ...props }: any) {
-                                                        const match = /language-(\w+)/.exec(className || '');
-                                                        return !inline && match ? (
-                                                            <div className="rounded-md overflow-hidden my-3 border border-[#333]">
-                                                                <div className="bg-[#2d2d2d] px-4 py-1.5 text-[10px] font-mono text-[#888] flex justify-between items-center border-b border-[#333]">
-                                                                    <span>{match[1].toUpperCase()}</span>
-                                                                </div>
-                                                                <SyntaxHighlighter
-                                                                    style={vscDarkPlus}
-                                                                    language={match[1]}
-                                                                    PreTag="div"
-                                                                    customStyle={{
-                                                                        margin: 0,
-                                                                        padding: '1rem',
-                                                                        fontSize: '0.8rem',
-                                                                        background: '#1e1e1e'
-                                                                    }}
-                                                                    {...props}
-                                                                >
-                                                                    {String(children).replace(/\n$/, '')}
-                                                                </SyntaxHighlighter>
-                                                            </div>
+                                            {/* Render parsed content: markdown + citations */}
+                                            {parseCitations(msg.text).map((part, i) =>
+                                                part.type === 'citation' ? (
+                                                    <button
+                                                        key={i}
+                                                        onClick={() => onCitationClick?.(part.page, part.quotedText)}
+                                                        className="inline-flex items-center gap-1.5 mx-1 px-2 py-0.5 rounded-full bg-[#00ff88]/10 text-[#00ff88] text-xs font-bold border border-[#00ff88]/20 hover:bg-[#00ff88]/20 hover:scale-105 transition-all cursor-pointer select-none align-middle max-w-xs"
+                                                        title={part.quotedText ? `Find "${part.quotedText}" on page ${part.page}` : `Jump to Page ${part.page}`}
+                                                    >
+                                                        <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                                                        {part.quotedText ? (
+                                                            <span className="truncate italic">"{part.quotedText.length > 40 ? part.quotedText.substring(0, 40) + '...' : part.quotedText}" <span className="opacity-70 font-normal">[Pg {part.page}]</span></span>
                                                         ) : (
-                                                            <code className="bg-[#2d2d2d] px-1.5 py-0.5 rounded text-[#00ff88] font-mono text-[0.85em]" {...props}>
-                                                                {children}
-                                                            </code>
-                                                        );
-                                                    },
-                                                    h1: ({ children }) => <h1 className="text-lg font-bold mt-4 mb-2 text-white border-b border-[#222] pb-1">{children}</h1>,
-                                                    h2: ({ children }) => <h2 className="text-base font-bold mt-4 mb-2 text-white">{children}</h2>,
-                                                    h3: ({ children }) => <h3 className="text-sm font-bold mt-3 mb-1 text-white">{children}</h3>,
-                                                    p: ({ children }) => <p className="mb-3 last:mb-0 leading-relaxed text-[rgba(255,255,255,0.85)]">{children}</p>,
-                                                    ul: ({ children }) => <ul className="list-disc ml-5 mb-3 space-y-1">{children}</ul>,
-                                                    ol: ({ children }) => <ol className="list-decimal ml-5 mb-3 space-y-1">{children}</ol>,
-                                                    li: ({ children }) => <li className="pl-1">{children}</li>,
-                                                    blockquote: ({ children }) => <blockquote className="border-l-4 border-[#00ff88] pl-4 py-1 my-3 bg-[#1e1e1e] rounded-r-md italic text-[#888]">{children}</blockquote>,
-                                                    a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-[#00ff88] hover:underline transition-all underline-offset-2">{children}</a>,
-                                                    table: ({ children }) => <div className="overflow-x-auto my-4 rounded-lg border border-[#333]"><table className="w-full text-left border-collapse">{children}</table></div>,
-                                                    th: ({ children }) => <th className="bg-[#1e1e1e] p-2 font-bold border-b border-[#333] text-[#00ff88]">{children}</th>,
-                                                    td: ({ children }) => <td className="p-2 border-b border-[#222] text-[#ccc]">{children}</td>,
-                                                }}
-                                            >
-                                                {msg.text}
-                                            </ReactMarkdown>
+                                                            <span>Page {part.page}</span>
+                                                        )}
+                                                    </button>
+                                                ) : (
+                                                    <ReactMarkdown
+                                                        key={i}
+                                                        remarkPlugins={[remarkGfm]}
+                                                        components={{
+                                                            p: ({ children }) => <span className="inline">{children}</span>, // Inline to flow with buttons
+                                                            // ... other components
+                                                        }}
+                                                    >
+                                                        {part.content}
+                                                    </ReactMarkdown>
+                                                )
+                                            )}
                                         </div>
                                     ) : (
                                         <span className="whitespace-pre-wrap">{msg.text}</span>

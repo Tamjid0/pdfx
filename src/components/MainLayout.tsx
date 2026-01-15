@@ -1,6 +1,8 @@
 'use client';
 
+import { useStore } from '../store/useStore';
 import React from 'react';
+
 import { Allotment } from "allotment";
 import "allotment/dist/style.css";
 import Sidebar from "./Sidebar";
@@ -188,6 +190,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                                                         <Chat
                                                             history={chatHistory}
                                                             onSendMessage={handleSendMessage}
+                                                            onCitationClick={(pageIndex, searchText) => {
+                                                                // Convert 1-based page index to 0-based for the store
+                                                                useStore.getState().setCurrentSlideIndex(pageIndex - 1);
+                                                                // Store search text for PDF viewer to use
+                                                                if (searchText) {
+                                                                    useStore.getState().setPdfSearchText(searchText);
+                                                                }
+                                                            }}
                                                             isTyping={isTyping}
                                                         />
                                                     )}

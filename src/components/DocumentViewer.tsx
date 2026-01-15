@@ -13,7 +13,10 @@ const DocumentViewer: React.FC = () => {
         setFileId,
         setFileType,
         setSlides,
-        setCurrentSlideIndex
+        setCurrentSlideIndex,
+        currentSlideIndex,
+        pdfSearchText,
+        setPdfSearchText
     } = useStore();
 
     const [numPages, setNumPages] = useState<number | null>(null);
@@ -22,6 +25,8 @@ const DocumentViewer: React.FC = () => {
     const [scale, setScale] = useState(1.0);
     const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
     const [containerRect, setContainerRect] = useState<{ width: number; height: number } | null>(null);
+    const [showSearchBox, setShowSearchBox] = useState(false);
+    const [highlightedText, setHighlightedText] = useState<string | null>(null);
 
     useEffect(() => {
         if (!containerRef) return;
@@ -39,6 +44,99 @@ const DocumentViewer: React.FC = () => {
         observer.observe(containerRef);
         return () => observer.disconnect();
     }, [containerRef]);
+
+    // Sync with external page control (e.g. from Chat citations)
+    // currentSlideIndex is 0-based, PDF pageNumber is 1-based
+    useEffect(() => {
+        if (currentSlideIndex >= 0) {
+            setPageNumber(currentSlideIndex + 1);
+        }
+    }, [currentSlideIndex]);
+
+    // Show search box and highlight text when citation with quoted text is clicked
+    useEffect(() => {
+        if (pdfSearchText) {
+            setShowSearchBox(true);
+            setHighlightedText(pdfSearchText);
+
+            // Highlight text in PDF text layer after a short delay to ensure rendering
+            setTimeout(() => {
+                highlightTextInPDF(pdfSearchText);
+            }, 500);
+        }
+    }, [pdfSearchText, pageNumber]); // Re-run when page changes too
+
+    // Function to highlight text in the PDF.js text layer
+    const highlightTextInPDF = (searchText: string) => {
+        if (!searchText) return;
+
+        console.log('🔍 Searching for:', searchText);
+
+        // Find the text layer
+        const textLayer = document.querySelector('.react-pdf__Page__textContent');
+        if (!textLayer) {
+            console.warn('❌ Text layer not found');
+            return;
+        }
+
+        const spans = textLayer.querySelectorAll('span');
+        console.log(`✅ Found ${spans.length} text spans`);
+
+        // Build full text and track span positions
+        let fullText = '';
+        const spanMap: Array<{ start: number, end: number, element: HTMLElement }> = [];
+
+        spans.forEach(span => {
+            const element = span as HTMLElement;
+            const text = element.textContent || '';
+            const start = fullText.length;
+            fullText += text;
+            const end = fullText.length;
+            spanMap.push({ start, end, element });
+
+            // Clear any previous highlights
+            element.style.backgroundColor = '';
+            element.style.color = '';
+            element.style.padding = '';
+        });
+
+        console.log('📄 Full page text:', fullText.substring(0, 200) + '...');
+
+        // Find the search text (case-insensitive)
+        const searchLower = searchText.toLowerCase();
+        const fullTextLower = fullText.toLowerCase();
+        const matchIndex = fullTextLower.indexOf(searchLower);
+
+        if (matchIndex === -1) {
+            console.warn('❌ Text not found on this page');
+            return;
+        }
+
+        console.log(`✅ Match found at position ${matchIndex}`);
+        const matchEnd = matchIndex + searchText.length;
+
+        // Highlight all spans that overlap with the match
+        let firstHighlighted = false;
+        spanMap.forEach(({ start, end, element }) => {
+            if (start < matchEnd && end > matchIndex) {
+                element.style.backgroundColor = '#00ff88';
+                element.style.color = '#000';
+                element.style.padding = '2px';
+                element.style.borderRadius = '3px';
+                element.style.fontWeight = 'bold';
+
+                // Scroll to first highlighted span
+                if (!firstHighlighted) {
+                    setTimeout(() => {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
+                    firstHighlighted = true;
+                }
+            }
+        });
+
+        console.log('✅ Highlighting complete');
+    };
 
     function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
         setNumPages(numPages);
@@ -105,6 +203,42 @@ const DocumentViewer: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            {/* Floating Search Box - Appears when citation is clicked */}
+            {showSearchBox && pdfSearchText && (
+                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-2 fade-in duration-200">
+                    <div className="bg-[#1a1a1a]/95 backdrop-blur-md border border-[#00ff88]/30 rounded-xl p-4 shadow-2xl min-w-[400px]">
+                        <div className="flex items-start gap-3">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <svg className="w-4 h-4 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                    <span className="text-xs font-bold text-[#00ff88] uppercase tracking-wider">Search in PDF</span>
+                                </div>
+                                <div className="bg-[#0a0a0a] border border-[#333] rounded-lg p-3 mb-2">
+                                    <p className="text-sm text-white/90 italic">"{pdfSearchText}"</p>
+                                </div>
+                                <p className="text-xs text-white/50">
+                                    Press <kbd className="px-1.5 py-0.5 bg-[#333] rounded text-[#00ff88] font-mono">Ctrl+F</kbd> (or <kbd className="px-1.5 py-0.5 bg-[#333] rounded text-[#00ff88] font-mono">⌘+F</kbd>) to search for this text in the PDF
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setShowSearchBox(false);
+                                    setPdfSearchText(null);
+                                }}
+                                className="p-1 hover:bg-white/10 rounded transition-colors"
+                                title="Close"
+                            >
+                                <svg className="w-4 h-4 text-white/50 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Main Content Area - React PDF (Fit to Page) */}
             <div className="flex-1 w-full h-full relative bg-[#0a0a0a] overflow-hidden flex justify-center items-center p-4">

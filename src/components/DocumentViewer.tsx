@@ -20,6 +20,25 @@ const DocumentViewer: React.FC = () => {
     const [pageNumber, setPageNumber] = useState<number>(1);
     const [showExitConfirm, setShowExitConfirm] = useState(false);
     const [scale, setScale] = useState(1.0);
+    const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
+    const [containerRect, setContainerRect] = useState<{ width: number; height: number } | null>(null);
+
+    useEffect(() => {
+        if (!containerRef) return;
+
+        const observer = new ResizeObserver((entries) => {
+            const entry = entries[0];
+            if (entry) {
+                setContainerRect({
+                    width: entry.contentRect.width,
+                    height: entry.contentRect.height
+                });
+            }
+        });
+
+        observer.observe(containerRef);
+        return () => observer.disconnect();
+    }, [containerRef]);
 
     function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
         setNumPages(numPages);
@@ -87,33 +106,37 @@ const DocumentViewer: React.FC = () => {
                 </div>
             </div>
 
-            {/* Main Content Area - React PDF */}
-            <div className="flex-1 w-full h-full relative bg-[#0a0a0a] overflow-auto flex justify-center p-8 pt-20">
-                <Document
-                    file={`/api/v1/documents/${fileId}/pdf`}
-                    onLoadSuccess={onDocumentLoadSuccess}
-                    className="shadow-2xl"
-                    loading={
-                        <div className="flex flex-col items-center gap-4 text-[#666]">
-                            <div className="w-8 h-8 border-2 border-[#00ff88] border-t-transparent rounded-full animate-spin"></div>
-                            <p className="text-xs uppercase tracking-widest">Loading PDF...</p>
-                        </div>
-                    }
-                    error={
-                        <div className="flex flex-col items-center gap-4 text-[#ff4444]">
-                            <p>Failed to load PDF.</p>
-                            <a href={`/api/v1/documents/${fileId}/pdf`} download className="text-[#00ff88] hover:underline">Download File</a>
-                        </div>
-                    }
-                >
-                    <Page
-                        pageNumber={pageNumber}
-                        renderTextLayer={true}
-                        renderAnnotationLayer={true}
-                        width={800} // Fixed width container for now, or use resize observer later
-                        className="shadow-2xl border border-[#222]"
-                    />
-                </Document>
+            {/* Main Content Area - React PDF (Fit to Page) */}
+            <div className="flex-1 w-full h-full relative bg-[#0a0a0a] overflow-hidden flex justify-center items-center p-4">
+                <div ref={setContainerRef} className="w-full h-full flex items-center justify-center">
+                    {containerRect && (
+                        <Document
+                            file={`/api/v1/documents/${fileId}/pdf`}
+                            onLoadSuccess={onDocumentLoadSuccess}
+                            className="flex items-center justify-center"
+                            loading={
+                                <div className="flex flex-col items-center gap-4 text-[#666]">
+                                    <div className="w-8 h-8 border-2 border-[#00ff88] border-t-transparent rounded-full animate-spin"></div>
+                                    <p className="text-xs uppercase tracking-widest">Loading PDF...</p>
+                                </div>
+                            }
+                            error={
+                                <div className="flex flex-col items-center gap-4 text-[#ff4444]">
+                                    <p>Failed to load PDF.</p>
+                                    <a href={`/api/v1/documents/${fileId}/pdf`} download className="text-[#00ff88] hover:underline">Download File</a>
+                                </div>
+                            }
+                        >
+                            <Page
+                                pageNumber={pageNumber}
+                                renderTextLayer={true}
+                                renderAnnotationLayer={true}
+                                height={containerRect.height - 40} // Subtract padding
+                                className="shadow-2xl border border-[#222]"
+                            />
+                        </Document>
+                    )}
+                </div>
             </div>
 
             {/* Confirmation Modal */}

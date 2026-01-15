@@ -3,7 +3,16 @@ import TiptapEditor from './TiptapEditor';
 import { Editor as TiptapEditorClass } from '@tiptap/core';
 import * as apiService from '../services/apiService';
 import { useStore } from '../store/useStore';
-import DocumentViewer from './DocumentViewer';
+import dynamic from 'next/dynamic';
+
+const DocumentViewer = dynamic(() => import('./DocumentViewer'), {
+    ssr: false,
+    loading: () => (
+        <div className="flex items-center justify-center h-full text-[#666]">
+            <p className="text-xs uppercase tracking-widest">Loading Viewer...</p>
+        </div>
+    )
+});
 
 interface EditorProps {
     onEditorChange: (html: string, text: string) => void;

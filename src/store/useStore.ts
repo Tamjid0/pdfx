@@ -100,6 +100,8 @@ interface AppState {
 
     openExportModal: (mode: string, content: any) => void;
     closeExportModal: () => void;
+
+    setFileId: (id: string | null) => void;
 }
 
 export const useStore = create<AppState>((set) => ({

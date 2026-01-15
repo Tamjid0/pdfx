@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStore } from '../../store/useStore';
-import PdfSlideRenderer from './PdfSlideRenderer';
+import StaticSlideRenderer from './StaticSlideRenderer';
 
 const IconChevronLeft = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -22,14 +22,11 @@ const SlideViewer: React.FC = () => {
         fileId,
         isProcessingSlides,
         renderingProgress,
-        nextSlide, // Keep existing nextSlide
-        prevSlide, // Keep existing prevSlide
-        isSlideMode // Keep existing isSlideMode
+        nextSlide,
+        prevSlide,
+        isSlideMode
     } = useStore();
-    const [showHighFidelity, setShowHighFidelity] = React.useState(false);
     const currentSlide = slides[currentSlideIndex];
-
-    const pdfUrl = fileId ? `/api/v1/documents/${fileId}/pdf` : null;
 
     if (!currentSlide && !isSlideMode && !isProcessingSlides) {
         return (
@@ -102,14 +99,26 @@ const SlideViewer: React.FC = () => {
             <div className="flex-1 flex items-center justify-center p-4 relative">
                 <div className="slide-content-container aspect-[16/9] w-full max-w-[950px] bg-[#1a1a1a] rounded-xl border border-[#333] shadow-2xl relative flex flex-col items-center justify-center overflow-hidden transition-all duration-300 hover:border-[#00ff88]/30">
 
-                    {pdfUrl && !isProcessingSlides ? (
-                        // HIGH FIDELITY PDF PAGE (Inside the Card) - Custom Canvas Renderer
+                    {fileId && !isProcessingSlides ? (
+                        // HIGH FIDELITY STATIC PAGE (Pre-rendered on Server)
                         <div className="w-full h-full relative group/pdf overflow-hidden flex items-center justify-center">
-                            <PdfSlideRenderer
-                                url={pdfUrl}
+                            <StaticSlideRenderer
+                                documentId={fileId}
                                 pageNumber={currentSlideIndex + 1}
+                                priority={true}
                                 className="shadow-lg"
                             />
+                            {/* Preload Next Slide */}
+                            {currentSlideIndex < slides.length - 1 && (
+                                <div style={{ display: 'none' }}>
+                                    <StaticSlideRenderer
+                                        documentId={fileId}
+                                        pageNumber={currentSlideIndex + 2}
+                                        priority={false}
+                                    />
+                                </div>
+                            )}
+
                             {/* Visual Overlay - transparent border to maintain card aesthetic */}
                             <div className="absolute inset-0 pointer-events-none border-4 border-[#1a1a1a] rounded-xl ring-1 ring-[#333]/50" />
                         </div>

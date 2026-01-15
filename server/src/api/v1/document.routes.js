@@ -26,6 +26,27 @@ router.get('/:documentId/images/:filename', validate(getDocumentImageSchema), (r
 });
 
 /**
+ * GET /api/v1/documents/:documentId/pages/:pageIndex
+ * Serves the pre-rendered static PNG of a specific page
+ */
+router.get('/:documentId/pages/:pageIndex', validate(getDocumentPageSchema), (req, res) => {
+    const { documentId, pageIndex } = req.params;
+
+    // Pages are stored as 1.png, 2.png etc. 
+    // The validation schema transforms pageIndex to Number.
+    const imagePath = path.join(DOCUMENTS_DIR, documentId, 'pages', `${pageIndex}.png`);
+
+    if (!fs.existsSync(imagePath)) {
+        // Fallback for immediate response if processing isn't done (though it should be)
+        return res.status(404).json({ error: 'Page image not found' });
+    }
+
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache aggressively (1 year)
+    res.sendFile(imagePath);
+});
+
+/**
  * GET /api/v1/documents/:documentId/pdf
  * Serves the converted PDF of a presentation
  */

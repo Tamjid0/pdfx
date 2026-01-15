@@ -1,11 +1,12 @@
 import React from 'react';
 import { useStore } from '../../store/useStore';
-import PdfSlideRenderer from './PdfSlideRenderer';
+import StaticSlideRenderer from './StaticSlideRenderer';
 
 const SlideThumbnails: React.FC = () => {
     const { slides, currentSlideIndex, setCurrentSlideIndex, fileId, isProcessingSlides } = useStore();
 
-    const pdfUrl = fileId ? `/api/v1/documents/${fileId}/pdf` : null;
+    // pdfUrl is not needed anymore
+    // const pdfUrl = fileId ? `/api/v1/documents/${fileId}/pdf` : null;
 
     return (
         <div className="slide-thumbnails w-[220px] bg-[#111] border-r border-[#222] flex flex-col overflow-y-auto custom-scrollbar">
@@ -27,12 +28,11 @@ const SlideThumbnails: React.FC = () => {
                             }`}>
 
                             {/* Slide Preview Background */}
-                            {pdfUrl && !isProcessingSlides ? (
+                            {fileId && !isProcessingSlides ? (
                                 <div className="absolute inset-0 z-0 pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity">
-                                    <PdfSlideRenderer
-                                        url={pdfUrl}
+                                    <StaticSlideRenderer
+                                        documentId={fileId}
                                         pageNumber={index + 1}
-                                        scale={0.4}
                                         className="w-full h-full"
                                     />
                                 </div>

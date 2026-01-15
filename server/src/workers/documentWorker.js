@@ -27,35 +27,23 @@ export const initDocumentWorker = async () => {
             logger.info(`Processing job ${job.id}: ${fileName}`);
 
             try {
-                const result = await documentProcessor.process(
-                    filePath,
-                    mimeType,
-                    fileName,
+                // Determine if we need to run the conversion/rendering phase.
+                // Now we want STATIC IMAGES for ALL formats, so we always run convert().
+                console.log(`[Worker] Starting conversion/rendering for ${documentId} (${mimeType})`);
+
+                await documentProcessor.convert(
                     documentId,
+                    filePath,
                     async (progress) => {
                         await job.updateProgress(progress);
                     }
                 );
-
-                await job.updateProgress(80); // Processing done, starting embedding
-                if (result.chunks && result.chunks.length > 0) {
-                    const docsWithMetadata = result.chunks.map(chunk => ({
-                        pageContent: chunk.content,
-                        metadata: {
-                            ...chunk.metadata,
-                            source: documentId,
-                            fileName: fileName
-                        }
-                    }));
-                    await embedStructuredChunks(documentId, docsWithMetadata);
-                }
 
                 await job.updateProgress(100);
                 logger.info(`Job ${job.id} completed successfully`);
 
                 return {
                     documentId,
-                    chunkCount: result.chunks?.length || 0,
                     success: true
                 };
             } catch (error) {

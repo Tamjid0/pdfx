@@ -1,22 +1,19 @@
-import '../../utils/polyfill.js';
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
-import { createCanvas } from 'canvas';
+import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
-// Disable worker for Node.js environment
-pdfjsLib.GlobalWorkerOptions.workerSrc = '';
-
 /**
- * Service to render PDF pages to static images on the server.
+ * Service to render PDF pages to static images on the server using Native Poppler (pdftoppm).
+ * This replaces the Node.js canvas/pdfjs implementation for performance and stability.
  */
 class PdfImageRenderer {
 
     /**
-     * Renders all pages of a PDF to WebP images.
+     * Renders all pages of a PDF to PNG images using pdftoppm.
      * @param {string} pdfPath - Absolute path to the source PDF.
      * @param {string} outputDir - Directory to save images (e.g., .../documents/{id}).
      * @param {Function} onProgress - Optional callback(progressPercent).
+     * @returns {Promise<number>} - Promise resolving to total page count.
      */
     async renderToImages(pdfPath, outputDir, onProgress = null) {
         // Ensure pages directory exists
@@ -25,80 +22,84 @@ class PdfImageRenderer {
             fs.mkdirSync(pagesDir, { recursive: true });
         }
 
-        console.log(`[PdfImageRenderer] Loading PDF: ${pdfPath}`);
-        const data = new Uint8Array(fs.readFileSync(pdfPath));
-        const pdfDocument = await pdfjsLib.getDocument({
-            data,
-            standardFontDataUrl: 'https://mozilla.github.io/pdf.js/standard_fonts/',
-            disableFontFace: true // Optimization for server-side rendering
-        }).promise;
+        console.log(`[PdfImageRenderer] Starting Native Poppler Rendering: ${pdfPath}`);
 
-        const totalPages = pdfDocument.numPages;
-        console.log(`[PdfImageRenderer] Found ${totalPages} pages. Starting render...`);
+        // Output prefix for pdftoppm. It will generate files like {prefix}-1.png, {prefix}-2.png
+        // We use 'page' as prefix, so we get page-1.png, page-2.png
+        const outputPrefix = path.join(pagesDir, 'page');
 
-        for (let i = 1; i <= totalPages; i++) {
-            try {
-                const page = await pdfDocument.getPage(i);
+        return new Promise((resolve, reject) => {
+            // Command: pdftoppm -png -r 150 input.pdf output_prefix
+            // -png: Output format
+            // -r 150: DPI (Resolution). 150 is good balance.
 
-                // Scale 2.0 = ~144 DPI (assuming 72 DPI base). Good compromise for web.
-                const scale = 2.0;
-                const viewport = page.getViewport({ scale });
+            const process = spawn('pdftoppm', [
+                '-png',
+                '-r', '150',
+                pdfPath,
+                outputPrefix
+            ]);
 
-                // Create Canvas
-                const canvas = createCanvas(viewport.width, viewport.height);
-                const context = canvas.getContext('2d');
+            process.stdout.on('data', (data) => {
+                // pdftoppm might output progress info or warnings here
+                // console.log(`stdout: ${data}`);
+            });
 
-                // Render
-                await page.render({
-                    canvasContext: context,
-                    viewport: viewport
-                }).promise;
+            process.stderr.on('data', (data) => {
+                // Poppler logs warnings to stderr, not necessarily fatal
+                console.log(`[PdfImageRenderer] Poppler Log: ${data}`);
+            });
 
-                // Save as WebP (Requires canvas built with JPEG/PNG support, strictly speaking canvas usually exports PNG/JPEG)
-                // Note: 'canvas' node package support for encoding depends on build. 
-                // We'll use buffer and simple file write. 
-                // Using PNG for best compatibility if WebP isn't fully supported by the specific canvas build, 
-                // but checking for toBuffer('image/webp').
-                let buffer;
-                let ext = 'png'; // Default safely to PNG
+            process.on('close', (code) => {
+                if (code !== 0) {
+                    console.error(`[PdfImageRenderer] pdftoppm process exited with code ${code}`);
+                    return reject(new Error(`pdftoppm failed with code ${code}`));
+                }
 
-                // Try WebP if available (node-canvas often supports it now)
+                console.log(`[PdfImageRenderer] Native rendering completed.`);
+
+                // Normalization Step:
+                // pdftoppm outputs: page-1.png, page-01.png (depending on digit count) or page-1.png
+                // It usually does page-1.png, page-10.png etc.
+                // WE WANT: 1.png, 2.png
+
                 try {
-                    // buffer = canvas.toBuffer('image/webp', { quality: 0.8 }); 
-                    // ext = 'webp';
-                    // Fallback to PNG for absolute stability in this environment unless sure.
-                    // User requested WebP. Let's try, fall back to JPEG/PNG if needed.
-                    // Actually, standard node-canvas `toBuffer` takes mime type.
-                    buffer = canvas.toBuffer('image/png'); // Safe bet for now, or use jpeg for speed.
-                } catch (e) {
-                    buffer = canvas.toBuffer(); // Defaults to PNG
+                    const files = fs.readdirSync(pagesDir).filter(f => f.startsWith('page-') && f.endsWith('.png'));
+
+                    files.forEach(file => {
+                        // Extract number
+                        const match = file.match(/page-(\d+)\.png/);
+                        if (match) {
+                            const pageNum = parseInt(match[1]); // pdftoppm uses 1-based index by default? Yes.
+                            // However, we want strict '1.png'
+                            // pdftoppm might pad zeros if many pages.
+                            // parseInt handles "01" -> 1.
+
+                            const oldPath = path.join(pagesDir, file);
+                            const newPath = path.join(pagesDir, `${pageNum}.png`);
+
+                            fs.renameSync(oldPath, newPath);
+                        }
+                    });
+
+                    // Count total pages
+                    const finalFiles = fs.readdirSync(pagesDir).filter(f => f.endsWith('.png'));
+                    console.log(`[PdfImageRenderer] Renamed and verified ${finalFiles.length} images.`);
+
+                    if (onProgress) onProgress(100);
+                    resolve(finalFiles.length);
+
+                } catch (err) {
+                    console.error("[PdfImageRenderer] Error renaming files:", err);
+                    reject(err);
                 }
+            });
 
-                // NOTE: User requested WebP. Node-canvas usually supports PDF/SVG/PNG/JPEG.
-                // To get WebP, we might need an external tool or sharp. 
-                // Given constraints, I will use PNG for now as it is lossless and supported by all browsers, 
-                // and rename expectation or use 'sharp' if available. 
-                // Looking at package.json... 'sharp' is NOT there. 'canvas' is.
-                // So I will output PNGs. This satisfies "Static Images".
-                // I'll name them .png but the logic holds.
-
-                const outputPath = path.join(pagesDir, `${i}.png`);
-                fs.writeFileSync(outputPath, buffer);
-
-                // Release memory
-                page.cleanup();
-
-                if (onProgress) {
-                    const percent = Math.round((i / totalPages) * 100);
-                    onProgress(percent);
-                }
-            } catch (err) {
-                console.error(`[PdfImageRenderer] Error rendering page ${i}`, err);
-            }
-        }
-
-        console.log(`[PdfImageRenderer] Completed rendering ${totalPages} pages.`);
-        return totalPages;
+            process.on('error', (err) => {
+                console.error("[PdfImageRenderer] Failed to start pdftoppm:", err);
+                reject(err);
+            });
+        });
     }
 }
 

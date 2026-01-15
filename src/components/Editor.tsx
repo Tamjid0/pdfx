@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import TiptapEditor from './TiptapEditor';
 import { Editor as TiptapEditorClass } from '@tiptap/core';
 import * as apiService from '../services/apiService';
 import { useStore } from '../store/useStore';
+import DocumentViewer from './DocumentViewer';
 
 interface EditorProps {
     onEditorChange: (html: string, text: string) => void;
@@ -13,7 +13,7 @@ interface EditorProps {
 }
 
 const Editor: React.FC<EditorProps> = ({ htmlContent, onEditorChange, onFileUpload, onPasteContent }) => {
-    const { setFileId } = useStore();
+    const { setFileId, fileType, fileId } = useStore();
     const [editor, setEditor] = useState<TiptapEditorClass | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
@@ -22,6 +22,12 @@ const Editor: React.FC<EditorProps> = ({ htmlContent, onEditorChange, onFileUplo
     useEffect(() => {
         setIsMounted(true);
     }, []);
+
+    // Conditional Rendering: If it's a PDF and we have a fileId, show DocumentViewer
+    // The user said: "by the deafult the layout should be the same but only when user uploads a file on the editor or upload page editormode should be switched to docmuent viewer"
+    if (fileType === 'pdf' && fileId) {
+        return <DocumentViewer />;
+    }
 
     const isEmpty = !htmlContent || htmlContent === '<p></p>' || htmlContent === '';
 

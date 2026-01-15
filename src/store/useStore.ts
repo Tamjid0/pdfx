@@ -16,6 +16,7 @@ interface AppState {
     summaryData: any | null;
     chatHistory: any[];
     fileId: string | null;
+    fileType: 'pdf' | 'pptx' | 'text' | null;
     stats: {
         wordCount: number;
         charCount: number;
@@ -70,8 +71,7 @@ interface AppState {
     setFlashcardsData: (data: any) => void;
     setSummaryData: (data: any) => void;
     setChatHistory: (history: any[] | ((prev: any[]) => any[])) => void;
-    setFileId: (id: string | null) => void;
-    setStats: (stats: any) => void;
+    setFileType: (type: 'pdf' | 'pptx' | 'text' | null) => void;
     setPreviewMode: (preview: boolean) => void;
     setIsTyping: (typing: boolean) => void;
     setIsSummaryGenerated: (val: boolean) => void;
@@ -116,6 +116,7 @@ export const useStore = create<AppState>((set) => ({
     summaryData: null,
     chatHistory: [],
     fileId: null,
+    fileType: null,
     stats: { wordCount: 0, charCount: 0, lineCount: 0, readTime: 0 },
     isPreviewMode: false,
     isTyping: false,
@@ -192,6 +193,7 @@ export const useStore = create<AppState>((set) => ({
         chatHistory: typeof history === 'function' ? history(state.chatHistory) : history
     })),
     setFileId: (id) => set({ fileId: id }),
+    setFileType: (type) => set({ fileType: type }),
     setStats: (stats) => set({ stats: stats }),
     setPreviewMode: (preview) => set({ isPreviewMode: preview }),
     setIsTyping: (typing) => set({ isTyping: typing }),

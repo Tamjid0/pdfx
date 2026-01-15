@@ -54,3 +54,11 @@ This document tracks the strategic phases remaining to transition from a prototy
 - [ ] **Sentry Integration**: For real-time error tracking in production.
 - [ ] **Prometheus/Grafana**: For monitoring server resources and AI API usage latency.
 - [ ] **Automated Testing**: CI/CD pipeline with Jest and Playwright for end-to-end verification.
+
+---
+
+## 👁️ Visual Grounding & Citations (Future - On Hold)
+**Goal:** Connect AI answers directly to document visuals.
+- [ ] **Visual Citations**: Return `[Page X]` references in chat.
+- [ ] **Coordinate Mapping**: Map text segments to static image coordinates.
+- [ ] **Highlight Overlay**: Draw highlight boxes on the static image when a citation is clicked.

@@ -13,7 +13,8 @@ export const useFileUpload = () => {
         setLeftPanelView,
         setMode,
         setIsProcessingSlides,
-        setRenderingProgress
+        setRenderingProgress,
+        setFileType
     } = useStore();
 
     const pollJobStatus = async (jobId: string, documentId: string): Promise<any> => {
@@ -59,6 +60,8 @@ export const useFileUpload = () => {
         setIsLoading(true);
         try {
             const isSlideFile = file.name.endsWith('.pptx') || file.name.endsWith('.ppt') || file.name.endsWith('.key');
+            const isPdfFile = file.name.endsWith('.pdf');
+
             const response = await apiService.uploadFile(file);
             const { jobId, documentId } = response;
 
@@ -68,6 +71,14 @@ export const useFileUpload = () => {
             // DEFAULT: Always go to Editor view after upload
             setView("editor");
             setMode('editor');
+
+            if (isPdfFile) {
+                setFileType('pdf');
+            } else if (isSlideFile) {
+                setFileType('pptx');
+            } else {
+                setFileType('text');
+            }
 
             if (isSlideFile) {
                 // IMMEDIATE TRANSITION for PPTX
@@ -97,8 +108,24 @@ export const useFileUpload = () => {
                     }));
                     setSlides(slides);
                 }
+            } else if (isPdfFile) {
+                // PDF Path - Now uses Document Viewer
+                setIsSlideMode(false); // It's not "Slide Mode" in the global sense (that's for PPTX chat view), but we use slide data for viewer
+                setLeftPanelView('editor');
+
+                // Populate slides for PDF Viewer (it needs length and structure)
+                if (response.chunks) {
+                    const pages = response.chunks.map((chunk: any) => ({
+                        title: `Page ${chunk.metadata.pageIndex + 1}`,
+                        content: chunk.content
+                    }));
+                    setSlides(pages);
+                    console.log(`[useFileUpload] PDF loaded with ${pages.length} pages.`);
+                } else {
+                    setSlides([]);
+                }
             } else {
-                // PDF Path
+                // Text/Other Path
                 setIsSlideMode(false);
                 setLeftPanelView('editor');
                 setSlides([]);

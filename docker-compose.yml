@@ -6,9 +6,9 @@ services:
       dockerfile: Dockerfile
     container_name: pdfx-server
     ports:
-      - "3001:3001"
+      - "4000:4000"
     environment:
-      - PORT=3001
+      - PORT=4000
       - REDIS_HOST=pdfx-redis
       - REDIS_PORT=6379
       - NODE_ENV=production
@@ -17,6 +17,8 @@ services:
     volumes:
       - ./server/src:/app/src
       - ./server/uploads:/app/uploads
+      # Use named volume for database storage to avoid Windows I/O permission locks
+      - pdfx_documents_data:/app/src/database/documents
     depends_on:
       - redis
     networks:
@@ -40,3 +42,4 @@ networks:
 
 volumes:
   pdfx_redis_data_v4:
+  pdfx_documents_data:

@@ -60,7 +60,7 @@ RUN npm install --legacy-peer-deps
 COPY . .
 
 # Expose port
-EXPOSE 3001
+EXPOSE 4000
 
 # Command to run the application
 CMD ["npm", "start"]

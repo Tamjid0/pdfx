@@ -45,6 +45,7 @@ export class DocumentProcessor {
         }
 
         documentGraph.documentId = documentId;
+        documentGraph.originalFilePath = filePath; // Save absolute path for native PDF serving
 
         // Extract internal images (embedded in chunks)
         await ImageExtractor.extractAndSave(documentId, documentGraph);

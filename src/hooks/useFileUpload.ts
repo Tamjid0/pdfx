@@ -74,10 +74,13 @@ export const useFileUpload = () => {
 
             if (isPdfFile) {
                 setFileType('pdf');
+                // Don't auto-fill editor for PDF
+                setHtmlPreview('');
             } else if (isSlideFile) {
                 setFileType('pptx');
             } else {
                 setFileType('text');
+                setHtmlPreview(response.extractedText || "");
             }
 
             if (isSlideFile) {
@@ -109,21 +112,14 @@ export const useFileUpload = () => {
                     setSlides(slides);
                 }
             } else if (isPdfFile) {
-                // PDF Path - Now uses Document Viewer
-                setIsSlideMode(false); // It's not "Slide Mode" in the global sense (that's for PPTX chat view), but we use slide data for viewer
-                setLeftPanelView('editor');
+                // PDF Path - Now uses Client-Side Viewer
+                setIsSlideMode(false);
+                setLeftPanelView('editor'); // Left panel will show DocumentViewer
 
-                // Populate slides for PDF Viewer (it needs length and structure)
-                if (response.chunks) {
-                    const pages = response.chunks.map((chunk: any) => ({
-                        title: `Page ${chunk.metadata.pageIndex + 1}`,
-                        content: chunk.content
-                    }));
-                    setSlides(pages);
-                    console.log(`[useFileUpload] PDF loaded with ${pages.length} pages.`);
-                } else {
-                    setSlides([]);
-                }
+                // We DON'T poll for images anymore because we use direct PDF rendering
+                setIsProcessingSlides(false);
+                setRenderingProgress(100);
+
             } else {
                 // Text/Other Path
                 setIsSlideMode(false);

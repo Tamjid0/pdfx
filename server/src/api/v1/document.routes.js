@@ -60,11 +60,16 @@ router.get('/:documentId/pdf', validate(getDocumentSchema), (req, res) => {
 
     try {
         const docGraph = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
-        if (!docGraph.convertedPdfPath) {
-            return res.status(404).json({ error: 'Converted PDF not found for this document' });
+        if (!docGraph.convertedPdfPath && !docGraph.originalFilePath) {
+            return res.status(404).json({ error: 'PDF source not found for this document' });
         }
 
-        const pdfPath = path.join(DOCUMENTS_DIR, docGraph.convertedPdfPath);
+        let pdfPath;
+        if (docGraph.convertedPdfPath) {
+            pdfPath = path.join(DOCUMENTS_DIR, docGraph.convertedPdfPath);
+        } else {
+            pdfPath = docGraph.originalFilePath;
+        }
         if (!fs.existsSync(pdfPath)) {
             return res.status(404).json({ error: 'PDF file missing on disk' });
         }

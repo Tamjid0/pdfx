@@ -5,6 +5,7 @@ import path from 'path';
 /**
  * Service to render PDF pages to static images on the server using Native Poppler (pdftoppm).
  * This replaces the Node.js canvas/pdfjs implementation for performance and stability.
+ * verification: This relies on 'poppler-utils' being installed in the Docker container.
  */
 class PdfImageRenderer {
 
@@ -56,13 +57,9 @@ class PdfImageRenderer {
                     return reject(new Error(`pdftoppm failed with code ${code}`));
                 }
 
-                console.log(`[PdfImageRenderer] Native rendering completed.`);
+                console.log(`[PdfImageRenderer] Native rendering completed. Found files:`);
 
                 // Normalization Step:
-                // pdftoppm outputs: page-1.png, page-01.png (depending on digit count) or page-1.png
-                // It usually does page-1.png, page-10.png etc.
-                // WE WANT: 1.png, 2.png
-
                 try {
                     const files = fs.readdirSync(pagesDir).filter(f => f.startsWith('page-') && f.endsWith('.png'));
 
@@ -70,10 +67,8 @@ class PdfImageRenderer {
                         // Extract number
                         const match = file.match(/page-(\d+)\.png/);
                         if (match) {
-                            const pageNum = parseInt(match[1]); // pdftoppm uses 1-based index by default? Yes.
-                            // However, we want strict '1.png'
-                            // pdftoppm might pad zeros if many pages.
-                            // parseInt handles "01" -> 1.
+                            const pageNum = parseInt(match[1]);
+                            // pdftoppm output -> 1.png
 
                             const oldPath = path.join(pagesDir, file);
                             const newPath = path.join(pagesDir, `${pageNum}.png`);
@@ -96,7 +91,7 @@ class PdfImageRenderer {
             });
 
             process.on('error', (err) => {
-                console.error("[PdfImageRenderer] Failed to start pdftoppm:", err);
+                console.error("[PdfImageRenderer] Failed to start pdftoppm. Is poppler-utils installed?", err);
                 reject(err);
             });
         });

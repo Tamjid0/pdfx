@@ -48,7 +48,7 @@ app.use('/api', apiRoutes);
 app.use(errorConverter);
 app.use(errorHandler);
 
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 4000;
 app.listen(port, () => {
     logger.info(`Server running on port ${port}`);
 });

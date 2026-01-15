@@ -80,6 +80,7 @@ export const uploadFile = async (req, res, next) => {
         let jobId = null;
 
         // --- PHASE 3: Background PDF Conversion (Only for Slides) ---
+        // --- PHASE 3: Background PDF Conversion (Only for Slides) ---
         if (redisAvailable && (mimetype.includes('presentation') || mimetype.includes('powerpoint'))) {
             // Standard Path: Offload slow PDF conversion to background queue
             const job = await addDocumentJob({

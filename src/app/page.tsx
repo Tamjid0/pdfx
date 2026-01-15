@@ -249,6 +249,8 @@ const Home = () => {
                 handleExport={handleExport}
                 handleSendMessage={handleSendMessage}
                 getHasGenerated={getHasGenerated}
+                fileType={useStore.getState().fileType}
+                fileId={useStore.getState().fileId}
             />
             <ExportModal />
         </div>

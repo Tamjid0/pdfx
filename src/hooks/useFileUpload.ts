@@ -68,9 +68,12 @@ export const useFileUpload = () => {
             setHtmlPreview(response.extractedText || "");
             setFileId(documentId);
 
-            // DEFAULT: Always go to Editor view after upload
-            setView("editor");
-            setMode('editor');
+            // DEFAULT: Check if we are in import view, if so, switch to default editor mode
+            // Otherwise, keep the current mode (e.g., if user is in Chat, stay in Chat)
+            if (useStore.getState().view === 'import') {
+                setView("editor");
+                setMode('editor');
+            }
 
             if (isPdfFile) {
                 setFileType('pdf');

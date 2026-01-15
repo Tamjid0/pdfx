@@ -54,6 +54,8 @@ interface MainLayoutProps {
     handleExport: () => void;
     handleSendMessage: (message: string) => void;
     getHasGenerated: () => boolean;
+    fileType?: string | null;
+    fileId?: string | null;
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({
@@ -62,8 +64,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     isSummaryGenerated, isInsightsGenerated, isNotesGenerated, isFlashcardsGenerated,
     isQuizGenerated, isMindmapGenerated, isSlideMode, backToImport, setLeftPanelView, setMode,
     setPreviewMode, handleEditorChange, handleFileUpload, handlePasteContent,
-    handleScrapeUrl, handleGenerate, handleExport, handleSendMessage, getHasGenerated
+    handleScrapeUrl, handleGenerate, handleExport, handleSendMessage, getHasGenerated,
+    fileType, fileId
 }) => {
+    // Check if we are in PDF viewing mode
+    const isPdfMode = fileType === 'pdf' && !!fileId;
+
+    // Hide the second pane (Artboard) if we are in PDF mode and the mode is 'editor' (default)
+    // This allows the PDF viewer to take full width ("Middle")
+    const showSecondPane = !isPdfMode || mode !== 'editor';
+
     return (
         <div className="flex flex-1 overflow-hidden">
             {view !== 'import' && isMounted && <Sidebar />}
@@ -90,7 +100,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                                 </div>
                                 <div className="flex-1 flex justify-center items-center gap-4">
                                     <div className={`inline-flex bg-[#1a1a1a] p-1 rounded-md border border-[#333] ${mode === 'editor' ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                                        {!isSlideMode && (
+                                        {!isSlideMode && !isPdfMode && (
                                             <>
                                                 <button onClick={() => { if (mode !== 'editor') setLeftPanelView('editor') }} className={`px-4 py-2 text-sm font-medium rounded ${leftPanelView === 'editor' && mode !== 'editor' ? 'bg-[#00ff88] text-black' : 'text-white'}`} disabled={mode === 'editor'}>Editor</button>
                                                 <button onClick={() => { if (mode !== 'editor') setLeftPanelView('artboard') }} className={`px-4 py-2 text-sm font-medium rounded ${leftPanelView === 'artboard' && mode !== 'editor' ? 'bg-[#00ff88] text-black' : 'text-white'}`} disabled={mode === 'editor'}>Artboard</button>
@@ -98,6 +108,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                                         )}
                                         {isSlideMode && (
                                             <button onClick={() => { if (mode !== 'editor') setLeftPanelView('slides') }} className={`px-4 py-2 text-sm font-medium rounded ${leftPanelView === 'slides' && mode !== 'editor' ? 'bg-[#00ff88] text-black' : 'text-white'}`} disabled={mode === 'editor'}>Slides</button>
+                                        )}
+                                        {isPdfMode && (
+                                            <div className="px-4 py-2 text-sm font-bold text-[#00ff88] flex items-center gap-2">
+                                                <span className="w-2 h-2 rounded-full bg-[#00ff88]"></span>
+                                                PDF Viewer
+                                            </div>
                                         )}
                                     </div>
                                     <ModeSwitcher currentMode={mode} onModeChange={(newMode) => setMode(newMode)} />
@@ -153,29 +169,31 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                                                 )}
                                             </div>
                                         </Allotment.Pane>
-                                        <Allotment.Pane>
-                                            <div className="flex-1 flex flex-col p-6 overflow-y-auto h-full">
-                                                {mode === 'editor' ? (
-                                                    <Artboard htmlContent={htmlPreview} isLoading={false} activeNotesToggles={activeNotesToggles} activeInsightsToggles={activeInsightsToggles} onExport={handleExport} />
-                                                ) : (
-                                                    <DocumentPreview mode={mode}>
-                                                        {mode === 'summary' && <Summary onGenerate={() => handleGenerate('summary')} />}
-                                                        {mode === 'insights' && <Insights onGenerate={() => handleGenerate('insights')} />}
-                                                        {mode === 'notes' && <Notes onGenerate={() => handleGenerate('notes')} />}
-                                                        {mode === 'flashcards' && <Flashcards onGenerate={() => handleGenerate('flashcards')} />}
-                                                        {mode === 'quiz' && <Quiz onGenerate={() => handleGenerate('quiz')} />}
-                                                        {mode === 'mindmap' && <Mindmap data={mindmapData} onGenerate={() => handleGenerate('mindmap')} />}
-                                                    </DocumentPreview>
-                                                )}
-                                                {mode === 'chat' && (
-                                                    <Chat
-                                                        history={chatHistory}
-                                                        onSendMessage={handleSendMessage}
-                                                        isTyping={isTyping}
-                                                    />
-                                                )}
-                                            </div>
-                                        </Allotment.Pane>
+                                        {showSecondPane && (
+                                            <Allotment.Pane>
+                                                <div className="flex-1 flex flex-col p-6 overflow-y-auto h-full">
+                                                    {mode === 'editor' ? (
+                                                        <Artboard htmlContent={htmlPreview} isLoading={false} activeNotesToggles={activeNotesToggles} activeInsightsToggles={activeInsightsToggles} onExport={handleExport} />
+                                                    ) : (
+                                                        <DocumentPreview mode={mode}>
+                                                            {mode === 'summary' && <Summary onGenerate={() => handleGenerate('summary')} />}
+                                                            {mode === 'insights' && <Insights onGenerate={() => handleGenerate('insights')} />}
+                                                            {mode === 'notes' && <Notes onGenerate={() => handleGenerate('notes')} />}
+                                                            {mode === 'flashcards' && <Flashcards onGenerate={() => handleGenerate('flashcards')} />}
+                                                            {mode === 'quiz' && <Quiz onGenerate={() => handleGenerate('quiz')} />}
+                                                            {mode === 'mindmap' && <Mindmap data={mindmapData} onGenerate={() => handleGenerate('mindmap')} />}
+                                                        </DocumentPreview>
+                                                    )}
+                                                    {mode === 'chat' && (
+                                                        <Chat
+                                                            history={chatHistory}
+                                                            onSendMessage={handleSendMessage}
+                                                            isTyping={isTyping}
+                                                        />
+                                                    )}
+                                                </div>
+                                            </Allotment.Pane>
+                                        )}
                                     </Allotment>
                                 )}
                             </div>

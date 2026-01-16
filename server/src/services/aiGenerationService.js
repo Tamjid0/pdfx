@@ -50,7 +50,7 @@ User's specific instruction: "${promptInstruction}"
  * @param {number} [topN=4] - Number of top relevant documents to retrieve.
  * @returns {Promise<string>} - The AI generated content based on relevant documents.
  */
-export async function generateChunkBasedTransformation(fileId, query, topN = 8) {
+export async function generateChunkBasedTransformation(fileId, query, topN = 8, citationMode = true) {
     const indexesDir = path.join(process.cwd(), 'src', 'database', 'indexes');
     const indexPath = path.join(indexesDir, fileId);
 
@@ -73,41 +73,53 @@ export async function generateChunkBasedTransformation(fileId, query, topN = 8) 
         let source = '';
 
         if (meta.pageIndex !== undefined) {
+            const displayIndex = meta.pageIndex + 1; // Convert 0-indexed to 1-based for human/prompt
             if (meta.pageType === 'slide') {
-                source = `[Source: Slide ${meta.pageIndex}]`;
+                source = `[Source: Slide ${displayIndex}]`;
             } else {
-                source = `[Source: Page ${meta.pageIndex}]`;
+                source = `[Source: Page ${displayIndex}]`;
             }
         }
 
         return `${source}\n${doc.pageContent}`;
     }).join('\n\n---\n\n');
 
+    const citationRules = citationMode ? `
+ZERO-REDUNDANCY CITATION RULES:
+- DO NOT repeat info. Integrate citations NATIVELY into your flow.
+- Wrap ONLY the extracted keyword/phrase in <cite page="X">...</cite> tags.
+- Example: "The **atom** <cite page="1">allows for manipulation of particles</cite> to build elements."
+- The page "X" MUST match the [Source: Page X] or [Source: Slide X] tag.
+- Citation must be part of the sentence, not an added block.
+` : `
+CITATION RULES:
+- DO NOT Use any <cite> tags.
+- DO NOT mention page numbers or slide numbers.
+- Return a clean, professional markdown response WITHOUT any source references.
+`;
+
     const systemPrompt = `
-You are an expert AI assistant answering questions based STRICTLY on the provided "Context".
+You are an elite AI researcher specializing in high-density, structured knowledge extraction. Generate a perfectly organized "Markdown Note" based strictly on the Context.
 
-CRITICAL CITATION FORMAT (MUST FOLLOW):
-- You MUST wrap quoted text in cite tags: <cite page="X">exact text from document</cite>
-- Example: The document states that <cite page="3">atoms are the building blocks of matter</cite>.
-- DO NOT use (Page X) or [Page X] format - ONLY use <cite> tags
-- The quoted text MUST be EXACT text from the Context, word-for-word
-- Use MULTIPLE cite tags throughout your answer
-- Every major point should have a cited quote
+STRUCTURE:
+- Use H2 (##) and H3 (###) headers. Use BOLDING for emphasis.
+- Use TABLES for comparisons and LISTS for steps. No conversational filler.
 
-OTHER RULES:
-- ONLY use information from the "Context" below
-- DO NOT invent facts or paraphrase - quote exactly
-- Format your answer using Markdown for readability
-- Be thorough and cite frequently
+CRITICAL: ZERO REDUNDANCY POLICY:
+- DO NOT explain a concept and then "quote" it again separately.
+- DO NOT use a format like: Explanation "Quote" [Page X].
+- DO NOT repeat the same information twice in a sentence.
+
+${citationRules}
 
 Context:
 """
 ${context}
 """
 
-User's query: "${query}"
+User Query: "${query}"
 
-REMINDER: Use <cite page="X">exact quoted text</cite> format for ALL citations!
+REMINDER: ${citationMode ? 'Integrated <cite> tags for keywords only. No duplicate text.' : 'NO CITATIONS. NO PAGE NUMBERS.'} Perfectly structured Markdown.
 `;
 
     try {
@@ -126,7 +138,7 @@ REMINDER: Use <cite page="X">exact quoted text</cite> format for ALL citations!
  * @param {number} [topN=4] - Number of top relevant documents to retrieve.
  * @returns {AsyncGenerator<string>} - Async generator yielding AI content chunks.
  */
-export async function* generateChunkBasedStreamingTransformation(fileId, query, topN = 8) {
+export async function* generateChunkBasedStreamingTransformation(fileId, query, topN = 8, citationMode = true) {
     const indexesDir = path.join(process.cwd(), 'src', 'database', 'indexes');
     const indexPath = path.join(indexesDir, fileId);
 
@@ -148,27 +160,51 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
         let source = '';
 
         if (meta.pageIndex !== undefined) {
+            const displayIndex = meta.pageIndex + 1; // Convert 0-indexed to 1-based
             if (meta.pageType === 'slide') {
-                source = `[Source: Slide ${meta.pageIndex + 1}]`;
+                source = `[Source: Slide ${displayIndex}]`;
             } else {
-                source = `[Source: Page ${meta.pageIndex + 1}]`;
+                source = `[Source: Page ${displayIndex}]`;
             }
         }
 
         return `${source}\n${doc.pageContent}`;
     }).join('\n\n---\n\n');
 
+    const citationRules = citationMode ? `
+ZERO-REDUNDANCY CITATION RULES:
+- DO NOT repeat info. Integrate citations NATIVELY into your flow.
+- Wrap ONLY the extracted keyword/phrase in <cite page="X">...</cite> tags.
+- Example: "The **atom** <cite page="1">allows for manipulation of particles</cite> to build elements."
+- The page "X" MUST match the [Source: Page X] or [Source: Slide X] tag.
+- Citation must be part of the sentence, not an added block.
+` : `
+CITATION RULES:
+- DO NOT Use any <cite> tags.
+- DO NOT mention page numbers or slide numbers.
+- Return a clean, professional markdown response WITHOUT any source references.
+`;
+
     const systemPrompt = `
-You are an expert AI assistant answering questions based STRICTLY on the provided "Context".
-- When answering, ALWAYS cite the source (Page X or Slide X) from the [Source: ...] tags in the Context.
-- Format your answer using Markdown.
+You are an elite AI researcher generating high-density "Markdown Notes".
+
+STRUCTURE:
+- Use H2/H3 headers. BOLD key terms. Use TABLES/LISTS. No fluff.
+
+CRITICAL: ZERO REDUNDANCY POLICY:
+- DO NOT explain a concept and then "quote" it again separately.
+- DO NOT repeat the same information twice in a sentence.
+
+${citationRules}
 
 Context:
 """
 ${context}
 """
 
-User's query: "${query}"
+User Query: "${query}"
+
+REMINDER: ${citationMode ? 'Integrated <cite> tags for keywords only. No duplicate text.' : 'NO CITATIONS. NO PAGE NUMBERS.'} Perfectly structured Markdown.
 `;
 
     try {

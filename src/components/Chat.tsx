@@ -5,6 +5,8 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { parseCitations } from '../utils/citationParser';
 
+import { useStore } from '../store/useStore';
+
 interface ChatMessage {
     sender: 'user' | 'ai';
     text: string;
@@ -19,6 +21,7 @@ interface ChatProps {
 }
 
 const Chat: React.FC<ChatProps> = ({ history, onSendMessage, onCitationClick, isTyping }) => {
+    const { citationMode, setCitationMode } = useStore();
     const [inputValue, setInputValue] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -57,8 +60,30 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, onCitationClick, is
     }, [inputValue]);
 
     return (
-        <div className="chat-container flex flex-col h-full w-full">
-            <div className="chat-messages-area flex-1 overflow-y-auto p-6 flex flex-col gap-5">
+        <div className="chat-container flex flex-col h-full w-full relative">
+            {/* Citation Toggle Header */}
+            <div className="flex items-center justify-between px-6 py-3 bg-[#0f0f0f] border-b border-[#222] z-10">
+                <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${citationMode ? 'bg-[#00ff88]' : 'bg-[#666]'}`}></div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#aaa]">
+                        {citationMode ? 'Citation Mode Active' : 'Citation Mode Disabled'}
+                    </span>
+                </div>
+                <button
+                    onClick={() => setCitationMode(!citationMode)}
+                    className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold transition-all border ${citationMode
+                            ? 'bg-[#00ff88]/10 text-[#00ff88] border-[#00ff88]/20 hover:bg-[#00ff88]/20'
+                            : 'bg-[#1a1a1a] text-[#666] border-[#333] hover:border-[#444]'
+                        }`}
+                >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                    CITATIONS: {citationMode ? 'ON' : 'OFF'}
+                </button>
+            </div>
+
+            <div className="chat-messages-area flex-1 overflow-y-auto p-6 flex flex-col gap-5 relative">
                 {history.length === 0 ? (
                     <div className="chat-empty-state flex-1 flex flex-col items-center justify-center text-center p-8">
                         <div className="chat-empty-icon w-20 h-20 bg-gradient-to-br from-[rgba(0,255,136,0.2)] to-[rgba(0,255,136,0.05)] rounded-2xl flex items-center justify-center mb-5">
@@ -110,19 +135,23 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, onCitationClick, is
                                             {/* Render parsed content: markdown + citations */}
                                             {parseCitations(msg.text).map((part, i) =>
                                                 part.type === 'citation' ? (
-                                                    <button
+                                                    <span
                                                         key={i}
                                                         onClick={() => onCitationClick?.(part.page, part.quotedText)}
-                                                        className="inline-flex items-center gap-1.5 mx-1 px-2 py-0.5 rounded-full bg-[#00ff88]/10 text-[#00ff88] text-xs font-bold border border-[#00ff88]/20 hover:bg-[#00ff88]/20 hover:scale-105 transition-all cursor-pointer select-none align-middle max-w-xs"
+                                                        className="cursor-pointer text-[#00ff88] font-bold hover:underline transition-all inline cursor-pointer select-text mx-0.5"
                                                         title={part.quotedText ? `Find "${part.quotedText}" on page ${part.page}` : `Jump to Page ${part.page}`}
                                                     >
-                                                        <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                                                         {part.quotedText ? (
-                                                            <span className="truncate italic">"{part.quotedText.length > 40 ? part.quotedText.substring(0, 40) + '...' : part.quotedText}" <span className="opacity-70 font-normal">[Pg {part.page}]</span></span>
+                                                            <span className="italic text-[#00ff88]">
+                                                                {part.quotedText}
+                                                                <sup className="text-[10px] opacity-80 decoration-none no-underline border border-[#00ff88]/30 px-1 rounded-sm ml-1 font-bold">
+                                                                    {part.page}
+                                                                </sup>
+                                                            </span>
                                                         ) : (
-                                                            <span>Page {part.page}</span>
+                                                            <span className="text-[#00ff88]">[Pg {part.page}]</span>
                                                         )}
-                                                    </button>
+                                                    </span>
                                                 ) : (
                                                     <ReactMarkdown
                                                         key={i}

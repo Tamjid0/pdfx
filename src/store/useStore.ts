@@ -106,6 +106,8 @@ interface AppState {
     setTemplates: (templates: any[]) => void;
     pdfSearchText: string | null;
     setPdfSearchText: (text: string | null) => void;
+    citationMode: boolean;
+    setCitationMode: (mode: boolean) => void;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -239,4 +241,8 @@ export const useStore = create<AppState>((set) => ({
     // PDF Search State
     pdfSearchText: null,
     setPdfSearchText: (text) => set({ pdfSearchText: text }),
+
+    // Citation Mode
+    citationMode: true,
+    setCitationMode: (mode) => set({ citationMode: mode }),
 }));

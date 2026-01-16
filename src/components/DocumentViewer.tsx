@@ -20,7 +20,8 @@ const HIGHLIGHT_STYLE = `
     .react-pdf__Page__textContent {
         opacity: 1 !important;
         z-index: 10 !important;
-        pointer-events: none !important;
+        pointer-events: auto !important; /* Restore text selection */
+        user-select: text !important;
     }
 
     /* Keep the text layer invisible to avoid z-fighting/ghosting */
@@ -161,9 +162,16 @@ const DocumentViewer: React.FC = () => {
         });
 
         const fullPageText = charMap.map(c => c.char).join('');
-        const normalizedSearch = searchText.toLowerCase().split('').map(normalizeChar).join('').replace(/\s+/g, ' ').trim();
 
-        console.log('🔍 [PDF Search] Normalized query:', normalizedSearch);
+        // Normalize search: strip quotes, normalize chars, collapse spaces
+        const cleanQuery = (text: string) => text.toLowerCase()
+            .split('').map(normalizeChar).join('')
+            .replace(/["'“”‘’]/g, '') // Strip quotes for broader matching
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        const normalizedSearch = cleanQuery(searchText);
+        console.log('🔍 [PDF Search V5] Target:', normalizedSearch);
 
         // --- STRATEGY 1: Exact Whitespace-Insensitive Match ---
         const normalizedPageText = fullPageText.replace(/\s+/g, ' ');
@@ -194,39 +202,35 @@ const DocumentViewer: React.FC = () => {
             return;
         }
 
-        // --- STRATEGY 2: Character-Only Match ---
-        console.log('⚠️ [PDF Search] Strategy 1 failed. Trying Strategy 2 (Chars Only)...');
-        const pageCharsOnly = charMap.filter(c => /[a-z0-9]/.test(c.char)).map(c => c.char).join('');
-        const searchCharsOnly = normalizedSearch.replace(/[^a-z0-9]/g, '');
+        // --- STRATEGY 2: Semantic Phrase Match (Punctuation Blind) ---
+        console.log('⚠️ [PDF Search] Strategy 1 failed. Trying Strategy 2 (Semantic Phrase)...');
+        const searchTerms = normalizedSearch.split(' ').filter(w => w.length > 0);
 
-        const charMatchIndex = pageCharsOnly.indexOf(searchCharsOnly);
-        if (charMatchIndex !== -1 && searchCharsOnly.length > 5) {
-            console.log('✅ [PDF Search] Strategy 2 (Chars Only) matched!');
-            const highlightedElements = new Set<HTMLElement>();
-            let alphaCounter = 0;
-            let matchedCount = 0;
-            let startMatching = false;
+        // Build a regex that matches the words with flexible non-word characters between them
+        const semanticPattern = searchTerms
+            .map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+            .join('[^a-z0-9]+');
 
-            for (let i = 0; i < charMap.length; i++) {
-                if (/[a-z0-9]/.test(charMap[i].char)) {
-                    if (alphaCounter === charMatchIndex) startMatching = true;
-                    if (startMatching) {
-                        highlightedElements.add(charMap[i].element);
-                        matchedCount++;
-                    }
-                    alphaCounter++;
-                    if (matchedCount === searchCharsOnly.length) break;
-                } else if (startMatching) {
+        try {
+            const regex = new RegExp(semanticPattern, 'i');
+            const match = fullPageText.match(regex);
+
+            if (match) {
+                console.log('✅ [PDF Search] Strategy 2 (Semantic) matched!');
+                const highlightedElements = new Set<HTMLElement>();
+                const startIndex = fullPageText.indexOf(match[0]);
+                const endIndex = startIndex + match[0].length;
+                for (let i = startIndex; i < endIndex && i < charMap.length; i++) {
                     highlightedElements.add(charMap[i].element);
                 }
+                applyHighlights(highlightedElements);
+                return;
             }
-            applyHighlights(highlightedElements);
-            return;
-        }
+        } catch (e) { console.warn('Semantic match failed:', e); }
 
-        // --- STRATEGY 3: Word Cluster ---
+        // --- STRATEGY 3: Word Cluster (Proximity Match) ---
         console.log('⚠️ [PDF Search] Strategy 2 failed. Trying Strategy 3 (Word Cluster)...');
-        const importantWords = normalizedSearch.split(' ').filter(w => w.length > 3);
+        const importantWords = searchTerms.filter(w => w.length > 3);
         const clusterSpans = new Set<HTMLElement>();
         let foundWords = 0;
 
@@ -241,43 +245,40 @@ const DocumentViewer: React.FC = () => {
             }
         });
 
-        if (foundWords >= Math.min(3, importantWords.length)) {
-            console.log(`✅ [PDF Search] Strategy 3 (Word Cluster) highlighted ${foundWords} words`);
+        if (foundWords >= Math.min(2, importantWords.length)) {
+            console.log(`✅ [PDF Search] Strategy 3 (Word Cluster) matched ${foundWords} words`);
             applyHighlights(clusterSpans);
             return;
         }
 
-        // --- STRATEGY 4: Squishy Match (Handle extra characters/stuttering) ---
-        console.log('⚠️ [PDF Search] Strategy 3 failed. Trying Strategy 4 (Squishy Match)...');
-        // Create a regex that allows for optional non-alphanumeric junk between characters
-        const squishyPattern = normalizedSearch
-            .split('')
-            .map(char => char.match(/[a-z0-9]/) ? `${char.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^a-z0-9]*` : '')
-            .filter(Boolean)
-            .join('');
+        // --- STRATEGY 4: Character-Only Strict Match ---
+        console.log('⚠️ [PDF Search] Strategy 3 failed. Trying Strategy 4 (Chars Only)...');
+        const pageCharsOnly = charMap.filter(c => /[a-z0-9]/.test(c.char)).map(c => c.char).join('');
+        const searchCharsOnly = normalizedSearch.replace(/[^a-z0-9]/g, '');
 
-        try {
-            const regex = new RegExp(squishyPattern, 'i');
-            const match = fullPageText.match(regex);
-            if (match && match[0].length < normalizedSearch.length * 4) {
-                console.log('✅ [PDF Search] Strategy 4 (Squishy) matched!');
-                const highlightedElements = new Set<HTMLElement>();
-
-                // We need to map the fullPageText match range back to spans
-                const startIndex = fullPageText.indexOf(match[0]);
-                const endIndex = startIndex + match[0].length;
-
-                for (let i = startIndex; i < endIndex && i < charMap.length; i++) {
-                    highlightedElements.add(charMap[i].element);
-                }
-                applyHighlights(highlightedElements);
-                return;
+        const charMatchIndex = pageCharsOnly.indexOf(searchCharsOnly);
+        if (charMatchIndex !== -1 && searchCharsOnly.length > 5) {
+            console.log('✅ [PDF Search] Strategy 4 (Chars Only) matched');
+            const highlightedElements = new Set<HTMLElement>();
+            let alphaCounter = 0;
+            let matchedCount = 0;
+            let startMatching = false;
+            for (let i = 0; i < charMap.length; i++) {
+                if (/[a-z0-9]/.test(charMap[i].char)) {
+                    if (alphaCounter === charMatchIndex) startMatching = true;
+                    if (startMatching) {
+                        highlightedElements.add(charMap[i].element);
+                        matchedCount++;
+                    }
+                    alphaCounter++;
+                    if (matchedCount === searchCharsOnly.length) break;
+                } else if (startMatching) highlightedElements.add(charMap[i].element);
             }
-        } catch (e) {
-            console.warn('Squishy regex failed:', e);
+            applyHighlights(highlightedElements);
+            return;
         }
 
-        console.error('❌ [PDF Search] All strategies failed for text:', normalizedSearch);
+        console.error('❌ [PDF Search V5] All strategies failed for:', normalizedSearch);
     };
 
     const applyHighlights = (elements: Set<HTMLElement>) => {

@@ -9,30 +9,35 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/b
 
 const HIGHLIGHT_STYLE = `
     .pdf-highlight {
-        background-color: #00ff88 !important;
-        color: #000 !important;
-        font-weight: bold !important;
+        background-color: rgba(0, 255, 136, 0.4) !important;
+        color: transparent !important; /* Hide overlay text to prevent ghosting */
         border-radius: 2px !important;
-        outline: 3px solid #00ff88 !important;
-        box-shadow: 0 0 15px rgba(0, 255, 136, 0.8) !important;
+        outline: 2px solid #00ff88 !important;
+        box-shadow: 0 0 10px rgba(0, 255, 136, 0.5) !important;
         z-index: 1000 !important;
-        mix-blend-mode: multiply !important;
     }
     
     .react-pdf__Page__textContent {
-        opacity: 0.5 !important;
+        opacity: 1 !important;
         z-index: 10 !important;
         pointer-events: none !important;
     }
 
+    /* Keep the text layer invisible to avoid z-fighting/ghosting */
     .react-pdf__Page__textContent span {
         background: transparent !important;
+        color: transparent !important;
     }
 
     /* Target the Search Box container specifically */
     .document-viewer .z-50 {
         z-index: 9999 !important;
         pointer-events: auto !important;
+    }
+
+    /* Smooth transition for minimization */
+    .search-box-transition {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 `;
 
@@ -55,6 +60,7 @@ const DocumentViewer: React.FC = () => {
     const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
     const [containerRect, setContainerRect] = useState<{ width: number; height: number } | null>(null);
     const [showSearchBox, setShowSearchBox] = useState(false);
+    const [isSearchMinimized, setIsSearchMinimized] = useState(false);
     const [highlightedText, setHighlightedText] = useState<string | null>(null);
 
     useEffect(() => {
@@ -86,6 +92,7 @@ const DocumentViewer: React.FC = () => {
     useEffect(() => {
         if (pdfSearchText) {
             setShowSearchBox(true);
+            setIsSearchMinimized(false);
             setHighlightedText(pdfSearchText);
 
             // Copy to clipboard for easy Ctrl+F search
@@ -156,7 +163,6 @@ const DocumentViewer: React.FC = () => {
         const fullPageText = charMap.map(c => c.char).join('');
         const normalizedSearch = searchText.toLowerCase().split('').map(normalizeChar).join('').replace(/\s+/g, ' ').trim();
 
-        console.log('📄 [PDF Search] Page text preview:', fullPageText.substring(0, 100));
         console.log('🔍 [PDF Search] Normalized query:', normalizedSearch);
 
         // --- STRATEGY 1: Exact Whitespace-Insensitive Match ---
@@ -241,8 +247,37 @@ const DocumentViewer: React.FC = () => {
             return;
         }
 
-        console.error('❌ [PDF Search] All strategies failed. Check console for page dump.');
-        console.log('📄 [PDF Search] PAGE DUMP:', normalizedPageText);
+        // --- STRATEGY 4: Squishy Match (Handle extra characters/stuttering) ---
+        console.log('⚠️ [PDF Search] Strategy 3 failed. Trying Strategy 4 (Squishy Match)...');
+        // Create a regex that allows for optional non-alphanumeric junk between characters
+        const squishyPattern = normalizedSearch
+            .split('')
+            .map(char => char.match(/[a-z0-9]/) ? `${char.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^a-z0-9]*` : '')
+            .filter(Boolean)
+            .join('');
+
+        try {
+            const regex = new RegExp(squishyPattern, 'i');
+            const match = fullPageText.match(regex);
+            if (match && match[0].length < normalizedSearch.length * 4) {
+                console.log('✅ [PDF Search] Strategy 4 (Squishy) matched!');
+                const highlightedElements = new Set<HTMLElement>();
+
+                // We need to map the fullPageText match range back to spans
+                const startIndex = fullPageText.indexOf(match[0]);
+                const endIndex = startIndex + match[0].length;
+
+                for (let i = startIndex; i < endIndex && i < charMap.length; i++) {
+                    highlightedElements.add(charMap[i].element);
+                }
+                applyHighlights(highlightedElements);
+                return;
+            }
+        } catch (e) {
+            console.warn('Squishy regex failed:', e);
+        }
+
+        console.error('❌ [PDF Search] All strategies failed for text:', normalizedSearch);
     };
 
     const applyHighlights = (elements: Set<HTMLElement>) => {
@@ -280,6 +315,10 @@ const DocumentViewer: React.FC = () => {
     const previousPage = () => changePage(-1);
     const nextPage = () => changePage(1);
 
+    const zoomIn = () => setScale(prev => Math.min(prev + 0.1, 3.0));
+    const zoomOut = () => setScale(prev => Math.max(prev - 0.1, 0.5));
+    const resetZoom = () => setScale(1.0);
+
     if (!fileId) return null;
 
     return (
@@ -302,25 +341,34 @@ const DocumentViewer: React.FC = () => {
                     </button>
                 </div>
 
-                <div className="flex items-center gap-4 pointer-events-auto">
-                    {/* Diagnostic Tool */}
-                    <button
-                        onClick={() => {
-                            const layer = document.querySelector('.react-pdf__Page__textContent');
-                            if (layer) {
-                                const spans = layer.querySelectorAll('span');
-                                spans.forEach(span => span.classList.add('pdf-highlight'));
-                                alert(`Highlighted ${spans.length} spans on this page. If you don't see green boxes, the text layer is hidden or misaligned.`);
-                            } else {
-                                alert('PDF Text Layer not found. Wait for render or check console.');
-                            }
-                        }}
-                        className="px-3 py-1.5 bg-yellow-500/20 border border-yellow-500/30 rounded-lg text-yellow-500 text-[10px] font-bold hover:bg-yellow-500/30 transition-all uppercase tracking-widest"
-                    >
-                        Diagnostic: Highlight All
-                    </button>
+                <div className="flex items-center gap-3 pointer-events-auto">
+                    {/* Zoom Controls */}
+                    <div className="flex items-center gap-1 bg-[#1a1a1a]/40 backdrop-blur-md p-1 rounded-full border border-white/10 ring-1 ring-white/5">
+                        <button
+                            onClick={zoomOut}
+                            className="p-1.5 hover:text-[#00ff88] transition-colors rounded-full hover:bg-white/5"
+                            title="Zoom Out"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
+                        </button>
+                        <button
+                            onClick={resetZoom}
+                            className="px-2 text-[10px] font-mono text-white/70 hover:text-white transition-colors"
+                            title="Reset Zoom"
+                        >
+                            {Math.round(scale * 100)}%
+                        </button>
+                        <button
+                            onClick={zoomIn}
+                            className="p-1.5 hover:text-[#00ff88] transition-colors rounded-full hover:bg-white/5"
+                            title="Zoom In"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                        </button>
+                    </div>
 
-                    <div className="flex items-center gap-2 bg-[#1a1a1a]/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+                    {/* Page Controls */}
+                    <div className="flex items-center gap-2 bg-[#1a1a1a]/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 ring-1 ring-white/5">
                         <button
                             disabled={pageNumber <= 1}
                             onClick={previousPage}
@@ -344,72 +392,84 @@ const DocumentViewer: React.FC = () => {
 
             {/* Floating Search Box - Appears when citation is clicked */}
             {showSearchBox && pdfSearchText && (
-                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-2 fade-in duration-200">
-                    <div className="bg-[#1a1a1a]/95 backdrop-blur-md border border-[#00ff88]/30 rounded-xl p-4 shadow-2xl min-w-[400px]">
-                        <div className="flex items-start gap-3">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <svg className="w-4 h-4 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <div className={`absolute top-20 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-2 fade-in duration-200 search-box-transition ${isSearchMinimized ? 'min-w-0 opacity-80' : 'min-w-[400px]'}`}>
+                    <div className={`bg-[#1a1a1a]/95 backdrop-blur-md border border-[#00ff88]/30 rounded-xl shadow-2xl overflow-hidden ${isSearchMinimized ? 'p-1' : 'p-4'}`}>
+                        {isSearchMinimized ? (
+                            <div className="flex items-center gap-2 px-2 py-1">
+                                <div className="w-2 h-2 bg-[#00ff88] rounded-full animate-pulse"></div>
+                                <span className="text-[10px] font-bold text-[#00ff88] uppercase tracking-widest">Active Highlight</span>
+                                <button
+                                    onClick={() => setIsSearchMinimized(false)}
+                                    className="p-1 hover:bg-white/10 rounded-lg transition-colors text-white/50 hover:text-white"
+                                    title="Restore Search Box"
+                                >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 4l-5 5M4 16v4m0 0h4m-4 4l5-5m11 1v4m0 0h-4m4-4l-5 5" />
                                     </svg>
-                                    <span className="text-xs font-bold text-[#00ff88] uppercase tracking-wider">Search in PDF</span>
-                                </div>
-                                <div className="bg-[#0a0a0a] border border-[#333] rounded-lg p-3 mb-2">
-                                    <p className="text-sm text-white/90 italic">"{pdfSearchText}"</p>
-                                </div>
-                                <p className="text-xs text-white/50 mb-3">
-                                    Press <kbd className="px-1.5 py-0.5 bg-[#333] rounded text-[#00ff88] font-mono">Ctrl+F</kbd> (or <kbd className="px-1.5 py-0.5 bg-[#333] rounded text-[#00ff88] font-mono">⌘+F</kbd>) to search for this text in the PDF
-                                </p>
-                                <div className="flex gap-2">
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex items-start gap-3">
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <svg className="w-4 h-4 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                        <span className="text-xs font-bold text-[#00ff88] uppercase tracking-wider">Search in PDF</span>
+                                    </div>
+                                    <div className="bg-[#0a0a0a] border border-[#333] rounded-lg p-3 mb-2">
+                                        <p className="text-sm text-white/90 italic">"{pdfSearchText}"</p>
+                                    </div>
+                                    <p className="text-xs text-white/50 mb-3">
+                                        Press <kbd className="px-1.5 py-0.5 bg-[#333] rounded text-[#00ff88] font-mono">Ctrl+F</kbd> (or <kbd className="px-1.5 py-0.5 bg-[#333] rounded text-[#00ff88] font-mono">⌘+F</kbd>) to search for this text in the PDF
+                                    </p>
                                     <button
                                         onClick={() => highlightTextInPDF(pdfSearchText)}
-                                        className="flex-1 py-1.5 bg-[#00ff88]/20 border border-[#00ff88]/30 rounded-lg text-[#00ff88] text-xs font-bold hover:bg-[#00ff88]/30 transition-all flex items-center justify-center gap-2"
+                                        className="w-full py-1.5 bg-[#00ff88]/20 border border-[#00ff88]/30 rounded-lg text-[#00ff88] text-xs font-bold hover:bg-[#00ff88]/30 transition-all flex items-center justify-center gap-2"
                                     >
                                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                         </svg>
-                                        Re-highlight
+                                        Re-highlight Text
+                                    </button>
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <button
+                                        onClick={() => setIsSearchMinimized(true)}
+                                        className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-white/50 hover:text-white"
+                                        title="Minimize search box"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M18 12H6" />
+                                        </svg>
                                     </button>
                                     <button
                                         onClick={() => {
+                                            setShowSearchBox(false);
+                                            setPdfSearchText('');
+                                            useStore.getState().setPdfSearchText('');
                                             const layer = document.querySelector('.react-pdf__Page__textContent');
                                             if (layer) {
-                                                layer.querySelectorAll('span').forEach(span => span.classList.add('pdf-highlight'));
-                                                console.log('🧪 Diagnostic: Highlighted all spans');
+                                                layer.querySelectorAll('.pdf-highlight').forEach(el => el.classList.remove('pdf-highlight'));
                                             }
                                         }}
-                                        className="px-3 py-1.5 bg-red-500/20 border border-red-500/30 rounded-lg text-red-500 text-[10px] font-bold hover:bg-red-500/30 transition-all uppercase tracking-tighter"
-                                        title="Debug: Highlight every single text span on this page"
+                                        className="p-1.5 hover:bg-white/10 rounded-lg transition-colors group/close"
+                                        title="Close search"
                                     >
-                                        Highlight All (Diagnostic)
+                                        <svg className="w-5 h-5 text-white/50 group-hover/close:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
                                     </button>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => {
-                                    setShowSearchBox(false);
-                                    setPdfSearchText('');
-                                    useStore.getState().setPdfSearchText('');
-                                    const layer = document.querySelector('.react-pdf__Page__textContent');
-                                    if (layer) {
-                                        layer.querySelectorAll('.pdf-highlight').forEach(el => el.classList.remove('pdf-highlight'));
-                                    }
-                                }}
-                                className="p-1.5 hover:bg-white/10 rounded-lg transition-colors group/close"
-                                title="Close search"
-                            >
-                                <svg className="w-5 h-5 text-white/50 group-hover/close:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
+                        )}
                     </div>
                 </div>
             )}
 
-            {/* Main Content Area - React PDF (Fit to Page) */}
-            <div className="flex-1 w-full h-full relative bg-[#0a0a0a] overflow-hidden flex justify-center items-center p-4">
-                <div ref={setContainerRef} className="w-full h-full flex items-center justify-center">
+            {/* Main Content Area - React PDF */}
+            <div className="flex-1 w-full h-full relative bg-[#0a0a0a] overflow-auto flex justify-center items-start p-8">
+                <div ref={setContainerRef} className="min-w-full flex items-start justify-center">
                     {containerRect && (
                         <Document
                             file={`/api/v1/documents/${fileId}/pdf`}
@@ -430,11 +490,11 @@ const DocumentViewer: React.FC = () => {
                         >
                             <Page
                                 pageNumber={pageNumber}
+                                scale={scale}
                                 renderTextLayer={true}
                                 renderAnnotationLayer={true}
                                 onRenderSuccess={onPageRenderSuccess}
-                                height={containerRect.height - 40}
-                                className="shadow-2xl border border-[#222]"
+                                className="shadow-2xl border border-[#222] transition-transform duration-200"
                             />
                         </Document>
                     )}

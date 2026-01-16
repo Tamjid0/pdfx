@@ -51,7 +51,7 @@ export class PptxExtractor {
         });
 
         // 3. Process Each Slide
-        let slideIndex = 1;
+        let slideIndex = 0;
         for (const fileName of slideFiles) {
             try {
                 const page = new DocumentPage(slideIndex, { width: slideWidth, height: slideHeight }, 'slide');

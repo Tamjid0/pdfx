@@ -7,6 +7,35 @@ import 'react-pdf/dist/Page/TextLayer.css';
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
+const HIGHLIGHT_STYLE = `
+    .pdf-highlight {
+        background-color: #00ff88 !important;
+        color: #000 !important;
+        font-weight: bold !important;
+        border-radius: 2px !important;
+        outline: 3px solid #00ff88 !important;
+        box-shadow: 0 0 15px rgba(0, 255, 136, 0.8) !important;
+        z-index: 1000 !important;
+        mix-blend-mode: multiply !important;
+    }
+    
+    .react-pdf__Page__textContent {
+        opacity: 0.5 !important;
+        z-index: 10 !important;
+        pointer-events: none !important;
+    }
+
+    .react-pdf__Page__textContent span {
+        background: transparent !important;
+    }
+
+    /* Target the Search Box container specifically */
+    .document-viewer .z-50 {
+        z-index: 9999 !important;
+        pointer-events: auto !important;
+    }
+`;
+
 const DocumentViewer: React.FC = () => {
     const {
         fileId,
@@ -59,83 +88,173 @@ const DocumentViewer: React.FC = () => {
             setShowSearchBox(true);
             setHighlightedText(pdfSearchText);
 
-            // Highlight text in PDF text layer after a short delay to ensure rendering
-            setTimeout(() => {
-                highlightTextInPDF(pdfSearchText);
-            }, 500);
-        }
-    }, [pdfSearchText, pageNumber]); // Re-run when page changes too
+            // Copy to clipboard for easy Ctrl+F search
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(pdfSearchText).catch(err => {
+                    console.warn('Failed to copy to clipboard:', err);
+                });
+            }
 
-    // Function to highlight text in the PDF.js text layer
+            // Highlighting triggers:
+            // 1. Immediately (for when we're already on the correct page)
+            const timer = setTimeout(() => {
+                highlightTextInPDF(pdfSearchText);
+            }, 300);
+
+            return () => clearTimeout(timer);
+        }
+    }, [pdfSearchText]);
+
+    const onPageRenderSuccess = () => {
+        console.log('📄 Page rendered successfully, attempting highlight...');
+        if (pdfSearchText) {
+            highlightTextInPDF(pdfSearchText);
+        }
+    };
+
+    // Helper to normalize problematic characters (ligatures, smart quotes, etc.)
+    const normalizeChar = (c: string): string => {
+        const ligatures: { [key: string]: string } = {
+            '\uFB00': 'ff', '\uFB01': 'fi', '\uFB02': 'fl', '\uFB03': 'ffi', '\uFB04': 'ffl',
+            '\uFB05': 'ft', '\uFB06': 'st'
+        };
+        const symbols: { [key: string]: string } = {
+            '\u201C': '"', '\u201D': '"', '\u2018': "'", '\u2019': "'",
+            '\u2013': '-', '\u2014': '-'
+        };
+        return ligatures[c] || symbols[c] || c;
+    };
+
     const highlightTextInPDF = (searchText: string) => {
         if (!searchText) return;
 
-        console.log('🔍 Searching for:', searchText);
+        console.log('🔍 [PDF Search] Attempting to match:', searchText);
 
-        // Find the text layer
         const textLayer = document.querySelector('.react-pdf__Page__textContent');
         if (!textLayer) {
-            console.warn('❌ Text layer not found');
+            console.warn('❌ [PDF Search] Text layer not found');
             return;
         }
 
         const spans = textLayer.querySelectorAll('span');
-        console.log(`✅ Found ${spans.length} text spans`);
 
-        // Build full text and track span positions
-        let fullText = '';
-        const spanMap: Array<{ start: number, end: number, element: HTMLElement }> = [];
-
+        // 1. Build character map with normalization
+        const charMap: Array<{ char: string, element: HTMLElement, originalChar: string }> = [];
         spans.forEach(span => {
             const element = span as HTMLElement;
+            element.classList.remove('pdf-highlight');
+
             const text = element.textContent || '';
-            const start = fullText.length;
-            fullText += text;
-            const end = fullText.length;
-            spanMap.push({ start, end, element });
-
-            // Clear any previous highlights
-            element.style.backgroundColor = '';
-            element.style.color = '';
-            element.style.padding = '';
-        });
-
-        console.log('📄 Full page text:', fullText.substring(0, 200) + '...');
-
-        // Find the search text (case-insensitive)
-        const searchLower = searchText.toLowerCase();
-        const fullTextLower = fullText.toLowerCase();
-        const matchIndex = fullTextLower.indexOf(searchLower);
-
-        if (matchIndex === -1) {
-            console.warn('❌ Text not found on this page');
-            return;
-        }
-
-        console.log(`✅ Match found at position ${matchIndex}`);
-        const matchEnd = matchIndex + searchText.length;
-
-        // Highlight all spans that overlap with the match
-        let firstHighlighted = false;
-        spanMap.forEach(({ start, end, element }) => {
-            if (start < matchEnd && end > matchIndex) {
-                element.style.backgroundColor = '#00ff88';
-                element.style.color = '#000';
-                element.style.padding = '2px';
-                element.style.borderRadius = '3px';
-                element.style.fontWeight = 'bold';
-
-                // Scroll to first highlighted span
-                if (!firstHighlighted) {
-                    setTimeout(() => {
-                        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }, 100);
-                    firstHighlighted = true;
+            for (const char of text) {
+                const normalized = normalizeChar(char);
+                for (const n of normalized) {
+                    charMap.push({ char: n.toLowerCase(), element, originalChar: char });
                 }
             }
         });
 
-        console.log('✅ Highlighting complete');
+        const fullPageText = charMap.map(c => c.char).join('');
+        const normalizedSearch = searchText.toLowerCase().split('').map(normalizeChar).join('').replace(/\s+/g, ' ').trim();
+
+        console.log('📄 [PDF Search] Page text preview:', fullPageText.substring(0, 100));
+        console.log('🔍 [PDF Search] Normalized query:', normalizedSearch);
+
+        // --- STRATEGY 1: Exact Whitespace-Insensitive Match ---
+        const normalizedPageText = fullPageText.replace(/\s+/g, ' ');
+        let matchIndex = normalizedPageText.indexOf(normalizedSearch);
+
+        if (matchIndex !== -1) {
+            console.log('✅ [PDF Search] Strategy 1 (Exact) matched at:', matchIndex);
+            const highlightedElements = new Set<HTMLElement>();
+
+            let currentNormalizedPos = 0;
+            let lastCharWasSpace = false;
+
+            for (let i = 0; i < charMap.length; i++) {
+                const isSpace = /\s/.test(charMap[i].char);
+                if (isSpace) {
+                    if (!lastCharWasSpace) currentNormalizedPos++;
+                    lastCharWasSpace = true;
+                } else {
+                    if (currentNormalizedPos >= matchIndex && currentNormalizedPos < matchIndex + normalizedSearch.length) {
+                        highlightedElements.add(charMap[i].element);
+                    }
+                    currentNormalizedPos++;
+                    lastCharWasSpace = false;
+                }
+                if (currentNormalizedPos >= matchIndex + normalizedSearch.length) break;
+            }
+            applyHighlights(highlightedElements);
+            return;
+        }
+
+        // --- STRATEGY 2: Character-Only Match ---
+        console.log('⚠️ [PDF Search] Strategy 1 failed. Trying Strategy 2 (Chars Only)...');
+        const pageCharsOnly = charMap.filter(c => /[a-z0-9]/.test(c.char)).map(c => c.char).join('');
+        const searchCharsOnly = normalizedSearch.replace(/[^a-z0-9]/g, '');
+
+        const charMatchIndex = pageCharsOnly.indexOf(searchCharsOnly);
+        if (charMatchIndex !== -1 && searchCharsOnly.length > 5) {
+            console.log('✅ [PDF Search] Strategy 2 (Chars Only) matched!');
+            const highlightedElements = new Set<HTMLElement>();
+            let alphaCounter = 0;
+            let matchedCount = 0;
+            let startMatching = false;
+
+            for (let i = 0; i < charMap.length; i++) {
+                if (/[a-z0-9]/.test(charMap[i].char)) {
+                    if (alphaCounter === charMatchIndex) startMatching = true;
+                    if (startMatching) {
+                        highlightedElements.add(charMap[i].element);
+                        matchedCount++;
+                    }
+                    alphaCounter++;
+                    if (matchedCount === searchCharsOnly.length) break;
+                } else if (startMatching) {
+                    highlightedElements.add(charMap[i].element);
+                }
+            }
+            applyHighlights(highlightedElements);
+            return;
+        }
+
+        // --- STRATEGY 3: Word Cluster ---
+        console.log('⚠️ [PDF Search] Strategy 2 failed. Trying Strategy 3 (Word Cluster)...');
+        const importantWords = normalizedSearch.split(' ').filter(w => w.length > 3);
+        const clusterSpans = new Set<HTMLElement>();
+        let foundWords = 0;
+
+        importantWords.forEach(word => {
+            if (fullPageText.includes(word)) {
+                foundWords++;
+                spans.forEach(span => {
+                    if (span.textContent?.toLowerCase().includes(word)) {
+                        clusterSpans.add(span as HTMLElement);
+                    }
+                });
+            }
+        });
+
+        if (foundWords >= Math.min(3, importantWords.length)) {
+            console.log(`✅ [PDF Search] Strategy 3 (Word Cluster) highlighted ${foundWords} words`);
+            applyHighlights(clusterSpans);
+            return;
+        }
+
+        console.error('❌ [PDF Search] All strategies failed. Check console for page dump.');
+        console.log('📄 [PDF Search] PAGE DUMP:', normalizedPageText);
+    };
+
+    const applyHighlights = (elements: Set<HTMLElement>) => {
+        let first = true;
+        elements.forEach(el => {
+            el.classList.add('pdf-highlight');
+            if (first) {
+                setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+                first = false;
+            }
+        });
+        console.log(`🎨 [PDF Search] Highlighting applied to ${elements.size} spans`);
     };
 
     function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
@@ -165,6 +284,7 @@ const DocumentViewer: React.FC = () => {
 
     return (
         <div className="document-viewer flex flex-col h-full bg-[#151515] relative animate-in fade-in duration-300 group">
+            <style>{HIGHLIGHT_STYLE}</style>
 
             {/* Modern Top Toolbar */}
             <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
@@ -182,25 +302,43 @@ const DocumentViewer: React.FC = () => {
                     </button>
                 </div>
 
-                {/* Page Controls - Centered/Right */}
-                <div className="flex items-center gap-2 pointer-events-auto bg-[#1a1a1a]/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+                <div className="flex items-center gap-4 pointer-events-auto">
+                    {/* Diagnostic Tool */}
                     <button
-                        disabled={pageNumber <= 1}
-                        onClick={previousPage}
-                        className="p-1 hover:text-[#00ff88] disabled:opacity-30 disabled:hover:text-inherit transition-colors"
+                        onClick={() => {
+                            const layer = document.querySelector('.react-pdf__Page__textContent');
+                            if (layer) {
+                                const spans = layer.querySelectorAll('span');
+                                spans.forEach(span => span.classList.add('pdf-highlight'));
+                                alert(`Highlighted ${spans.length} spans on this page. If you don't see green boxes, the text layer is hidden or misaligned.`);
+                            } else {
+                                alert('PDF Text Layer not found. Wait for render or check console.');
+                            }
+                        }}
+                        className="px-3 py-1.5 bg-yellow-500/20 border border-yellow-500/30 rounded-lg text-yellow-500 text-[10px] font-bold hover:bg-yellow-500/30 transition-all uppercase tracking-widest"
                     >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                        Diagnostic: Highlight All
                     </button>
-                    <span className="text-xs font-mono text-white/70">
-                        {pageNumber} / {numPages || '--'}
-                    </span>
-                    <button
-                        disabled={pageNumber >= (numPages || 0)}
-                        onClick={nextPage}
-                        className="p-1 hover:text-[#00ff88] disabled:opacity-30 disabled:hover:text-inherit transition-colors"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                    </button>
+
+                    <div className="flex items-center gap-2 bg-[#1a1a1a]/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+                        <button
+                            disabled={pageNumber <= 1}
+                            onClick={previousPage}
+                            className="p-1 hover:text-[#00ff88] disabled:opacity-30 disabled:hover:text-inherit transition-colors"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                        </button>
+                        <span className="text-xs font-mono text-white/70">
+                            {pageNumber} / {numPages || '--'}
+                        </span>
+                        <button
+                            disabled={pageNumber >= (numPages || 0)}
+                            onClick={nextPage}
+                            className="p-1 hover:text-[#00ff88] disabled:opacity-30 disabled:hover:text-inherit transition-colors"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -219,20 +357,49 @@ const DocumentViewer: React.FC = () => {
                                 <div className="bg-[#0a0a0a] border border-[#333] rounded-lg p-3 mb-2">
                                     <p className="text-sm text-white/90 italic">"{pdfSearchText}"</p>
                                 </div>
-                                <p className="text-xs text-white/50">
+                                <p className="text-xs text-white/50 mb-3">
                                     Press <kbd className="px-1.5 py-0.5 bg-[#333] rounded text-[#00ff88] font-mono">Ctrl+F</kbd> (or <kbd className="px-1.5 py-0.5 bg-[#333] rounded text-[#00ff88] font-mono">⌘+F</kbd>) to search for this text in the PDF
                                 </p>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => highlightTextInPDF(pdfSearchText)}
+                                        className="flex-1 py-1.5 bg-[#00ff88]/20 border border-[#00ff88]/30 rounded-lg text-[#00ff88] text-xs font-bold hover:bg-[#00ff88]/30 transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        Re-highlight
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const layer = document.querySelector('.react-pdf__Page__textContent');
+                                            if (layer) {
+                                                layer.querySelectorAll('span').forEach(span => span.classList.add('pdf-highlight'));
+                                                console.log('🧪 Diagnostic: Highlighted all spans');
+                                            }
+                                        }}
+                                        className="px-3 py-1.5 bg-red-500/20 border border-red-500/30 rounded-lg text-red-500 text-[10px] font-bold hover:bg-red-500/30 transition-all uppercase tracking-tighter"
+                                        title="Debug: Highlight every single text span on this page"
+                                    >
+                                        Highlight All (Diagnostic)
+                                    </button>
+                                </div>
                             </div>
                             <button
                                 onClick={() => {
                                     setShowSearchBox(false);
-                                    setPdfSearchText(null);
+                                    setPdfSearchText('');
+                                    useStore.getState().setPdfSearchText('');
+                                    const layer = document.querySelector('.react-pdf__Page__textContent');
+                                    if (layer) {
+                                        layer.querySelectorAll('.pdf-highlight').forEach(el => el.classList.remove('pdf-highlight'));
+                                    }
                                 }}
-                                className="p-1 hover:bg-white/10 rounded transition-colors"
-                                title="Close"
+                                className="p-1.5 hover:bg-white/10 rounded-lg transition-colors group/close"
+                                title="Close search"
                             >
-                                <svg className="w-4 h-4 text-white/50 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                <svg className="w-5 h-5 text-white/50 group-hover/close:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
                         </div>
@@ -265,7 +432,8 @@ const DocumentViewer: React.FC = () => {
                                 pageNumber={pageNumber}
                                 renderTextLayer={true}
                                 renderAnnotationLayer={true}
-                                height={containerRect.height - 40} // Subtract padding
+                                onRenderSuccess={onPageRenderSuccess}
+                                height={containerRect.height - 40}
                                 className="shadow-2xl border border-[#222]"
                             />
                         </Document>

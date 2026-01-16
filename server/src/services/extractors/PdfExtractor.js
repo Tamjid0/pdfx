@@ -38,7 +38,7 @@ export class PdfExtractor {
             const viewport = page.getViewport({ scale: 1.0 });
             const content = await page.getTextContent();
 
-            const docPage = new DocumentPage(i, {
+            const docPage = new DocumentPage(i - 1, {
                 width: viewport.width,
                 height: viewport.height
             });

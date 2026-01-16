@@ -149,9 +149,9 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
 
         if (meta.pageIndex !== undefined) {
             if (meta.pageType === 'slide') {
-                source = `[Source: Slide ${meta.pageIndex}]`;
+                source = `[Source: Slide ${meta.pageIndex + 1}]`;
             } else {
-                source = `[Source: Page ${meta.pageIndex}]`;
+                source = `[Source: Page ${meta.pageIndex + 1}]`;
             }
         }
 

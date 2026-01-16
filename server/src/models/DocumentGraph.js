@@ -67,7 +67,7 @@ class ImageNode extends ContentNode {
  */
 class DocumentPage {
     /**
-     * @param {number} index - 1-based index
+     * @param {number} index - 0-based index
      * @param {Object} dimensions - { width, height }
      * @param {string} [type='page'] - 'page' or 'slide'
      */

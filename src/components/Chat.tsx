@@ -50,7 +50,7 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, onCitationClick, is
 
     const autoResize = (textarea: HTMLTextAreaElement) => {
         textarea.style.height = 'auto';
-        textarea.style.height = Math.min(textarea.scrollHeight, 100) + 'px';
+        textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
     };
 
     useEffect(() => {
@@ -60,139 +60,151 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, onCitationClick, is
     }, [inputValue]);
 
     return (
-        <div className="chat-container flex flex-col h-full w-full relative">
-            {/* Citation Toggle Header */}
-            <div className="flex items-center justify-between px-6 py-3 bg-[#0f0f0f] border-b border-[#222] z-10">
-                <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${citationMode ? 'bg-[#00ff88]' : 'bg-[#666]'}`}></div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#aaa]">
-                        {citationMode ? 'Citation Mode Active' : 'Citation Mode Disabled'}
-                    </span>
+        <div className="chat-container flex flex-col h-full w-full bg-[#0a0a0a] text-[#e0e0e0]">
+            {/* Minimal Toggle Header */}
+            <div className="flex items-center justify-between px-8 py-3 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/5 sticky top-0 z-20">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-[#00ff88]/10 flex items-center justify-center">
+                        <svg viewBox="0 0 24 24" className="w-5 h-5 fill-[#00ff88]"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" /></svg>
+                    </div>
+                    <div>
+                        <h3 className="text-xs font-bold text-white uppercase tracking-[0.2em]">Research Assistant</h3>
+                        <p className="text-[10px] text-[#666] font-medium uppercase tracking-wider">Powered by Gemini 2.5</p>
+                    </div>
                 </div>
+
                 <button
                     onClick={() => setCitationMode(!citationMode)}
-                    className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold transition-all border ${citationMode
-                            ? 'bg-[#00ff88]/10 text-[#00ff88] border-[#00ff88]/20 hover:bg-[#00ff88]/20'
-                            : 'bg-[#1a1a1a] text-[#666] border-[#333] hover:border-[#444]'
+                    className={`group flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${citationMode
+                            ? 'bg-[#00ff88]/5 text-[#00ff88] border-[#00ff88]/20 hover:bg-[#00ff88]/10'
+                            : 'bg-white/5 text-[#666] border-white/10 hover:border-white/20'
                         }`}
                 >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                    </svg>
-                    CITATIONS: {citationMode ? 'ON' : 'OFF'}
+                    <div className={`w-1.5 h-1.5 rounded-full transition-all ${citationMode ? 'bg-[#00ff88] animate-pulse shadow-[0_0_8px_rgba(0,255,136,0.6)]' : 'bg-[#444]'}`}></div>
+                    CITATIONS: {citationMode ? 'ENABLED' : 'DISABLED'}
                 </button>
             </div>
 
-            <div className="chat-messages-area flex-1 overflow-y-auto p-6 flex flex-col gap-5 relative">
+            <div className="chat-messages-area flex-1 overflow-y-auto relative pb-32">
                 {history.length === 0 ? (
-                    <div className="chat-empty-state flex-1 flex flex-col items-center justify-center text-center p-8">
-                        <div className="chat-empty-icon w-20 h-20 bg-gradient-to-br from-[rgba(0,255,136,0.2)] to-[rgba(0,255,136,0.05)] rounded-2xl flex items-center justify-center mb-5">
-                            <svg viewBox="0 0 24 24" className="w-10 h-10 fill-[#00ff88]"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 9h-2V5h2v6zm0 4h-2v-2h2v2z" /></svg>
+                    <div className="h-full flex flex-col items-center justify-center max-w-2xl mx-auto p-8 pt-20">
+                        <div className="w-16 h-16 bg-gradient-to-br from-[#00ff88]/20 to-transparent rounded-2xl flex items-center justify-center mb-8 border border-[#00ff88]/10">
+                            <svg viewBox="0 0 24 24" className="w-8 h-8 fill-[#00ff88]"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" /></svg>
                         </div>
-                        <h2 className="chat-empty-title text-2xl font-semibold text-white mb-2.5">Chat with Your Document</h2>
-                        <p className="chat-empty-subtitle text-sm text-[#666] mb-6 max-w-sm">Ask me anything about your document. I can summarize, explain concepts, or answer specific questions.</p>
-                        <div className="chat-starter-grid grid grid-cols-2 gap-2.5 max-w-md w-full">
-                            <div className="chat-starter-card bg-[#1a1a1a] border border-[#333] rounded-lg p-3 text-left cursor-pointer transition-all hover:bg-[rgba(0,255,136,0.05)] hover:border-[#00ff88] hover:translate-y-[-2px]" onClick={() => onSendMessage('What are the main topics covered in this document?')}>
-                                <div className="chat-starter-icon w-7 h-7 bg-[rgba(0,255,136,0.1)] rounded-md flex items-center justify-center mb-2">
-                                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-[#00ff88]"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z" /></svg>
-                                </div>
-                                <div className="chat-starter-text text-sm text-[#ccc] leading-tight">What are the main topics covered?</div>
-                            </div>
-                            <div className="chat-starter-card bg-[#1a1a1a] border border-[#333] rounded-lg p-3 text-left cursor-pointer transition-all hover:bg-[rgba(0,255,136,0.05)] hover:border-[#00ff88] hover:translate-y-[-2px]" onClick={() => onSendMessage('Can you summarize this in simple terms?')}>
-                                <div className="chat-starter-icon w-7 h-7 bg-[rgba(0,255,136,0.1)] rounded-md flex items-center justify-center mb-2">
-                                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-[#00ff88]"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" /></svg>
-                                </div>
-                                <div className="chat-starter-text text-sm text-[#ccc] leading-tight">Summarize this document</div>
-                            </div>
-                            <div className="chat-starter-card bg-[#1a1a1a] border border-[#333] rounded-lg p-3 text-left cursor-pointer transition-all hover:bg-[rgba(0,255,136,0.05)] hover:border-[#00ff88] hover:translate-y-[-2px]" onClick={() => onSendMessage('What are the key takeaways?')}>
-                                <div className="chat-starter-icon w-7 h-7 bg-[rgba(0,255,136,0.1)] rounded-md flex items-center justify-center mb-2">
-                                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-[#00ff88]"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>
-                                </div>
-                                <div className="chat-starter-text text-sm text-[#ccc] leading-tight">What are the key takeaways?</div>
-                            </div>
-                            <div className="chat-starter-card bg-[#1a1a1a] border border-[#333] rounded-lg p-3 text-left cursor-pointer transition-all hover:bg-[rgba(0,255,136,0.05)] hover:border-[#00ff88] hover:translate-y-[-2px]" onClick={() => onSendMessage('Explain machine learning to a beginner')}>
-                                <div className="chat-starter-icon w-7 h-7 bg-[rgba(0,255,136,0.1)] rounded-md flex items-center justify-center mb-2">
-                                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-[#00ff88]"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" /></svg>
-                                </div>
-                                <div className="chat-starter-text text-sm text-[#ccc] leading-tight">Explain concepts simply</div>
-                            </div>
+                        <h2 className="text-3xl font-bold text-white mb-4 tracking-tight">How can I help today?</h2>
+                        <p className="text-[#666] text-center mb-12 text-lg font-medium leading-relaxed">
+                            I can analyze documents, extract key insights, and answer specialized questions with high-precision citations.
+                        </p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                            {[
+                                { title: 'Deep Summary', text: 'Extract core themes and logic', icon: 'M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z' },
+                                { title: 'Key Actions', text: 'Identify main takeaways', icon: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z' }
+                            ].map((card, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => onSendMessage(card.text)}
+                                    className="p-4 bg-white/[0.03] border border-white/10 rounded-xl text-left hover:bg-white/[0.07] hover:border-[#00ff88]/30 transition-all group"
+                                >
+                                    <div className="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center mb-3 group-hover:bg-[#00ff88]/10">
+                                        <svg viewBox="0 0 24 24" className="w-4 h-4 fill-[#888] group-hover:fill-[#00ff88]"><path d={card.icon} /></svg>
+                                    </div>
+                                    <h4 className="text-sm font-bold text-white mb-1 uppercase tracking-wider">{card.title}</h4>
+                                    <p className="text-xs text-[#666]">{card.text}</p>
+                                </button>
+                            ))}
                         </div>
                     </div>
                 ) : (
+                    <div className="flex flex-col">
+                        {history.map((msg, index) => (
+                            <div
+                                key={index}
+                                className={`group py-12 px-8 border-b border-white/[0.03] transition-colors ${msg.sender === 'ai' ? 'bg-white/[0.02]/5' : ''
+                                    }`}
+                            >
+                                <div className="max-w-3xl mx-auto flex gap-8">
+                                    <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-bold text-xs tracking-tighter shadow-xl transform transition-transform group-hover:scale-110 ${msg.sender === 'user'
+                                            ? 'bg-gradient-to-br from-[#00ff88] to-[#00cc66] text-black ring-4 ring-[#00ff88]/10'
+                                            : 'bg-[#1a1a1a] border border-white/10 text-[#00ff88] ring-4 ring-white/5'
+                                        }`}>
+                                        {msg.sender === 'user' ? 'JD' : (
+                                            <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" /></svg>
+                                        )}
+                                    </div>
 
+                                    <div className="flex-1 min-w-0 pt-1">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#444]">
+                                                {msg.sender === 'user' ? 'Research Request' : 'Analysis Output'}
+                                            </span>
+                                            <span className="text-[10px] font-bold text-[#333] tracking-wider">{msg.timestamp}</span>
+                                        </div>
 
-                    // ... inside Chat component
-
-                    history.map((msg, index) => (
-                        <div key={index} className={`chat-message flex gap-3 max-w-[95%] ${msg.sender === 'user' ? 'ml-auto flex-row-reverse' : ''}`}>
-                            <div className={`chat-message-avatar w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center font-semibold text-sm ${msg.sender === 'user' ? 'bg-gradient-to-br from-[#00ff88] to-[#00cc66] text-black' : 'bg-[#1a1a1a] border-2 border-[#333]'}`}>
-                                {msg.sender === 'user' ? 'JD' : <svg viewBox="0 0 24 24" className="w-5 h-5 fill-[#00ff88]"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" /></svg>}
-                            </div>
-                            <div className="chat-message-content max-w-full overflow-hidden">
-                                <div className={`chat-message-bubble p-3 px-4 text-sm leading-relaxed rounded-2xl w-fit max-w-full ${msg.sender === 'user' ? 'bg-[#00ff88] text-black rounded-br-lg ml-auto' : 'bg-[#1a1a1a] text-[#ddd] border border-[#333] rounded-bl-lg'}`}>
-                                    {msg.sender === 'ai' ? (
-                                        <div className="markdown-content prose prose-invert prose-emerald prose-sm max-w-none">
-                                            {/* Render parsed content: markdown + citations */}
-                                            {parseCitations(msg.text).map((part, i) =>
-                                                part.type === 'citation' ? (
-                                                    <span
-                                                        key={i}
-                                                        onClick={() => onCitationClick?.(part.page, part.quotedText)}
-                                                        className="cursor-pointer text-[#00ff88] font-bold hover:underline transition-all inline cursor-pointer select-text mx-0.5"
-                                                        title={part.quotedText ? `Find "${part.quotedText}" on page ${part.page}` : `Jump to Page ${part.page}`}
-                                                    >
-                                                        {part.quotedText ? (
-                                                            <span className="italic text-[#00ff88]">
-                                                                {part.quotedText}
-                                                                <sup className="text-[10px] opacity-80 decoration-none no-underline border border-[#00ff88]/30 px-1 rounded-sm ml-1 font-bold">
-                                                                    {part.page}
-                                                                </sup>
+                                        <div className="text-[15px] leading-[1.8] font-medium text-[#ccc]">
+                                            {msg.sender === 'ai' ? (
+                                                <div className="markdown-content prose prose-invert prose-emerald prose-sm max-w-none prose-p:leading-[1.8] prose-headings:tracking-tight prose-headings:text-white">
+                                                    {parseCitations(msg.text).map((part, i) =>
+                                                        part.type === 'citation' ? (
+                                                            <span
+                                                                key={i}
+                                                                onClick={() => onCitationClick?.(part.page, part.quotedText)}
+                                                                className="cursor-pointer text-[#00ff88] font-bold hover:underline decoration-white/20 underline-offset-4 decoration-dotted transition-all inline select-text px-1 bg-[#00ff88]/5 rounded-md"
+                                                                title={`Context from Page ${part.page}`}
+                                                            >
+                                                                {part.quotedText ? (
+                                                                    <span className="italic">
+                                                                        {part.quotedText}
+                                                                        <sup className="text-[9px] font-black opacity-60 ml-1 tracking-tighter align-top">
+                                                                            P{part.page}
+                                                                        </sup>
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-[#00ff88] text-[10px] font-black">[P{part.page}]</span>
+                                                                )}
                                                             </span>
                                                         ) : (
-                                                            <span className="text-[#00ff88]">[Pg {part.page}]</span>
-                                                        )}
-                                                    </span>
-                                                ) : (
-                                                    <ReactMarkdown
-                                                        key={i}
-                                                        remarkPlugins={[remarkGfm]}
-                                                        components={{
-                                                            p: ({ children }) => <span className="inline">{children}</span>, // Inline to flow with buttons
-                                                            // ... other components
-                                                        }}
-                                                    >
-                                                        {part.content}
-                                                    </ReactMarkdown>
-                                                )
+                                                            <ReactMarkdown
+                                                                key={i}
+                                                                remarkPlugins={[remarkGfm]}
+                                                                components={{
+                                                                    p: ({ children }) => <span className="inline">{children}</span>,
+                                                                    h2: ({ children }) => <h2 className="text-xl font-bold mt-8 mb-4 border-l-2 border-[#00ff88]/30 pl-4">{children}</h2>,
+                                                                    h3: ({ children }) => <h3 className="text-lg font-bold mt-6 mb-3 text-[#f0f0f0]">{children}</h3>,
+                                                                    ul: ({ children }) => <ul className="my-4 space-y-2 list-none">{children}</ul>,
+                                                                    li: ({ children }) => <li className="flex gap-2 before:content-['→'] before:text-[#00ff88] before:opacity-50">{children}</li>,
+                                                                    table: ({ children }) => <div className="my-6 overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]"><table className="w-full text-left border-collapse">{children}</table></div>,
+                                                                    th: ({ children }) => <th className="px-4 py-3 bg-white/5 text-[10px] font-black uppercase tracking-widest text-[#666] border-b border-white/10">{children}</th>,
+                                                                    td: ({ children }) => <td className="px-4 py-3 text-sm border-b border-white/[0.03] text-[#aaa]">{children}</td>
+                                                                }}
+                                                            >
+                                                                {part.content}
+                                                            </ReactMarkdown>
+                                                        )
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <span className="whitespace-pre-wrap text-white text-lg tracking-tight font-semibold">{msg.text}</span>
                                             )}
                                         </div>
-                                    ) : (
-                                        <span className="whitespace-pre-wrap">{msg.text}</span>
-                                    )}
-                                </div>
-                                <div className={`chat-message-time text-xs text-[#666] mt-1 px-1 ${msg.sender === 'user' ? 'text-right' : ''}`}>{msg.timestamp}</div>
-                            </div>
-                        </div>
-                    ))
-                )}
-                {isTyping && (
-                    <div className="chat-message flex gap-3 max-w-[85%] animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <div className="chat-message-avatar w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center bg-[#1a1a1a] border-2 border-[#333]">
-                            <div className="relative flex items-center justify-center w-full h-full">
-                                <div className="absolute w-full h-full bg-[#00ff88] rounded-full opacity-20 animate-ping duration-[2000ms]"></div>
-                                <div className="absolute w-3/4 h-3/4 bg-[#00ff88] rounded-full opacity-40 animate-ping duration-[1500ms]"></div>
-                                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-[#00ff88] z-10"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" /></svg>
-                            </div>
-                        </div>
-                        <div className="chat-message-content max-w-full">
-                            <div className="chat-message-bubble p-3 px-4 text-sm leading-relaxed rounded-2xl bg-[#1a1a1a] text-[#aaa] border border-[#333] rounded-bl-lg w-fit">
-                                <div className="flex items-center gap-2">
-                                    <div className="flex gap-1 items-center py-1">
-                                        <div className="w-1.5 h-1.5 bg-[#00ff88] rounded-full animate-pulse shadow-[0_0_8px_rgba(0,255,136,0.5)]"></div>
-                                        <div className="w-1.5 h-1.5 bg-[#00ff88] rounded-full animate-pulse [animation-delay:200ms] shadow-[0_0_8px_rgba(0,255,136,0.3)]"></div>
                                     </div>
-                                    <span className="text-xs font-medium tracking-wide animate-pulse uppercase">AI is thinking</span>
                                 </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {isTyping && (
+                    <div className="py-12 px-8 bg-white/[0.01]">
+                        <div className="max-w-3xl mx-auto flex gap-8">
+                            <div className="w-10 h-10 rounded-xl bg-[#1a1a1a] border border-white/10 flex items-center justify-center">
+                                <div className="w-4 h-4 border-2 border-[#00ff88] border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                            <div className="pt-2">
+                                <div className="flex gap-1 items-center px-1">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#00ff88] animate-pulse">Analyzing Library...</span>
+                                </div>
+                                <div className="h-4 w-48 bg-white/5 rounded-full mt-4 animate-pulse"></div>
                             </div>
                         </div>
                     </div>
@@ -200,21 +212,36 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, onCitationClick, is
                 <div ref={messagesEndRef} />
             </div>
 
-            <div className="chat-input-area p-4 pt-3 bg-[#0f0f0f] border-t border-[#222]">
-                <div className="chat-input-wrapper bg-[#1a1a1a] border-2 border-[#333] rounded-xl flex items-end p-2.5 transition-all gap-2.5 focus-within:border-[#00ff88]">
-                    <textarea
-                        ref={textareaRef}
-                        className="chat-textarea flex-1 bg-transparent border-none text-white text-sm resize-none outline-none max-h-24 overflow-y-auto leading-normal"
-                        placeholder="Ask anything about your document..."
-                        rows={1}
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        onInput={(e) => autoResize(e.currentTarget)}
-                    />
-                    <button className="chat-send-btn w-8 h-8 bg-gradient-to-br from-[#00ff88] to-[#00cc66] border-none rounded-lg flex items-center justify-center cursor-pointer transition-transform hover:scale-105 disabled:opacity-30 disabled:cursor-not-allowed disabled:transform-none" onClick={handleSend} disabled={!inputValue.trim()}>
-                        <svg viewBox="0 0 24 24" className="w-4 h-4 fill-black"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>
-                    </button>
+            {/* Premium Floating Input */}
+            <div className="absolute bottom-0 left-0 right-0 p-6 pt-12 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/90 to-transparent pointer-events-none">
+                <div className="max-w-3xl mx-auto pointer-events-auto">
+                    <div className="group bg-[#111] border border-white/10 rounded-2xl flex flex-col p-2 transition-all shadow-2xl shadow-black focus-within:border-[#00ff88]/50 focus-within:ring-4 focus-within:ring-[#00ff88]/5">
+                        <textarea
+                            ref={textareaRef}
+                            className="w-full bg-transparent border-none text-[#fff] text-base resize-none outline-none px-4 py-3 min-h-[50px] max-h-48 leading-relaxed placeholder:text-[#444] font-medium"
+                            placeholder="Message Research Assistant..."
+                            rows={1}
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                        />
+                        <div className="flex items-center justify-between px-2 pb-2">
+                            <div className="flex items-center gap-2 px-2">
+                                <div className="flex items-center gap-1.5 px-2 py-1 bg-white/5 rounded-md text-[9px] font-black text-[#666] uppercase tracking-widest border border-white/5">
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                    Encrypted
+                                </div>
+                                <div className="text-[9px] font-bold text-[#333] uppercase">Shift + Enter for newline</div>
+                            </div>
+                            <button
+                                className="w-10 h-10 bg-[#00ff88] rounded-xl flex items-center justify-center cursor-pointer transition-all hover:scale-105 active:scale-95 disabled:grayscale disabled:opacity-20 disabled:cursor-not-allowed shadow-[0_4px_12px_rgba(0,255,136,0.3)]"
+                                onClick={handleSend}
+                                disabled={!inputValue.trim()}
+                            >
+                                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-black"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

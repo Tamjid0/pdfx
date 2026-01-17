@@ -6,8 +6,7 @@ export const useChat = () => {
         fileId,
         setChatHistory,
         setIsTyping,
-        citationMode,
-        activeReplyProfile
+        citationMode
     } = useStore();
 
     const handleSendMessage = async (message: string) => {
@@ -75,8 +74,7 @@ export const useChat = () => {
                     });
                     setIsTyping(false);
                 },
-                citationMode,
-                activeReplyProfile
+                citationMode
             );
         } catch (error) {
             console.error("Error sending message:", error);

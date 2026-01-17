@@ -5,7 +5,6 @@ export const chatSchema = {
         fileId: z.string().min(1, 'fileId is required'),
         message: z.string().min(1, 'message is required'),
         citationMode: z.boolean().optional(),
-        replyProfile: z.string().optional(),
     }),
 };
 
@@ -14,6 +13,5 @@ export const chatStreamSchema = {
         fileId: z.string().min(1, 'fileId is required'),
         message: z.string().min(1, 'message is required'),
         citationMode: z.boolean().optional(),
-        replyProfile: z.string().optional(),
     }),
 };

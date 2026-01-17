@@ -43,33 +43,10 @@ User's specific instruction: "${promptInstruction}"
     }
 }
 
-const REPLY_PROFILES = {
-    default: {
-        name: "Research Assistant",
-        instructions: "Generate a balanced, structured response using markdown. Mix text and lists naturally.",
-        allowedBlocks: ["text", "list", "table", "insight"]
-    },
-    educational: {
-        name: "Academic Tutor",
-        instructions: "Deeply explain concepts. Prioritize Step-by-Step guides and Q&A pairs for clarity.",
-        allowedBlocks: ["text", "steps", "qa", "list", "insight"]
-    },
-    data_analyst: {
-        name: "Data Analyst",
-        instructions: "Focus on facts, comparisons, and technical details. Use tables and code blocks extensively.",
-        allowedBlocks: ["text", "table", "code", "list"]
-    },
-    executive: {
-        name: "Executive Brief",
-        instructions: "High-level summary. Focus on key insights and bullet points. Avoid long paragraphs.",
-        allowedBlocks: ["insight", "list", "text", "table"]
-    }
-};
-
 /**
  * Performs chunk-based RAG generation using a FAISS vector index.
  */
-export async function generateChunkBasedTransformation(fileId, query, topN = 8, citationMode = true, replyProfile = 'default') {
+export async function generateChunkBasedTransformation(fileId, query, topN = 10, citationMode = true) {
     const indexesDir = path.join(process.cwd(), 'src', 'database', 'indexes');
     const indexPath = path.join(indexesDir, fileId);
 
@@ -84,8 +61,6 @@ export async function generateChunkBasedTransformation(fileId, query, topN = 8, 
         return "Information not found in document.";
     }
 
-    const profile = REPLY_PROFILES[replyProfile] || REPLY_PROFILES.default;
-
     const context = searchResults.map((doc) => {
         const meta = doc.metadata || {};
         const displayIndex = (meta.pageIndex !== undefined) ? meta.pageIndex + 1 : 'Unknown';
@@ -95,28 +70,30 @@ export async function generateChunkBasedTransformation(fileId, query, topN = 8, 
 
     const citationRules = citationMode ? `
 SEAMLESS INLINE CITATIONS:
-- Wrap essential phrases in <cite page="X">...</cite> where X is the Source Page number.
-- Integrate these citations NATIVELY into your sentence flow.
+- Use <cite page="X">phrase</cite> for direct quotes or highly specific facts.
+- Use (Page X) or P1 for general references at the end of sentences.
+- X is the Source Page number from the context below.
 ` : "DO NOT use any <cite> tags or mention page numbers.";
 
     const systemPrompt = `
-You are an expert ${profile.name}. ${profile.instructions}
+You are an advanced Research Assistant Insight Engine. Your goal is to provide deep, analytical, and highly structured responses based strictly on the provided document context.
 
-RESPONSE STRUCTURE:
-You must wrap your content in the following tag-based blocks for better categorization:
-- <text>...</text> for standard paragraphs.
-- <list>...</list> for bulleted or numbered items.
-- <table>...</table> for data grids/comparisons.
-- <steps>...</steps> for sequential instructions.
-- <qa>...</qa> for Question/Answer pairs.
-- <insight>...</insight> for key takeaways or evaluations.
-- <code>...</code> for technical snippets.
+COMPOSITE RESPONSE ARCHITECTURE:
+You MUST dynamically choose the best "blocks" to structure your reply based on the intent of the User Query. You can mix and match any of these blocks:
+- <text>...</text>: For natural language explanations, deep reasoning, and prose. Use Markdown (##, ###, **bold**) inside.
+- <list>...</list>: For summaries, features, or multi-point observations.
+- <table>...</table>: For data comparisons, pros/cons, or structured feature matrices.
+- <steps>...</steps>: For processes, how-to guides, or sequential logic.
+- <qa>...</qa>: For addressing potential clarifications or FAQ-style drill-downs.
+- <insight>...</insight>: For analytical takeaways, expert evaluations, or non-obvious conclusions.
+- <code>...</code>: For technical specifications, JSON, code, or configuration snippets.
 
-ALLOWED BLOCKS for this profile: ${profile.allowedBlocks.join(', ')}.
-
-CRITICAL:
-- ZERO REDUNDANCY: Do not repeat info.
-- ${citationRules}
+RULES:
+1. Intent-Driven: If the user asks for a comparison, heavily use <table>. If they ask for a summary, use <list> and <insight>.
+2. High Density: Provide as much detail as possible from the context.
+3. Formatting: Use rich Markdown (bolding, headers, sub-lists) INSIDE the tags.
+4. ${citationRules}
+5. Zero Hallucination: If the answer isn't in the context, state it clearly.
 
 Context:
 """
@@ -138,7 +115,7 @@ User Query: "${query}"
 /**
  * Performs periodic RAG streaming generation using a FAISS vector index.
  */
-export async function* generateChunkBasedStreamingTransformation(fileId, query, topN = 8, citationMode = true, replyProfile = 'default') {
+export async function* generateChunkBasedStreamingTransformation(fileId, query, topN = 10, citationMode = true) {
     const indexesDir = path.join(process.cwd(), 'src', 'database', 'indexes');
     const indexPath = path.join(indexesDir, fileId);
 
@@ -154,8 +131,6 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
         return;
     }
 
-    const profile = REPLY_PROFILES[replyProfile] || REPLY_PROFILES.default;
-
     const context = searchResults.map((doc) => {
         const meta = doc.metadata || {};
         const displayIndex = (meta.pageIndex !== undefined) ? meta.pageIndex + 1 : 'Unknown';
@@ -165,28 +140,30 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
 
     const citationRules = citationMode ? `
 SEAMLESS INLINE CITATIONS:
-- Wrap essential phrases in <cite page="X">...</cite> where X is the Source Page number.
-- Integrate these citations NATIVELY into your sentence flow.
+- Use <cite page="X">phrase</cite> for direct quotes or highly specific facts.
+- Use (Page X) or P1 for general references at the end of sentences.
+- X is the Source Page number from the context below.
 ` : "DO NOT use any <cite> tags or mention page numbers.";
 
     const systemPrompt = `
-You are an expert ${profile.name}. ${profile.instructions}
+You are an advanced Research Assistant Insight Engine. Your goal is to provide deep, analytical, and highly structured responses based strictly on the provided document context.
 
-RESPONSE STRUCTURE:
-You must wrap your content in the following tag-based blocks for better categorization:
-- <text>...</text> for standard paragraphs.
-- <list>...</list> for bulleted or numbered items.
-- <table>...</table> for data grids/comparisons.
-- <steps>...</steps> for sequential instructions.
-- <qa>...</qa> for Question/Answer pairs.
-- <insight>...</insight> for key takeaways or evaluations.
-- <code>...</code> for technical snippets.
+COMPOSITE RESPONSE ARCHITECTURE:
+You MUST dynamically choose the best "blocks" to structure your reply based on the intent of the User Query. You can mix and match any of these blocks:
+- <text>...</text>: For natural language explanations, deep reasoning, and prose. Use Markdown (##, ###, **bold**) inside.
+- <list>...</list>: For summaries, features, or multi-point observations.
+- <table>...</table>: For data comparisons, pros/cons, or structured feature matrices.
+- <steps>...</steps>: For processes, how-to guides, or sequential logic.
+- <qa>...</qa>: For addressing potential clarifications or FAQ-style drill-downs.
+- <insight>...</insight>: For analytical takeaways, expert evaluations, or non-obvious conclusions.
+- <code>...</code>: For technical specifications, JSON, code, or configuration snippets.
 
-ALLOWED BLOCKS for this profile: ${profile.allowedBlocks.join(', ')}.
-
-CRITICAL:
-- ZERO REDUNDANCY: Do not repeat info.
-- ${citationRules}
+RULES:
+1. Intent-Driven: If the user asks for a comparison, heavily use <table>. If they ask for a summary, use <list> and <insight>.
+2. High Density: Provide as much detail as possible from the context.
+3. Formatting: Use rich Markdown (bolding, headers, sub-lists) INSIDE the tags.
+4. ${citationRules}
+5. Zero Hallucination: If the answer isn't in the context, state it clearly.
 
 Context:
 """

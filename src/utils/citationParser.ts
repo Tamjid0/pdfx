@@ -7,108 +7,113 @@ export interface MessagePart {
 }
 
 /**
- * Parses AI response text into a structured array of blocks and citations
+ * Converts all citation formats to markdown links for integrated rendering.
+ * Handled: <cite page="1">text</cite>, (Page 1), [P1], P1
+ */
+export function linkifyCitations(text: string): string {
+    if (!text) return '';
+
+    let processed = text;
+
+    // 1. <cite page="1">text</cite> -> [text](cite:1)
+    processed = processed.replace(/<cite\s+page="(\d+)">([\s\S]*?)<\/cite>/gi, (match, p1, p2) => {
+        return `[${p2 || `[P${p1}]`}](cite:${p1})`;
+    });
+
+    // 2. Parenthetical: (Page 1) -> [[P1]](cite:1)
+    processed = processed.replace(/\((?:Source:\s*)?(Page|Slide)\s+(\d+)\)/gi, '[[P$2]](cite:$2)');
+
+    // 3. Markers: [P1] or P1 -> [[P1]](cite:1)
+    // Avoid double-processing and don't match P1 inside existing markdown links
+    processed = processed.replace(/(?<!\]\(cite:\d+\))(?<!\[)P(\d+)(?!\])/g, '[[P$1]](cite:$1)');
+    processed = processed.replace(/\[P(\d+)\](?!\(cite:\d+\))/g, '[[P$1]](cite:$1)');
+
+    // 4. Aggressive Tag Strip (remove all other HTML blocks)
+    // This helps when the AI leaks <text> or <table> tags after they were already parsed
+    processed = processed.replace(/<\/?(text|table|list|steps|qa|insight|code|cite)[^>]*>/gi, '');
+    processed = processed.replace(/<\/?\w+[^>]*>/gi, '');
+
+    return processed;
+}
+
+/**
+ * Parses AI response text into a structured array of blocks and citations.
+ * Optimized for streaming: Handles unclosed tags at the end of the string.
  */
 export function parseMessageParts(text: string): MessagePart[] {
     const parts: MessagePart[] = [];
+    const blockTags = ['text', 'table', 'list', 'steps', 'qa', 'insight', 'code'];
 
-    // Regex to match blocks: <tag>content</tag>
+    // Regex for full/greedy blocks
     const blockRegex = /<(text|table|list|steps|qa|insight|code)>([\s\S]*?)<\/\1>/gi;
 
     let lastIndex = 0;
     let match;
 
     while ((match = blockRegex.exec(text)) !== null) {
-        // Handle any raw text before the block (if AI forgot or is still typing)
         if (match.index > lastIndex) {
             const rawText = text.slice(lastIndex, match.index).trim();
-            if (rawText) {
-                appendCitations(parts, rawText);
-            }
+            if (rawText) parts.push({ type: 'text', content: rawText });
         }
 
-        const type = match[1] as any;
-        const content = match[2];
-
-        // For blocks, we still want to parse citations INSIDE them
-        // unless it's a code block
-        if (type === 'code') {
-            parts.push({
-                type: 'block',
-                blockType: 'code',
-                content: content.trim()
-            });
-        } else {
-            // Process content for citations
-            const subParts = parseCitationsOnly(content);
-            parts.push({
-                type: 'block',
-                blockType: type,
-                content: content // Keep raw content for sub-parsing in UI if needed, or sub-parts
-            });
-            // Note: In a production app, we might want a nested structure.
-            // For now, I'll flatten or handle sub-parsing in the renderer.
-        }
-
+        parts.push({
+            type: 'block',
+            blockType: match[1] as any,
+            content: match[2].trim()
+        });
         lastIndex = blockRegex.lastIndex;
     }
 
-    // Handle remaining text
-    if (lastIndex < text.length) {
-        const remaining = text.slice(lastIndex).trim();
-        if (remaining) {
-            appendCitations(parts, remaining);
+    // Handle the remaining part (potential unclosed block during streaming)
+    const remaining = text.slice(lastIndex).trim();
+    if (remaining) {
+        // Look for an unclosed opening tag at the VERY start of remaining text
+        const unclosedRegex = /^<(text|table|list|steps|qa|insight|code)>([\s\S]*)$/i;
+        const unclosedMatch = unclosedRegex.exec(remaining);
+
+        if (unclosedMatch) {
+            parts.push({
+                type: 'block',
+                blockType: unclosedMatch[1] as any,
+                content: unclosedMatch[2].trim()
+            });
+        } else {
+            parts.push({ type: 'text', content: remaining });
         }
     }
 
-    // If no blocks were found, treat the whole thing as text + citations
     if (parts.length === 0 && text.trim()) {
-        appendCitations(parts, text);
+        parts.push({ type: 'text', content: text });
     }
 
     return parts;
 }
 
-function appendCitations(parts: MessagePart[], text: string) {
-    const citationParts = parseCitationsOnly(text);
-    parts.push(...citationParts.map(p => ({
-        ...p,
-        type: (p.type === 'text' ? 'text' : 'citation') as any
-    })));
-}
-
 /**
- * Legacy citation parsing logic (extracted from original parseCitations)
+ * Legacy citation parsing logic (kept for internal use but usually bypassed by linkifyCitations)
  */
 export function parseCitationsOnly(text: string): any[] {
     const parts: any[] = [];
     const allMatches: any[] = [];
 
-    // <cite page="3">text</cite>
-    const citeRegex = /<cite\s+page="(\d+)">([^<]+)<\/cite>/gi;
+    const citeRegex = /<cite\s+page="(\d+)">([\s\S]*?)<\/cite>/gi;
     let match;
     while ((match = citeRegex.exec(text)) !== null) {
-        allMatches.push({
-            index: match.index,
-            length: match[0].length,
-            page: parseInt(match[1], 10),
-            text: match[2],
-            fullMatch: match[0]
-        });
+        allMatches.push({ index: match.index, length: match[0].length, page: parseInt(match[1], 10), text: match[2] || null, fullMatch: match[0] });
     }
 
-    // (Page 3) or (Slide 3)
     const parenRegex = /\((?:Source:\s*)?(Page|Slide)\s+(\d+)\)/gi;
     while ((match = parenRegex.exec(text)) !== null) {
-        const beforeText = text.substring(Math.max(0, match.index - 150), match.index).trim();
-        const words = beforeText.split(/\s+/).slice(-20).join(' ');
-        allMatches.push({
-            index: match.index,
-            length: match[0].length,
-            page: parseInt(match[2], 10),
-            text: words || null,
-            fullMatch: match[0]
-        });
+        const isOverlap = allMatches.some(m => match!.index >= m.index && match!.index < m.index + m.length);
+        if (isOverlap) continue;
+        allMatches.push({ index: match.index, length: match[0].length, page: parseInt(match[2], 10), text: null, fullMatch: match[0] });
+    }
+
+    const markerRegex = /\[?P(\d+)\]?/g;
+    while ((match = markerRegex.exec(text)) !== null) {
+        const isOverlap = allMatches.some(m => match!.index >= m.index && match!.index < m.index + m.length);
+        if (isOverlap) continue;
+        allMatches.push({ index: match.index, length: match[0].length, page: parseInt(match[1], 10), text: null, fullMatch: match[0] });
     }
 
     allMatches.sort((a, b) => a.index - b.index);
@@ -129,17 +134,8 @@ export function parseCitationsOnly(text: string): any[] {
     return parts;
 }
 
-/**
- * Triggers browser's native find functionality to search for text
- */
 export function triggerBrowserSearch(searchText: string): void {
     if (navigator.clipboard) {
-        navigator.clipboard.writeText(searchText).catch(err => {
-            console.warn('Failed to copy to clipboard:', err);
-        });
+        navigator.clipboard.writeText(searchText).catch(err => console.warn('Clipboard fail:', err));
     }
-    console.log(`Copied to clipboard: "${searchText}". Press Ctrl+F to search.`);
 }
-
-// Keep the old export for compatibility during transition
-export const parseCitations = parseCitationsOnly;

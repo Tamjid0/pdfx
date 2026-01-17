@@ -16,14 +16,11 @@ interface ChatMessage {
 interface ChatProps {
     history: ChatMessage[];
     onSendMessage: (message: string) => void;
-    onCitationClick?: (pageIndex: number, searchText?: string | null) => void;
     isTyping?: boolean;
 }
 
-const Chat: React.FC<ChatProps> = ({ history, onSendMessage, onCitationClick, isTyping }) => {
+const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
     const {
-        citationMode,
-        setCitationMode
     } = useStore();
     const [inputValue, setInputValue] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -77,17 +74,6 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, onCitationClick, is
                         </div>
                     </div>
                 </div>
-
-                <button
-                    onClick={() => setCitationMode(!citationMode)}
-                    className={`group flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${citationMode
-                        ? 'bg-[#00ff88]/5 text-[#00ff88] border-[#00ff88]/20 hover:bg-[#00ff88]/10'
-                        : 'bg-white/5 text-[#666] border-white/10 hover:border-white/20'
-                        }`}
-                >
-                    <div className={`w-1.5 h-1.5 rounded-full transition-all ${citationMode ? 'bg-[#00ff88] animate-pulse shadow-[0_0_8px_rgba(0,255,136,0.6)]' : 'bg-[#444]'}`}></div>
-                    CITATIONS: {citationMode ? 'ON' : 'OFF'}
-                </button>
             </div>
 
             <div className="chat-messages-area flex-1 overflow-y-auto relative pb-32">
@@ -147,19 +133,6 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, onCitationClick, is
                                                                         ul: ({ children }) => <ul className="space-y-4 list-none mb-6">{children}</ul>,
                                                                         li: ({ children }) => <li className="flex gap-3 text-[#aaa] before:content-['•'] before:text-white/20">{children}</li>,
                                                                         a: ({ href, children }) => {
-                                                                            if (href?.startsWith('cite:')) {
-                                                                                const page = parseInt(href.split(':')[1], 10);
-                                                                                return (
-                                                                                    <span
-                                                                                        onClick={() => onCitationClick?.(page, String(children))}
-                                                                                        className="cursor-pointer text-[#00ff88]/80 font-semibold hover:text-[#00ff88] transition-colors inline-flex items-center gap-0.5 group/cite"
-                                                                                        title={`Context from Page ${page}`}
-                                                                                    >
-                                                                                        <span className="underline decoration-[#00ff88]/10 underline-offset-4 group-hover/cite:decoration-[#00ff88]/40">{children}</span>
-                                                                                        <sup className="text-[9px] opacity-30">[{page}]</sup>
-                                                                                    </span>
-                                                                                );
-                                                                            }
                                                                             return <a href={href} target="_blank" rel="noopener noreferrer" className="text-[#00ff88]/90 hover:underline underline-offset-4 decoration-[#00ff88]/20">{children}</a>
                                                                         },
                                                                         code: ({ node, inline, className, children, ...props }: any) => {

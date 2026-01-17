@@ -46,7 +46,7 @@ User's specific instruction: "${promptInstruction}"
 /**
  * Performs chunk-based RAG generation using a FAISS vector index.
  */
-export async function generateChunkBasedTransformation(fileId, query, topN = 10, citationMode = true) {
+export async function generateChunkBasedTransformation(fileId, query, topN = 10) {
     const indexesDir = path.join(process.cwd(), 'src', 'database', 'indexes');
     const indexPath = path.join(indexesDir, fileId);
 
@@ -68,13 +68,6 @@ export async function generateChunkBasedTransformation(fileId, query, topN = 10,
         return `[Source: ${type} ${displayIndex}]\n${doc.pageContent}`;
     }).join('\n\n---\n\n');
 
-    const citationRules = citationMode ? `
-SEAMLESS INLINE CITATIONS:
-- Use <cite page="X">phrase</cite> for direct quotes or highly specific facts.
-- Use (Page X) or P1 for general references at the end of sentences.
-- X is the Source Page number from the context below.
-` : "DO NOT use any <cite> tags or mention page numbers.";
-
     const systemPrompt = `
 You are an advanced Research Assistant Insight Engine. Your goal is to provide deep, analytical, and highly structured responses based strictly on the provided document context.
 
@@ -92,7 +85,7 @@ RULES:
 1. Intent-Driven: If the user asks for a comparison, heavily use <table>. If they ask for a summary, use <list> and <insight>.
 2. High Density: Provide as much detail as possible from the context.
 3. Formatting: Use rich Markdown (bolding, headers, sub-lists) INSIDE the tags.
-4. ${citationRules}
+4. ABSOLUTELY NO CITATIONS: Do NOT use <cite> tags. Do NOT mention page numbers (e.g., "Page 1"). Provide the information naturally.
 5. Zero Hallucination: If the answer isn't in the context, state it clearly.
 
 Context:
@@ -115,7 +108,7 @@ User Query: "${query}"
 /**
  * Performs periodic RAG streaming generation using a FAISS vector index.
  */
-export async function* generateChunkBasedStreamingTransformation(fileId, query, topN = 10, citationMode = true) {
+export async function* generateChunkBasedStreamingTransformation(fileId, query, topN = 10) {
     const indexesDir = path.join(process.cwd(), 'src', 'database', 'indexes');
     const indexPath = path.join(indexesDir, fileId);
 
@@ -138,13 +131,6 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
         return `[Source: ${type} ${displayIndex}]\n${doc.pageContent}`;
     }).join('\n\n---\n\n');
 
-    const citationRules = citationMode ? `
-SEAMLESS INLINE CITATIONS:
-- Use <cite page="X">phrase</cite> for direct quotes or highly specific facts.
-- Use (Page X) or P1 for general references at the end of sentences.
-- X is the Source Page number from the context below.
-` : "DO NOT use any <cite> tags or mention page numbers.";
-
     const systemPrompt = `
 You are an advanced Research Assistant Insight Engine. Your goal is to provide deep, analytical, and highly structured responses based strictly on the provided document context.
 
@@ -162,7 +148,7 @@ RULES:
 1. Intent-Driven: If the user asks for a comparison, heavily use <table>. If they ask for a summary, use <list> and <insight>.
 2. High Density: Provide as much detail as possible from the context.
 3. Formatting: Use rich Markdown (bolding, headers, sub-lists) INSIDE the tags.
-4. ${citationRules}
+4. ABSOLUTELY NO CITATIONS: Do NOT use <cite> tags. Do NOT mention page numbers (e.g., "Page 1"). Provide the information naturally.
 5. Zero Hallucination: If the answer isn't in the context, state it clearly.
 
 Context:

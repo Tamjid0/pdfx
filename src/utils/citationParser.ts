@@ -14,22 +14,7 @@ export function linkifyCitations(text: string): string {
     if (!text) return '';
 
     let processed = text;
-
-    // 1. <cite page="1">text</cite> -> [text](cite:1)
-    processed = processed.replace(/<cite\s+page="(\d+)">([\s\S]*?)<\/cite>/gi, (match, p1, p2) => {
-        return `[${p2 || `[P${p1}]`}](cite:${p1})`;
-    });
-
-    // 2. Parenthetical: (Page 1) -> [[P1]](cite:1)
-    processed = processed.replace(/\((?:Source:\s*)?(Page|Slide)\s+(\d+)\)/gi, '[[P$2]](cite:$2)');
-
-    // 3. Markers: [P1] or P1 -> [[P1]](cite:1)
-    // Avoid double-processing and don't match P1 inside existing markdown links
-    processed = processed.replace(/(?<!\]\(cite:\d+\))(?<!\[)P(\d+)(?!\])/g, '[[P$1]](cite:$1)');
-    processed = processed.replace(/\[P(\d+)\](?!\(cite:\d+\))/g, '[[P$1]](cite:$1)');
-
-    // 4. Aggressive Tag Strip (remove all other HTML blocks)
-    // This helps when the AI leaks <text> or <table> tags after they were already parsed
+    // Aggressively strip any HTML-like tags just to be safe and clean
     processed = processed.replace(/<\/?(text|table|list|steps|qa|insight|code|cite)[^>]*>/gi, '');
     processed = processed.replace(/<\/?\w+[^>]*>/gi, '');
 

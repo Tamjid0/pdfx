@@ -6,10 +6,10 @@ import { chatSchema, chatStreamSchema } from '../../validations/chat.validation.
 const router = express.Router();
 
 router.post('/', validate(chatSchema), async (req, res) => {
-    const { fileId, message, citationMode = true } = req.body;
+    const { fileId, message } = req.body;
 
     try {
-        const response = await generateChunkBasedTransformation(fileId, message, 10, citationMode);
+        const response = await generateChunkBasedTransformation(fileId, message, 10);
         res.json({
             sender: 'ai',
             text: response,
@@ -22,14 +22,14 @@ router.post('/', validate(chatSchema), async (req, res) => {
 });
 
 router.post('/stream', validate(chatStreamSchema), async (req, res) => {
-    const { fileId, message, citationMode = true } = req.body;
+    const { fileId, message } = req.body;
 
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
     try {
-        const stream = generateChunkBasedStreamingTransformation(fileId, message, 10, citationMode);
+        const stream = generateChunkBasedStreamingTransformation(fileId, message, 10);
         for await (const chunk of stream) {
             res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
         }

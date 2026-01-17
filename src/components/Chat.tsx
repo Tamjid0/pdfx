@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { parseMessageParts, triggerBrowserSearch, linkifyCitations } from '../utils/citationParser'; // Updated imports
+import { triggerBrowserSearch } from '../utils/citationParser';
 
 import { useStore } from '../store/useStore';
 
@@ -114,53 +114,42 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
 
                                         <div className="text-[15px] leading-[1.8] font-medium text-[#ccc]">
                                             {msg.sender === 'ai' ? (
-                                                <div className="markdown-content flex flex-col gap-4">
-                                                    {parseMessageParts(msg.text).map((part, i) => {
-                                                        const linkifiedContent = linkifyCitations(part.content || '');
-                                                        if (!linkifiedContent) return null;
-
-                                                        return (
-                                                            <div key={i} className={part.type === 'block' ? `ai-block-integrated ai-block-${part.blockType}` : ''}>
-                                                                <ReactMarkdown
-                                                                    remarkPlugins={[remarkGfm]}
-                                                                    components={{
-                                                                        p: ({ children }) => <p className="mb-4 last:mb-0 leading-relaxed text-[#bbb]">{children}</p>,
-                                                                        h2: ({ children }) => <h2 className="text-xl font-bold mt-8 mb-4 border-l-2 border-[#00ff88]/30 pl-4 text-white tracking-tight">{children}</h2>,
-                                                                        h3: ({ children }) => <h3 className="text-lg font-bold mt-6 mb-3 text-white/90">{children}</h3>,
-                                                                        table: ({ children }) => <div className="my-6 overflow-hidden rounded-xl border border-white/5 bg-[#050505] shadow-2xl"><table className="w-full text-left border-collapse">{children}</table></div>,
-                                                                        th: ({ children }) => <th className="px-5 py-4 bg-white/[0.02] text-[10px] font-bold uppercase tracking-[0.2em] text-white/60 border-b border-white/5">{children}</th>,
-                                                                        td: ({ children }) => <td className="px-5 py-4 text-sm border-b border-white/[0.02] text-[#aaa]">{children}</td>,
-                                                                        ul: ({ children }) => <ul className="space-y-4 list-none mb-6">{children}</ul>,
-                                                                        li: ({ children }) => <li className="flex gap-3 text-[#aaa] before:content-['•'] before:text-white/20">{children}</li>,
-                                                                        a: ({ href, children }) => {
-                                                                            return <a href={href} target="_blank" rel="noopener noreferrer" className="text-[#00ff88]/90 hover:underline underline-offset-4 decoration-[#00ff88]/20">{children}</a>
-                                                                        },
-                                                                        code: ({ node, inline, className, children, ...props }: any) => {
-                                                                            const match = /language-(\w+)/.exec(className || '');
-                                                                            return !inline && match ? (
-                                                                                <SyntaxHighlighter
-                                                                                    style={vscDarkPlus as any}
-                                                                                    language={match[1]}
-                                                                                    PreTag="div"
-                                                                                    className="rounded-xl !bg-[#050505] !p-6 border border-white/5 my-6 shadow-2xl"
-                                                                                    {...props}
-                                                                                >
-                                                                                    {String(children).replace(/\n$/, '')}
-                                                                                </SyntaxHighlighter>
-                                                                            ) : (
-                                                                                <code className="bg-white/5 px-1.5 py-0.5 rounded text-white/90 font-mono text-sm border border-white/5" {...props}>
-                                                                                    {children}
-                                                                                </code>
-                                                                            )
-                                                                        }
-                                                                    }}
+                                                <ReactMarkdown
+                                                    remarkPlugins={[remarkGfm]}
+                                                    components={{
+                                                        p: ({ children }) => <p className="mb-4 last:mb-0 leading-relaxed text-[#bbb]">{children}</p>,
+                                                        h2: ({ children }) => <h2 className="text-xl font-bold mt-8 mb-4 border-l-2 border-[#00ff88]/30 pl-4 text-white tracking-tight">{children}</h2>,
+                                                        h3: ({ children }) => <h3 className="text-lg font-bold mt-6 mb-3 text-white/90">{children}</h3>,
+                                                        table: ({ children }) => <div className="my-6 overflow-hidden rounded-xl border border-white/5 bg-[#050505] shadow-2xl"><table className="w-full text-left border-collapse">{children}</table></div>,
+                                                        th: ({ children }) => <th className="px-5 py-4 bg-white/[0.02] text-[10px] font-bold uppercase tracking-[0.2em] text-white/60 border-b border-white/5">{children}</th>,
+                                                        td: ({ children }) => <td className="px-5 py-4 text-sm border-b border-white/[0.02] text-[#aaa]">{children}</td>,
+                                                        ul: ({ children }) => <ul className="space-y-4 list-none mb-6">{children}</ul>,
+                                                        li: ({ children }) => <li className="flex gap-3 text-[#aaa] before:content-['•'] before:text-white/20">{children}</li>,
+                                                        a: ({ href, children }) => {
+                                                            return <a href={href} target="_blank" rel="noopener noreferrer" className="text-[#00ff88]/90 hover:underline underline-offset-4 decoration-[#00ff88]/20">{children}</a>
+                                                        },
+                                                        code: ({ node, inline, className, children, ...props }: any) => {
+                                                            const match = /language-(\w+)/.exec(className || '');
+                                                            return !inline && match ? (
+                                                                <SyntaxHighlighter
+                                                                    style={vscDarkPlus as any}
+                                                                    language={match[1]}
+                                                                    PreTag="div"
+                                                                    className="rounded-xl !bg-[#050505] !p-6 border border-white/5 my-6 shadow-2xl"
+                                                                    {...props}
                                                                 >
-                                                                    {linkifiedContent}
-                                                                </ReactMarkdown>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
+                                                                    {String(children).replace(/\n$/, '')}
+                                                                </SyntaxHighlighter>
+                                                            ) : (
+                                                                <code className="bg-white/5 px-1.5 py-0.5 rounded text-white/90 font-mono text-sm border border-white/5" {...props}>
+                                                                    {children}
+                                                                </code>
+                                                            )
+                                                        }
+                                                    }}
+                                                >
+                                                    {msg.text}
+                                                </ReactMarkdown>
                                             ) : (
                                                 <span className="whitespace-pre-wrap text-white text-lg tracking-tight font-semibold">{msg.text}</span>
                                             )}

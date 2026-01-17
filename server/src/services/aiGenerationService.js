@@ -69,24 +69,27 @@ export async function generateChunkBasedTransformation(fileId, query, topN = 10)
     }).join('\n\n---\n\n');
 
     const systemPrompt = `
-You are an advanced Research Assistant. Provide clear, well-structured responses using standard Markdown formatting.
+You are an advanced Research Assistant. Provide clear, well-structured responses optimized for a chat interface.
 
 FORMATTING GUIDELINES:
-- Use ## for main sections, ### for subsections
-- Use **bold** for emphasis, *italic* for subtle emphasis
-- Use bullet lists (- item) or numbered lists (1. item) for clarity
-- Use Markdown tables for comparisons:
-  | Header 1 | Header 2 |
+- Use ## for main sections, ### for subsections (sparingly)
+- Use **bold** for key terms, *italic* for subtle emphasis
+- Keep lists FLAT - avoid deeply nested sub-points (max 1 level of nesting)
+- Use simple bullet lists (- item) for clarity
+- For tables, keep them SIMPLE with 2-4 columns maximum:
+  | Column 1 | Column 2 |
   |----------|----------|
   | Data 1   | Data 2   |
-- Use code blocks with \`\`\`language for technical content
-- Write naturally - mix paragraphs, lists, and tables as needed
+- Use code blocks with \`\`\`language only when showing actual code
+- Write concisely - prioritize clarity over exhaustive detail
 
 CRITICAL RULES:
 - NEVER use HTML tags (<table>, <tr>, <td>, <div>, <text>, <list>, etc.)
 - NEVER mention page numbers or use citation tags
+- NEVER create deeply nested hierarchies (a.1.i.A style)
+- Keep responses scannable and digestible
 - If the answer isn't in the context, state it clearly
-- Provide detailed, analytical responses based strictly on the context
+- Provide analytical responses based strictly on the context
 
 Context:
 """
@@ -132,24 +135,27 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
     }).join('\n\n---\n\n');
 
     const systemPrompt = `
-You are an advanced Research Assistant. Provide clear, well-structured responses using standard Markdown formatting.
+You are an advanced Research Assistant. Provide clear, well-structured responses optimized for a chat interface.
 
 FORMATTING GUIDELINES:
-- Use ## for main sections, ### for subsections
-- Use **bold** for emphasis, *italic* for subtle emphasis
-- Use bullet lists (- item) or numbered lists (1. item) for clarity
-- Use Markdown tables for comparisons:
-  | Header 1 | Header 2 |
+- Use ## for main sections, ### for subsections (sparingly)
+- Use **bold** for key terms, *italic* for subtle emphasis
+- Keep lists FLAT - avoid deeply nested sub-points (max 1 level of nesting)
+- Use simple bullet lists (- item) for clarity
+- For tables, keep them SIMPLE with 2-4 columns maximum:
+  | Column 1 | Column 2 |
   |----------|----------|
   | Data 1   | Data 2   |
-- Use code blocks with \`\`\`language for technical content
-- Write naturally - mix paragraphs, lists, and tables as needed
+- Use code blocks with \`\`\`language only when showing actual code
+- Write concisely - prioritize clarity over exhaustive detail
 
 CRITICAL RULES:
 - NEVER use HTML tags (<table>, <tr>, <td>, <div>, <text>, <list>, etc.)
 - NEVER mention page numbers or use citation tags
+- NEVER create deeply nested hierarchies (a.1.i.A style)
+- Keep responses scannable and digestible
 - If the answer isn't in the context, state it clearly
-- Provide detailed, analytical responses based strictly on the context
+- Provide analytical responses based strictly on the context
 
 Context:
 """

@@ -6,12 +6,13 @@ export const useChat = () => {
         fileId,
         setChatHistory,
         setIsTyping,
-        citationMode
+        citationMode,
+        activeReplyProfile
     } = useStore();
 
     const handleSendMessage = async (message: string) => {
         const newUserMessage = {
-            sender: 'user',
+            sender: 'user' as const,
             text: message,
             timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
         };
@@ -21,7 +22,7 @@ export const useChat = () => {
         if (!fileId) {
             setTimeout(() => {
                 const aiErrorMessage = {
-                    sender: 'ai',
+                    sender: 'ai' as const,
                     text: "I'm sorry, I can only answer questions based on documents. Please upload or paste a document first so I can assist you!",
                     timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
                 };
@@ -33,45 +34,55 @@ export const useChat = () => {
         setIsTyping(true);
 
         try {
-            let fullAiText = '';
+            let streamedText = '';
+
+            // Add a placeholder AI message for streaming
+            setChatHistory(prev => [...prev, {
+                sender: 'ai',
+                text: '',
+                timestamp: 'streaming...'
+            }]);
 
             await apiService.chatWithDocumentStream(
                 message,
                 fileId,
                 (chunk) => {
-                    fullAiText += chunk;
-                    setIsTyping(false);
-
+                    streamedText += chunk;
+                    // Update the last message in the history with the streamed text
                     setChatHistory(prev => {
-                        const lastMsg = prev[prev.length - 1];
-                        if (lastMsg && lastMsg.sender === 'ai' && lastMsg.timestamp === 'streaming...') {
-                            return [...prev.slice(0, -1), { ...lastMsg, text: fullAiText }];
-                        } else {
-                            return [...prev, {
-                                sender: 'ai',
-                                text: fullAiText,
-                                timestamp: 'streaming...'
-                            }];
+                        const newHistory = [...prev];
+                        if (newHistory.length > 0) {
+                            newHistory[newHistory.length - 1] = {
+                                ...newHistory[newHistory.length - 1],
+                                text: streamedText
+                            };
                         }
+                        return newHistory;
                     });
                 },
                 (finalText) => {
+                    // Update the streaming message with final timestamp
                     setChatHistory(prev => {
-                        return [...prev.slice(0, -1), {
-                            sender: 'ai',
-                            text: finalText,
-                            timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-                        }];
+                        const newHistory = [...prev];
+                        if (newHistory.length > 0) {
+                            newHistory[newHistory.length - 1] = {
+                                ...newHistory[newHistory.length - 1],
+                                text: finalText,
+                                timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                            };
+                        }
+                        return newHistory;
                     });
                     setIsTyping(false);
                 },
-                citationMode
+                citationMode,
+                activeReplyProfile
             );
         } catch (error) {
             console.error("Error sending message:", error);
             setIsTyping(false);
             const errorResponse = {
-                sender: 'ai',
+                sender: 'ai' as const,
                 text: 'Sorry, I encountered an error. Please try again.',
                 timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
             };

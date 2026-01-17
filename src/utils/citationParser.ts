@@ -1,33 +1,92 @@
-// Enhanced citation parser that extracts surrounding context when no quoted text is provided
-// This helps with highlighting even when AI doesn't use proper cite tags
-
-export interface CitationPart {
-    type: 'text' | 'citation';
+export interface MessagePart {
+    type: 'text' | 'citation' | 'block';
+    blockType?: 'text' | 'table' | 'list' | 'steps' | 'qa' | 'insight' | 'code';
     content?: string;
     page?: number;
     quotedText?: string | null;
-    pageType?: string;
-    contextBefore?: string; // Text before citation
-    contextAfter?: string;  // Text after citation
 }
 
 /**
- * Parses AI response text to extract citations and surrounding context
+ * Parses AI response text into a structured array of blocks and citations
  */
-export function parseCitations(text: string): CitationPart[] {
-    const parts: CitationPart[] = [];
-    const allMatches: Array<{
-        index: number,
-        length: number,
-        page: number,
-        text: string | null,
-        fullMatch: string
-    }> = [];
+export function parseMessageParts(text: string): MessagePart[] {
+    const parts: MessagePart[] = [];
 
-    // Find cite tags: <cite page="3">text</cite>
-    const citeRegex = /<cite\s+page="(\d+)">([^<]+)<\/cite>/gi;
+    // Regex to match blocks: <tag>content</tag>
+    const blockRegex = /<(text|table|list|steps|qa|insight|code)>([\s\S]*?)<\/\1>/gi;
+
+    let lastIndex = 0;
     let match;
 
+    while ((match = blockRegex.exec(text)) !== null) {
+        // Handle any raw text before the block (if AI forgot or is still typing)
+        if (match.index > lastIndex) {
+            const rawText = text.slice(lastIndex, match.index).trim();
+            if (rawText) {
+                appendCitations(parts, rawText);
+            }
+        }
+
+        const type = match[1] as any;
+        const content = match[2];
+
+        // For blocks, we still want to parse citations INSIDE them
+        // unless it's a code block
+        if (type === 'code') {
+            parts.push({
+                type: 'block',
+                blockType: 'code',
+                content: content.trim()
+            });
+        } else {
+            // Process content for citations
+            const subParts = parseCitationsOnly(content);
+            parts.push({
+                type: 'block',
+                blockType: type,
+                content: content // Keep raw content for sub-parsing in UI if needed, or sub-parts
+            });
+            // Note: In a production app, we might want a nested structure.
+            // For now, I'll flatten or handle sub-parsing in the renderer.
+        }
+
+        lastIndex = blockRegex.lastIndex;
+    }
+
+    // Handle remaining text
+    if (lastIndex < text.length) {
+        const remaining = text.slice(lastIndex).trim();
+        if (remaining) {
+            appendCitations(parts, remaining);
+        }
+    }
+
+    // If no blocks were found, treat the whole thing as text + citations
+    if (parts.length === 0 && text.trim()) {
+        appendCitations(parts, text);
+    }
+
+    return parts;
+}
+
+function appendCitations(parts: MessagePart[], text: string) {
+    const citationParts = parseCitationsOnly(text);
+    parts.push(...citationParts.map(p => ({
+        ...p,
+        type: (p.type === 'text' ? 'text' : 'citation') as any
+    })));
+}
+
+/**
+ * Legacy citation parsing logic (extracted from original parseCitations)
+ */
+export function parseCitationsOnly(text: string): any[] {
+    const parts: any[] = [];
+    const allMatches: any[] = [];
+
+    // <cite page="3">text</cite>
+    const citeRegex = /<cite\s+page="(\d+)">([^<]+)<\/cite>/gi;
+    let match;
     while ((match = citeRegex.exec(text)) !== null) {
         allMatches.push({
             index: match.index,
@@ -38,77 +97,33 @@ export function parseCitations(text: string): CitationPart[] {
         });
     }
 
-    // Find parentheses citations: (Page 3)
+    // (Page 3) or (Slide 3)
     const parenRegex = /\((?:Source:\s*)?(Page|Slide)\s+(\d+)\)/gi;
-
     while ((match = parenRegex.exec(text)) !== null) {
-        // Extract surrounding context (20 words before citation)
         const beforeText = text.substring(Math.max(0, match.index - 150), match.index).trim();
         const words = beforeText.split(/\s+/).slice(-20).join(' ');
-
         allMatches.push({
             index: match.index,
             length: match[0].length,
             page: parseInt(match[2], 10),
-            text: words || null, // Use surrounding context as search text
+            text: words || null,
             fullMatch: match[0]
         });
     }
 
-    // Find square bracket citations: [Page 3]
-    const bracketRegex = /"([^"]+)"\s*\[(?:Source:\s*)?(Page|Slide)\s+(\d+)\]|\[(?:Source:\s*)?(Page|Slide)\s+(\d+)\]/gi;
-
-    while ((match = bracketRegex.exec(text)) !== null) {
-        const quotedText = match[1] || null;
-        const pageNum = match[3] || match[5];
-
-        // If no quoted text, extract surrounding context
-        let searchText = quotedText;
-        if (!searchText) {
-            const beforeText = text.substring(Math.max(0, match.index - 150), match.index).trim();
-            searchText = beforeText.split(/\s+/).slice(-20).join(' ') || null;
-        }
-
-        allMatches.push({
-            index: match.index,
-            length: match[0].length,
-            page: parseInt(pageNum, 10),
-            text: searchText,
-            fullMatch: match[0]
-        });
-    }
-
-    // Sort matches by position
     allMatches.sort((a, b) => a.index - b.index);
 
     let lastIndex = 0;
-
-    for (const match of allMatches) {
-        // Add text before this citation
-        if (match.index > lastIndex) {
-            parts.push({
-                type: 'text',
-                content: text.slice(lastIndex, match.index)
-            });
+    for (const m of allMatches) {
+        if (m.index > lastIndex) {
+            parts.push({ type: 'text', content: text.slice(lastIndex, m.index) });
         }
-
-        // Add the citation
-        parts.push({
-            type: 'citation',
-            page: match.page,
-            quotedText: match.text,
-            pageType: 'page'
-        });
-
-        lastIndex = match.index + match.length;
+        parts.push({ type: 'citation', page: m.page, quotedText: m.text });
+        lastIndex = m.index + m.length;
     }
 
-    // Add remaining text
     if (lastIndex < text.length) {
-        parts.push({
-            type: 'text',
-            content: text.slice(lastIndex)
-        });
+        parts.push({ type: 'text', content: text.slice(lastIndex) });
     }
 
     return parts;
@@ -125,3 +140,6 @@ export function triggerBrowserSearch(searchText: string): void {
     }
     console.log(`Copied to clipboard: "${searchText}". Press Ctrl+F to search.`);
 }
+
+// Keep the old export for compatibility during transition
+export const parseCitations = parseCitationsOnly;

@@ -43,74 +43,80 @@ User's specific instruction: "${promptInstruction}"
     }
 }
 
+const REPLY_PROFILES = {
+    default: {
+        name: "Research Assistant",
+        instructions: "Generate a balanced, structured response using markdown. Mix text and lists naturally.",
+        allowedBlocks: ["text", "list", "table", "insight"]
+    },
+    educational: {
+        name: "Academic Tutor",
+        instructions: "Deeply explain concepts. Prioritize Step-by-Step guides and Q&A pairs for clarity.",
+        allowedBlocks: ["text", "steps", "qa", "list", "insight"]
+    },
+    data_analyst: {
+        name: "Data Analyst",
+        instructions: "Focus on facts, comparisons, and technical details. Use tables and code blocks extensively.",
+        allowedBlocks: ["text", "table", "code", "list"]
+    },
+    executive: {
+        name: "Executive Brief",
+        instructions: "High-level summary. Focus on key insights and bullet points. Avoid long paragraphs.",
+        allowedBlocks: ["insight", "list", "text", "table"]
+    }
+};
+
 /**
  * Performs chunk-based RAG generation using a FAISS vector index.
- * @param {string} fileId - The ID of the document to query.
- * @param {string} query - The user's query or question.
- * @param {number} [topN=4] - Number of top relevant documents to retrieve.
- * @returns {Promise<string>} - The AI generated content based on relevant documents.
  */
-export async function generateChunkBasedTransformation(fileId, query, topN = 8, citationMode = true) {
+export async function generateChunkBasedTransformation(fileId, query, topN = 8, citationMode = true, replyProfile = 'default') {
     const indexesDir = path.join(process.cwd(), 'src', 'database', 'indexes');
     const indexPath = path.join(indexesDir, fileId);
 
     if (!fs.existsSync(indexPath)) {
-        throw new Error(`FAISS index for fileId '${fileId}' not found. Please upload the file again.`);
+        throw new Error(`FAISS index for fileId '${fileId}' not found.`);
     }
 
-    // Load the FAISS index from disk
     const vectorStore = await FaissStore.load(indexPath, hfEmbeddings);
-
     const searchResults = await vectorStore.similaritySearch(query, topN);
 
     if (searchResults.length === 0) {
-        return "Information not found in document. Try rephrasing your question.";
+        return "Information not found in document.";
     }
 
-    // Phase 2: Include metadata in context for page/slide citations
-    const context = searchResults.map((doc, idx) => {
+    const profile = REPLY_PROFILES[replyProfile] || REPLY_PROFILES.default;
+
+    const context = searchResults.map((doc) => {
         const meta = doc.metadata || {};
-        let source = '';
-
-        if (meta.pageIndex !== undefined) {
-            const displayIndex = meta.pageIndex + 1; // Convert 0-indexed to 1-based for human/prompt
-            if (meta.pageType === 'slide') {
-                source = `[Source: Slide ${displayIndex}]`;
-            } else {
-                source = `[Source: Page ${displayIndex}]`;
-            }
-        }
-
-        return `${source}\n${doc.pageContent}`;
+        const displayIndex = (meta.pageIndex !== undefined) ? meta.pageIndex + 1 : 'Unknown';
+        const type = meta.pageType || 'Page';
+        return `[Source: ${type} ${displayIndex}]\n${doc.pageContent}`;
     }).join('\n\n---\n\n');
 
     const citationRules = citationMode ? `
-ZERO-REDUNDANCY CITATION RULES:
-- DO NOT repeat info. Integrate citations NATIVELY into your flow.
-- Wrap ONLY the extracted keyword/phrase in <cite page="X">...</cite> tags.
-- Example: "The **atom** <cite page="1">allows for manipulation of particles</cite> to build elements."
-- The page "X" MUST match the [Source: Page X] or [Source: Slide X] tag.
-- Citation must be part of the sentence, not an added block.
-` : `
-CITATION RULES:
-- DO NOT Use any <cite> tags.
-- DO NOT mention page numbers or slide numbers.
-- Return a clean, professional markdown response WITHOUT any source references.
-`;
+SEAMLESS INLINE CITATIONS:
+- Wrap essential phrases in <cite page="X">...</cite> where X is the Source Page number.
+- Integrate these citations NATIVELY into your sentence flow.
+` : "DO NOT use any <cite> tags or mention page numbers.";
 
     const systemPrompt = `
-You are an elite AI researcher specializing in high-density, structured knowledge extraction. Generate a perfectly organized "Markdown Note" based strictly on the Context.
+You are an expert ${profile.name}. ${profile.instructions}
 
-STRUCTURE:
-- Use H2 (##) and H3 (###) headers. Use BOLDING for emphasis.
-- Use TABLES for comparisons and LISTS for steps. No conversational filler.
+RESPONSE STRUCTURE:
+You must wrap your content in the following tag-based blocks for better categorization:
+- <text>...</text> for standard paragraphs.
+- <list>...</list> for bulleted or numbered items.
+- <table>...</table> for data grids/comparisons.
+- <steps>...</steps> for sequential instructions.
+- <qa>...</qa> for Question/Answer pairs.
+- <insight>...</insight> for key takeaways or evaluations.
+- <code>...</code> for technical snippets.
 
-CRITICAL: ZERO REDUNDANCY POLICY:
-- DO NOT explain a concept and then "quote" it again separately.
-- DO NOT use a format like: Explanation "Quote" [Page X].
-- DO NOT repeat the same information twice in a sentence.
+ALLOWED BLOCKS for this profile: ${profile.allowedBlocks.join(', ')}.
 
-${citationRules}
+CRITICAL:
+- ZERO REDUNDANCY: Do not repeat info.
+- ${citationRules}
 
 Context:
 """
@@ -118,27 +124,21 @@ ${context}
 """
 
 User Query: "${query}"
-
-REMINDER: ${citationMode ? 'Integrated <cite> tags for keywords only. No duplicate text.' : 'NO CITATIONS. NO PAGE NUMBERS.'} Perfectly structured Markdown.
 `;
 
     try {
         const result = await aiModel.generateContent(systemPrompt);
         return result?.response?.text()?.trim() || "No content generated.";
     } catch (error) {
-        console.error('Error in chunk-based transformation:', error);
-        throw new Error('Failed to generate chunk-based transformation.');
+        console.error('Error in transformation:', error);
+        throw new Error('Failed to generate response.');
     }
 }
 
 /**
  * Performs periodic RAG streaming generation using a FAISS vector index.
- * @param {string} fileId - The ID of the document to query.
- * @param {string} query - The user's query or question.
- * @param {number} [topN=4] - Number of top relevant documents to retrieve.
- * @returns {AsyncGenerator<string>} - Async generator yielding AI content chunks.
  */
-export async function* generateChunkBasedStreamingTransformation(fileId, query, topN = 8, citationMode = true) {
+export async function* generateChunkBasedStreamingTransformation(fileId, query, topN = 8, citationMode = true, replyProfile = 'default') {
     const indexesDir = path.join(process.cwd(), 'src', 'database', 'indexes');
     const indexPath = path.join(indexesDir, fileId);
 
@@ -154,48 +154,39 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
         return;
     }
 
-    // Phase 2: Include metadata in context for page/slide citations
-    const context = searchResults.map((doc, idx) => {
+    const profile = REPLY_PROFILES[replyProfile] || REPLY_PROFILES.default;
+
+    const context = searchResults.map((doc) => {
         const meta = doc.metadata || {};
-        let source = '';
-
-        if (meta.pageIndex !== undefined) {
-            const displayIndex = meta.pageIndex + 1; // Convert 0-indexed to 1-based
-            if (meta.pageType === 'slide') {
-                source = `[Source: Slide ${displayIndex}]`;
-            } else {
-                source = `[Source: Page ${displayIndex}]`;
-            }
-        }
-
-        return `${source}\n${doc.pageContent}`;
+        const displayIndex = (meta.pageIndex !== undefined) ? meta.pageIndex + 1 : 'Unknown';
+        const type = meta.pageType || 'Page';
+        return `[Source: ${type} ${displayIndex}]\n${doc.pageContent}`;
     }).join('\n\n---\n\n');
 
     const citationRules = citationMode ? `
-ZERO-REDUNDANCY CITATION RULES:
-- DO NOT repeat info. Integrate citations NATIVELY into your flow.
-- Wrap ONLY the extracted keyword/phrase in <cite page="X">...</cite> tags.
-- Example: "The **atom** <cite page="1">allows for manipulation of particles</cite> to build elements."
-- The page "X" MUST match the [Source: Page X] or [Source: Slide X] tag.
-- Citation must be part of the sentence, not an added block.
-` : `
-CITATION RULES:
-- DO NOT Use any <cite> tags.
-- DO NOT mention page numbers or slide numbers.
-- Return a clean, professional markdown response WITHOUT any source references.
-`;
+SEAMLESS INLINE CITATIONS:
+- Wrap essential phrases in <cite page="X">...</cite> where X is the Source Page number.
+- Integrate these citations NATIVELY into your sentence flow.
+` : "DO NOT use any <cite> tags or mention page numbers.";
 
     const systemPrompt = `
-You are an elite AI researcher generating high-density "Markdown Notes".
+You are an expert ${profile.name}. ${profile.instructions}
 
-STRUCTURE:
-- Use H2/H3 headers. BOLD key terms. Use TABLES/LISTS. No fluff.
+RESPONSE STRUCTURE:
+You must wrap your content in the following tag-based blocks for better categorization:
+- <text>...</text> for standard paragraphs.
+- <list>...</list> for bulleted or numbered items.
+- <table>...</table> for data grids/comparisons.
+- <steps>...</steps> for sequential instructions.
+- <qa>...</qa> for Question/Answer pairs.
+- <insight>...</insight> for key takeaways or evaluations.
+- <code>...</code> for technical snippets.
 
-CRITICAL: ZERO REDUNDANCY POLICY:
-- DO NOT explain a concept and then "quote" it again separately.
-- DO NOT repeat the same information twice in a sentence.
+ALLOWED BLOCKS for this profile: ${profile.allowedBlocks.join(', ')}.
 
-${citationRules}
+CRITICAL:
+- ZERO REDUNDANCY: Do not repeat info.
+- ${citationRules}
 
 Context:
 """
@@ -203,8 +194,6 @@ ${context}
 """
 
 User Query: "${query}"
-
-REMINDER: ${citationMode ? 'Integrated <cite> tags for keywords only. No duplicate text.' : 'NO CITATIONS. NO PAGE NUMBERS.'} Perfectly structured Markdown.
 `;
 
     try {

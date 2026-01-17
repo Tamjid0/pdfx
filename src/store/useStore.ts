@@ -108,6 +108,8 @@ interface AppState {
     setPdfSearchText: (text: string | null) => void;
     citationMode: boolean;
     setCitationMode: (mode: boolean) => void;
+    activeReplyProfile: string;
+    setActiveReplyProfile: (profile: string) => void;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -245,4 +247,6 @@ export const useStore = create<AppState>((set) => ({
     // Citation Mode
     citationMode: true,
     setCitationMode: (mode) => set({ citationMode: mode }),
+    activeReplyProfile: 'default',
+    setActiveReplyProfile: (profile) => set({ activeReplyProfile: profile }),
 }));

@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { parseCitations } from '../utils/citationParser';
+import { parseMessageParts, triggerBrowserSearch } from '../utils/citationParser'; // Updated imports
 
 import { useStore } from '../store/useStore';
 
@@ -21,7 +21,12 @@ interface ChatProps {
 }
 
 const Chat: React.FC<ChatProps> = ({ history, onSendMessage, onCitationClick, isTyping }) => {
-    const { citationMode, setCitationMode } = useStore();
+    const {
+        citationMode,
+        setCitationMode,
+        activeReplyProfile,
+        setActiveReplyProfile
+    } = useStore();
     const [inputValue, setInputValue] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -61,27 +66,54 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, onCitationClick, is
 
     return (
         <div className="chat-container flex flex-col h-full w-full bg-[#0a0a0a] text-[#e0e0e0]">
-            {/* Minimal Toggle Header */}
+            {/* Extended Header with Profile Selector */}
             <div className="flex items-center justify-between px-8 py-3 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/5 sticky top-0 z-20">
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[#00ff88]/10 flex items-center justify-center">
-                        <svg viewBox="0 0 24 24" className="w-5 h-5 fill-[#00ff88]"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" /></svg>
+                <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-[#00ff88]/10 flex items-center justify-center">
+                            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-[#00ff88]"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" /></svg>
+                        </div>
+                        <div>
+                            <h3 className="text-xs font-bold text-white uppercase tracking-[0.2em]">Research Assistant</h3>
+                            <p className="text-[10px] text-[#666] font-medium uppercase tracking-wider">Gemini 2.5 Flash</p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 className="text-xs font-bold text-white uppercase tracking-[0.2em]">Research Assistant</h3>
-                        <p className="text-[10px] text-[#666] font-medium uppercase tracking-wider">Powered by Gemini 2.5</p>
+
+                    <div className="h-6 w-[1px] bg-white/10"></div>
+
+                    {/* Reply Profile Selector */}
+                    <div className="flex items-center gap-2">
+                        {[
+                            { id: 'default', label: 'Research', icon: '🔍' },
+                            { id: 'educational', label: 'Tutor', icon: '🎓' },
+                            { id: 'data_analyst', label: 'Analyst', icon: '📊' },
+                            { id: 'executive', label: 'Brief', icon: '⚡' }
+                        ].map((p) => (
+                            <button
+                                key={p.id}
+                                onClick={() => setActiveReplyProfile(p.id)}
+                                className={`px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-wider transition-all border ${activeReplyProfile === p.id
+                                    ? 'bg-[#00ff88] text-black border-[#00ff88]'
+                                    : 'bg-white/5 text-[#666] border-white/5 hover:border-white/10 hover:text-[#888]'
+                                    }`}
+                                title={`${p.label} Mode`}
+                            >
+                                <span className="mr-1.5">{p.icon}</span>
+                                {p.label}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
                 <button
                     onClick={() => setCitationMode(!citationMode)}
                     className={`group flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${citationMode
-                            ? 'bg-[#00ff88]/5 text-[#00ff88] border-[#00ff88]/20 hover:bg-[#00ff88]/10'
-                            : 'bg-white/5 text-[#666] border-white/10 hover:border-white/20'
+                        ? 'bg-[#00ff88]/5 text-[#00ff88] border-[#00ff88]/20 hover:bg-[#00ff88]/10'
+                        : 'bg-white/5 text-[#666] border-white/10 hover:border-white/20'
                         }`}
                 >
                     <div className={`w-1.5 h-1.5 rounded-full transition-all ${citationMode ? 'bg-[#00ff88] animate-pulse shadow-[0_0_8px_rgba(0,255,136,0.6)]' : 'bg-[#444]'}`}></div>
-                    CITATIONS: {citationMode ? 'ENABLED' : 'DISABLED'}
+                    CITATIONS: {citationMode ? 'ON' : 'OFF'}
                 </button>
             </div>
 
@@ -125,8 +157,8 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, onCitationClick, is
                             >
                                 <div className="max-w-3xl mx-auto flex gap-8">
                                     <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-bold text-xs tracking-tighter shadow-xl transform transition-transform group-hover:scale-110 ${msg.sender === 'user'
-                                            ? 'bg-gradient-to-br from-[#00ff88] to-[#00cc66] text-black ring-4 ring-[#00ff88]/10'
-                                            : 'bg-[#1a1a1a] border border-white/10 text-[#00ff88] ring-4 ring-white/5'
+                                        ? 'bg-gradient-to-br from-[#00ff88] to-[#00cc66] text-black ring-4 ring-[#00ff88]/10'
+                                        : 'bg-[#1a1a1a] border border-white/10 text-[#00ff88] ring-4 ring-white/5'
                                         }`}>
                                         {msg.sender === 'user' ? 'JD' : (
                                             <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" /></svg>
@@ -143,45 +175,75 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, onCitationClick, is
 
                                         <div className="text-[15px] leading-[1.8] font-medium text-[#ccc]">
                                             {msg.sender === 'ai' ? (
-                                                <div className="markdown-content prose prose-invert prose-emerald prose-sm max-w-none prose-p:leading-[1.8] prose-headings:tracking-tight prose-headings:text-white">
-                                                    {parseCitations(msg.text).map((part, i) =>
-                                                        part.type === 'citation' ? (
-                                                            <span
-                                                                key={i}
-                                                                onClick={() => onCitationClick?.(part.page, part.quotedText)}
-                                                                className="cursor-pointer text-[#00ff88] font-bold hover:underline decoration-white/20 underline-offset-4 decoration-dotted transition-all inline select-text px-1 bg-[#00ff88]/5 rounded-md"
-                                                                title={`Context from Page ${part.page}`}
-                                                            >
-                                                                {part.quotedText ? (
-                                                                    <span className="italic">
-                                                                        {part.quotedText}
-                                                                        <sup className="text-[9px] font-black opacity-60 ml-1 tracking-tighter align-top">
-                                                                            P{part.page}
-                                                                        </sup>
-                                                                    </span>
-                                                                ) : (
-                                                                    <span className="text-[#00ff88] text-[10px] font-black">[P{part.page}]</span>
-                                                                )}
-                                                            </span>
-                                                        ) : (
-                                                            <ReactMarkdown
-                                                                key={i}
-                                                                remarkPlugins={[remarkGfm]}
-                                                                components={{
-                                                                    p: ({ children }) => <span className="inline">{children}</span>,
-                                                                    h2: ({ children }) => <h2 className="text-xl font-bold mt-8 mb-4 border-l-2 border-[#00ff88]/30 pl-4">{children}</h2>,
-                                                                    h3: ({ children }) => <h3 className="text-lg font-bold mt-6 mb-3 text-[#f0f0f0]">{children}</h3>,
-                                                                    ul: ({ children }) => <ul className="my-4 space-y-2 list-none">{children}</ul>,
-                                                                    li: ({ children }) => <li className="flex gap-2 before:content-['→'] before:text-[#00ff88] before:opacity-50">{children}</li>,
-                                                                    table: ({ children }) => <div className="my-6 overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]"><table className="w-full text-left border-collapse">{children}</table></div>,
-                                                                    th: ({ children }) => <th className="px-4 py-3 bg-white/5 text-[10px] font-black uppercase tracking-widest text-[#666] border-b border-white/10">{children}</th>,
-                                                                    td: ({ children }) => <td className="px-4 py-3 text-sm border-b border-white/[0.03] text-[#aaa]">{children}</td>
-                                                                }}
-                                                            >
-                                                                {part.content}
-                                                            </ReactMarkdown>
-                                                        )
-                                                    )}
+                                                <div className="markdown-content flex flex-col gap-8">
+                                                    {parseMessageParts(msg.text).map((part, i) => {
+                                                        if (part.type === 'block') {
+                                                            return (
+                                                                <div key={i} className={`ai-block ai-block-${part.blockType}`}>
+                                                                    <ReactMarkdown
+                                                                        remarkPlugins={[remarkGfm]}
+                                                                        components={{
+                                                                            p: ({ children }) => <span className="inline-block">{children}</span>,
+                                                                            h2: ({ children }) => <h2 className="text-xl font-bold mt-2 mb-4 border-l-2 border-[#00ff88]/30 pl-4">{children}</h2>,
+                                                                            table: ({ children }) => <div className="my-2 overflow-hidden rounded-xl border border-white/10 bg-white/[0.02] shadow-lg"><table className="w-full text-left border-collapse">{children}</table></div>,
+                                                                            th: ({ children }) => <th className="px-4 py-3 bg-[#00ff88]/5 text-[10px] font-black uppercase tracking-widest text-[#00ff88] border-b border-[#00ff88]/20">{children}</th>,
+                                                                            td: ({ children }) => <td className="px-4 py-3 text-sm border-b border-white/[0.03] text-[#aaa]">{children}</td>,
+                                                                            ul: ({ children }) => <ul className="space-y-3 list-none">{children}</ul>,
+                                                                            li: ({ children }) => <li className="flex gap-2 before:content-['→'] before:text-[#00ff88] before:opacity-50">{children}</li>,
+                                                                            code: ({ node, inline, className, children, ...props }: any) => {
+                                                                                const match = /language-(\w+)/.exec(className || '');
+                                                                                return !inline && match ? (
+                                                                                    <SyntaxHighlighter
+                                                                                        style={vscDarkPlus as any}
+                                                                                        language={match[1]}
+                                                                                        PreTag="div"
+                                                                                        className="rounded-xl !bg-[#050505] !p-4 border border-white/10"
+                                                                                        {...props}
+                                                                                    >
+                                                                                        {String(children).replace(/\n$/, '')}
+                                                                                    </SyntaxHighlighter>
+                                                                                ) : (
+                                                                                    <code className="bg-white/10 px-1.5 py-0.5 rounded text-[#00ff88]" {...props}>
+                                                                                        {children}
+                                                                                    </code>
+                                                                                )
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        {part.content || ''}
+                                                                    </ReactMarkdown>
+                                                                </div>
+                                                            );
+                                                        } else if (part.type === 'citation') {
+                                                            return (
+                                                                <span
+                                                                    key={i}
+                                                                    onClick={() => onCitationClick?.(part.page || 0, part.quotedText || null)}
+                                                                    className="cursor-pointer text-[#00ff88] font-bold hover:underline decoration-white/20 underline-offset-4 decoration-dotted transition-all inline select-text px-1 bg-[#00ff88]/5 rounded-md"
+                                                                    title={`Context from Page ${part.page}`}
+                                                                >
+                                                                    {part.quotedText ? (
+                                                                        <span className="italic">
+                                                                            {part.quotedText}
+                                                                            <sup className="text-[9px] font-black opacity-60 ml-1 tracking-tighter align-top">P{part.page}</sup>
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="text-[#00ff88] text-[10px] font-black">[P{part.page}]</span>
+                                                                    )}
+                                                                </span>
+                                                            );
+                                                        } else {
+                                                            return (
+                                                                <ReactMarkdown
+                                                                    key={i}
+                                                                    remarkPlugins={[remarkGfm]}
+                                                                    components={{ p: ({ children }) => <span className="inline">{children}</span> }}
+                                                                >
+                                                                    {part.content || ''}
+                                                                </ReactMarkdown>
+                                                            );
+                                                        }
+                                                    })}
                                                 </div>
                                             ) : (
                                                 <span className="whitespace-pre-wrap text-white text-lg tracking-tight font-semibold">{msg.text}</span>
@@ -202,7 +264,7 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, onCitationClick, is
                             </div>
                             <div className="pt-2">
                                 <div className="flex gap-1 items-center px-1">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#00ff88] animate-pulse">Analyzing Library...</span>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#00ff88] animate-pulse">Processing Insights...</span>
                                 </div>
                                 <div className="h-4 w-48 bg-white/5 rounded-full mt-4 animate-pulse"></div>
                             </div>
@@ -219,7 +281,7 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, onCitationClick, is
                         <textarea
                             ref={textareaRef}
                             className="w-full bg-transparent border-none text-[#fff] text-base resize-none outline-none px-4 py-3 min-h-[50px] max-h-48 leading-relaxed placeholder:text-[#444] font-medium"
-                            placeholder="Message Research Assistant..."
+                            placeholder={`Message Research Assistant (${activeReplyProfile})...`}
                             rows={1}
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}

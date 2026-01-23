@@ -64,10 +64,10 @@ export default function LoginPage() {
 
                 <div className="relative my-8">
                     <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t border-gray-100 dark:border-zinc-900" />
+                        <span className="w-full border-t border-white/5" />
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-white dark:bg-zinc-950 px-3 text-gray-500 font-medium">
+                        <span className="bg-[#121214] px-3 text-gray-500 font-medium">
                             Or continue with
                         </span>
                     </div>

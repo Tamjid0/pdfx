@@ -61,10 +61,10 @@ export default function SignupPage() {
                 />
 
                 <div className="mb-4">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-gray-400">
                         By signing up, you agree to our{' '}
-                        <a href="#" className="font-semibold text-gray-700 dark:text-gray-300 hover:underline">Terms of Service</a> and{' '}
-                        <a href="#" className="font-semibold text-gray-700 dark:text-gray-300 hover:underline">Privacy Policy</a>.
+                        <a href="#" className="font-semibold text-white hover:underline">Terms of Service</a> and{' '}
+                        <a href="#" className="font-semibold text-white hover:underline">Privacy Policy</a>.
                     </p>
                 </div>
 
@@ -74,10 +74,10 @@ export default function SignupPage() {
 
                 <div className="relative my-8">
                     <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t border-gray-100 dark:border-zinc-900" />
+                        <span className="w-full border-t border-white/5" />
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-white dark:bg-zinc-950 px-3 text-gray-500 font-medium">
+                        <span className="bg-[#121214] px-3 text-gray-500 font-medium">
                             Or sign up with
                         </span>
                     </div>

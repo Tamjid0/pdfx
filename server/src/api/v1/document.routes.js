@@ -4,6 +4,8 @@ import path from 'path';
 import validate from '../../middleware/validate.js';
 import { getDocumentSchema, getDocumentPageSchema, getDocumentImageSchema } from '../../validations/document.validation.js';
 
+import Document from '../../models/Document.js';
+
 const router = express.Router();
 
 const DOCUMENTS_DIR = path.resolve(process.cwd(), 'src/database/documents');
@@ -37,7 +39,6 @@ router.get('/:documentId/pages/:pageIndex', validate(getDocumentPageSchema), (re
     const imagePath = path.join(DOCUMENTS_DIR, documentId, 'pages', `${pageIndex}.png`);
 
     if (!fs.existsSync(imagePath)) {
-        // Fallback for immediate response if processing isn't done (though it should be)
         return res.status(404).json({ error: 'Page image not found' });
     }
 
@@ -50,31 +51,31 @@ router.get('/:documentId/pages/:pageIndex', validate(getDocumentPageSchema), (re
  * GET /api/v1/documents/:documentId/pdf
  * Serves the converted PDF of a presentation
  */
-router.get('/:documentId/pdf', validate(getDocumentSchema), (req, res) => {
+router.get('/:documentId/pdf', validate(getDocumentSchema), async (req, res) => {
     const { documentId } = req.params;
-    const jsonPath = path.join(DOCUMENTS_DIR, `${documentId}.json`);
-
-    if (!fs.existsSync(jsonPath)) {
-        return res.status(404).json({ error: 'Document not found' });
-    }
 
     try {
-        const docGraph = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
-        if (!docGraph.convertedPdfPath && !docGraph.originalFilePath) {
+        const doc = await Document.findOne({ documentId });
+
+        if (!doc) {
+            return res.status(404).json({ error: 'Document not found' });
+        }
+
+        if (!doc.convertedPdfPath && !doc.originalFilePath) {
             return res.status(404).json({ error: 'PDF source not found for this document' });
         }
 
         let pdfPath;
-        if (docGraph.convertedPdfPath) {
-            pdfPath = path.join(DOCUMENTS_DIR, docGraph.convertedPdfPath);
+        if (doc.convertedPdfPath) {
+            pdfPath = path.join(DOCUMENTS_DIR, doc.convertedPdfPath);
         } else {
-            pdfPath = docGraph.originalFilePath;
+            pdfPath = doc.originalFilePath;
         }
+
         if (!fs.existsSync(pdfPath)) {
             return res.status(404).json({ error: 'PDF file missing on disk' });
         }
 
-        // Ensure browser doesn't cache the PDF too aggressively to assist fragment navigation
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         res.sendFile(pdfPath);
     } catch (error) {
@@ -85,22 +86,23 @@ router.get('/:documentId/pdf', validate(getDocumentSchema), (req, res) => {
 
 /**
  * GET /api/documents/:documentId
- * Retrieves the full DocumentGraph JSON
+ * Retrieves the full DocumentGraph JSON from MongoDB
  */
-router.get('/:documentId', validate(getDocumentSchema), (req, res) => {
+router.get('/:documentId', validate(getDocumentSchema), async (req, res) => {
     const { documentId } = req.params;
 
-    const jsonPath = path.join(DOCUMENTS_DIR, `${documentId}.json`);
-
-    if (!fs.existsSync(jsonPath)) {
-        return res.status(404).json({ error: 'Document not found' });
-    }
-
     try {
-        const docGraph = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
-        res.json(docGraph);
+        const doc = await Document.findOne({ documentId });
+
+        if (!doc) {
+            return res.status(404).json({ error: 'Document not found' });
+        }
+
+        // Return the structure (or the whole doc depending on preference)
+        // Here we return what the client expects: the full data object
+        res.json(doc);
     } catch (error) {
-        console.error('[DocumentRoutes] Error reading document:', error);
+        console.error('[DocumentRoutes] Error reading document from MongoDB:', error);
         res.status(500).json({ error: 'Failed to read document' });
     }
 });
@@ -109,18 +111,17 @@ router.get('/:documentId', validate(getDocumentSchema), (req, res) => {
  * GET /api/documents/:documentId/page/:pageIndex
  * Retrieves a specific page/slide from the document
  */
-router.get('/:documentId/page/:pageIndex', validate(getDocumentPageSchema), (req, res) => {
+router.get('/:documentId/page/:pageIndex', validate(getDocumentPageSchema), async (req, res) => {
     const { documentId, pageIndex } = req.params;
 
-    const jsonPath = path.join(DOCUMENTS_DIR, `${documentId}.json`);
-
-    if (!fs.existsSync(jsonPath)) {
-        return res.status(404).json({ error: 'Document not found' });
-    }
-
     try {
-        const docGraph = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
-        const page = docGraph.structure.pages.find(p => p.index === pageIndex);
+        const doc = await Document.findOne({ documentId });
+
+        if (!doc) {
+            return res.status(404).json({ error: 'Document not found' });
+        }
+
+        const page = doc.structure.pages.find(p => p.index === pageIndex);
 
         if (!page) {
             return res.status(404).json({ error: 'Page not found' });
@@ -130,12 +131,12 @@ router.get('/:documentId/page/:pageIndex', validate(getDocumentPageSchema), (req
             documentId,
             page,
             metadata: {
-                documentType: docGraph.type,
-                totalPages: docGraph.structure.pages.length
+                documentType: doc.type,
+                totalPages: doc.structure.pages.length
             }
         });
     } catch (error) {
-        console.error('[DocumentRoutes] Error reading page:', error);
+        console.error('[DocumentRoutes] Error reading page from MongoDB:', error);
         res.status(500).json({ error: 'Failed to read page' });
     }
 });

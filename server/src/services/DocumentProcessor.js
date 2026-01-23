@@ -15,6 +15,7 @@ if (!fs.existsSync(STORAGE_DIR)) {
 }
 
 import PdfImageRenderer from './PdfImageRenderer.js';
+import Document from '../models/Document.js';
 
 export class DocumentProcessor {
     constructor() {
@@ -52,10 +53,37 @@ export class DocumentProcessor {
         const chunks = StructuredChunker.chunkByStructure(documentGraph);
         const flatText = StructuredChunker.deriveTextFromGraph(documentGraph);
 
-        // Save JSON to disk immediately
+        // Save to MongoDB
+        const documentData = {
+            documentId,
+            type: documentGraph.type || mime,
+            originalFile: {
+                name: originalName,
+                mime: mime,
+                path: filePath
+            },
+            metadata: documentGraph.metadata,
+            structure: documentGraph,
+            chunks,
+            extractedText: flatText,
+            originalFilePath: filePath
+        };
+
+        try {
+            await Document.findOneAndUpdate(
+                { documentId },
+                documentData,
+                { upsert: true, new: true }
+            );
+            console.log(`[DocumentProcessor] Document ${documentId} saved to MongoDB.`);
+        } catch (mongoError) {
+            console.error(`[DocumentProcessor] Failed to save to MongoDB: ${mongoError.message}`);
+            // Fallback to local JSON if MongoDB fails during transition (optional, but safer)
+        }
+
+        // Save JSON to disk (Temporary backup during migration)
         const jsonPath = path.join(STORAGE_DIR, `${documentId}.json`);
-        const data = { ...documentGraph, chunks, extractedText: flatText };
-        fs.writeFileSync(jsonPath, JSON.stringify(data, null, 2));
+        fs.writeFileSync(jsonPath, JSON.stringify({ ...documentGraph, chunks, extractedText: flatText }, null, 2));
 
         return { documentId, documentGraph, chunks, extractedText: flatText };
     }

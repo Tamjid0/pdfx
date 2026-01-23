@@ -9,6 +9,10 @@ import { apiLimiter, aiGenerationLimiter } from './middleware/rateLimitMiddlewar
 import { scrapeHtml } from './services/scraper.js';
 import apiRoutes from './api/index.js';
 import { initDocumentWorker } from './workers/documentWorker.js';
+import connectDB from './config/database.js';
+
+// Connect to Database
+connectDB();
 
 // Start Background Worker (Safe Initialization)
 initDocumentWorker().catch(err => {

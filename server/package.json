@@ -32,6 +32,7 @@
     "jszip": "^3.10.1",
     "langchain": "^1.2.3",
     "multer": "^2.0.2",
+    "mongoose": "^8.9.5",
     "node-fetch": "^3.3.2",
     "pdfjs-dist": "^3.11.174",
     "puppeteer": "^22.10.0",

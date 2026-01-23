@@ -14,7 +14,7 @@ This document tracks the strategic phases remaining to transition from a prototy
 
 ---
 
-## 💾 Phase 3: Database Migration (Postponed)
+## 💾 Phase 3: Database Migration (next)
 **Goal:** Move from local filesystem storage to a centralized, queryable database.
 
 - [ ] **MongoDB/Mongoose Setup**: Transition `db.json` and document JSONs to MongoDB collections.

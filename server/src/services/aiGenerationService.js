@@ -157,6 +157,8 @@ avoid nested table and list if not needed .
 
 the the format must be bug free and not broken. it will be rendered on a next js app. 
 
+if the code is mor than one keyword put it on a fenced code block
+
 
 
 

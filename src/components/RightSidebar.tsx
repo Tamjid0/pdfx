@@ -70,18 +70,18 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         switch (mode) {
             case 'editor':
                 return (
-                    <div className="tool-section bg-[#1a1a1a] border border-[#333] rounded-xl p-4 mb-5">
-                        <div className="tool-section-title text-xs font-semibold text-[#00ff88] uppercase tracking-wider mb-3.5 flex items-center gap-1.5">
+                    <div className="tool-section bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 mb-5">
+                        <div className="tool-section-title text-xs font-semibold text-gemini-green uppercase tracking-wider mb-3.5 flex items-center gap-1.5">
                             <IconCircle className="w-3.5 h-3.5 fill-current" />
                             Document Analysis
                         </div>
                         <div className="tool-options grid gap-2.5">
-                            <button className="tool-option flex items-center gap-2.5 p-2.5 bg-[#252525] border border-[#333] rounded-lg cursor-pointer transition-all hover:bg-[rgba(0,255,136,0.1)] hover:border-[#00ff88]">
-                                <IconFileText className="w-4 h-4 fill-[#999] shrink-0" />
+                            <button className="tool-option flex items-center gap-2.5 p-2.5 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg cursor-pointer transition-all hover:bg-gemini-green/10 hover:border-gemini-green">
+                                <IconFileText className="w-4 h-4 fill-gemini-gray shrink-0" />
                                 <span className="tool-option-label text-sm text-[#ccc]">Word Count</span>
                             </button>
-                            <button className="tool-option flex items-center gap-2.5 p-2.5 bg-[#252525] border border-[#333] rounded-lg cursor-pointer transition-all hover:bg-[rgba(0,255,136,0.1)] hover:border-[#00ff88]">
-                                <IconBarChart className="w-4 h-4 fill-[#999] shrink-0" />
+                            <button className="tool-option flex items-center gap-2.5 p-2.5 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg cursor-pointer transition-all hover:bg-gemini-green/10 hover:border-gemini-green">
+                                <IconBarChart className="w-4 h-4 fill-gemini-gray shrink-0" />
                                 <span className="tool-option-label text-sm text-[#ccc]">Readability Score</span>
                             </button>
                         </div>
@@ -89,19 +89,19 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
                 );
             case 'notes':
                 return (
-                    <div className="tool-section bg-[#1a1a1a] border border-[#333] rounded-xl p-4 mb-5">
-                        <div className="tool-section-title text-xs font-semibold text-[#00ff88] uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Note Tools</div>
+                    <div className="tool-section bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 mb-5">
+                        <div className="tool-section-title text-xs font-semibold text-gemini-green uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Note Tools</div>
                         <div className="tool-options grid gap-2.5">
-                            <label className="flex items-center gap-2.5 p-2.5 bg-[#252525] border border-[#333] rounded-lg cursor-pointer transition-all hover:bg-[rgba(0,255,136,0.1)] hover:border-[#00ff88]">
-                                <input type="checkbox" className="accent-[#00ff88]" checked={notesSettings.keyConcepts} onChange={() => handleNotesSettingChange('keyConcepts', !notesSettings.keyConcepts)} />
+                            <label className="flex items-center gap-2.5 p-2.5 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg cursor-pointer transition-all hover:bg-gemini-green/10 hover:border-gemini-green">
+                                <input type="checkbox" className="accent-gemini-green" checked={notesSettings.keyConcepts} onChange={() => handleNotesSettingChange('keyConcepts', !notesSettings.keyConcepts)} />
                                 <span className="tool-option-label text-sm text-[#ccc]">Key Concepts</span>
                             </label>
-                            <label className="flex items-center gap-2.5 p-2.5 bg-[#252525] border border-[#333] rounded-lg cursor-pointer transition-all hover:bg-[rgba(0,255,136,0.1)] hover:border-[#00ff88]">
-                                <input type="checkbox" className="accent-[#00ff88]" checked={notesSettings.actionItems} onChange={() => handleNotesSettingChange('actionItems', !notesSettings.actionItems)} />
+                            <label className="flex items-center gap-2.5 p-2.5 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg cursor-pointer transition-all hover:bg-gemini-green/10 hover:border-gemini-green">
+                                <input type="checkbox" className="accent-gemini-green" checked={notesSettings.actionItems} onChange={() => handleNotesSettingChange('actionItems', !notesSettings.actionItems)} />
                                 <span className="tool-option-label text-sm text-[#ccc]">Action Items</span>
                             </label>
-                            <label className="flex items-center gap-2.5 p-2.5 bg-[#252525] border border-[#333] rounded-lg cursor-pointer transition-all hover:bg-[rgba(0,255,136,0.1)] hover:border-[#00ff88]">
-                                <input type="checkbox" className="accent-[#00ff88]" checked={notesSettings.aiSummary} onChange={() => handleNotesSettingChange('aiSummary', !notesSettings.aiSummary)} />
+                            <label className="flex items-center gap-2.5 p-2.5 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg cursor-pointer transition-all hover:bg-gemini-green/10 hover:border-gemini-green">
+                                <input type="checkbox" className="accent-gemini-green" checked={notesSettings.aiSummary} onChange={() => handleNotesSettingChange('aiSummary', !notesSettings.aiSummary)} />
                                 <span className="tool-option-label text-sm text-[#ccc]">AI Summary</span>
                             </label>
                         </div>
@@ -110,12 +110,12 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
             case 'quiz':
                 return (
                     <>
-                        <div className="tool-section bg-[#1a1a1a] border border-[#333] rounded-xl p-4 mb-5">
-                            <div className="tool-section-title text-xs font-semibold text-[#00ff88] uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Question Types</div>
+                        <div className="tool-section bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 mb-5">
+                            <div className="tool-section-title text-xs font-semibold text-gemini-green uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Question Types</div>
                             <div className="tool-options grid gap-2.5">
-                                <label className="flex items-center gap-2.5 p-2.5 bg-[#252525] border border-[#333] rounded-lg cursor-pointer transition-all hover:bg-[rgba(0,255,136,0.1)] hover:border-[#00ff88]">
-                                    <IconCheckSquare className="w-4 h-4 fill-[#999] shrink-0" />
-                                    <input type="checkbox" className="accent-[#00ff88]" checked={quizSettings.questionTypes.includes('multiple-choice')} onChange={() => {
+                                <label className="flex items-center gap-2.5 p-2.5 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg cursor-pointer transition-all hover:bg-gemini-green/10 hover:border-gemini-green">
+                                    <IconCheckSquare className="w-4 h-4 fill-gemini-gray shrink-0" />
+                                    <input type="checkbox" className="accent-gemini-green" checked={quizSettings.questionTypes.includes('multiple-choice')} onChange={() => {
                                         const newTypes = quizSettings.questionTypes.includes('multiple-choice')
                                             ? quizSettings.questionTypes.filter((t: string) => t !== 'multiple-choice')
                                             : [...quizSettings.questionTypes, 'multiple-choice'];
@@ -123,9 +123,9 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
                                     }} />
                                     <span className="tool-option-label text-sm text-[#ccc]">Multiple Choice</span>
                                 </label>
-                                <label className="flex items-center gap-2.5 p-2.5 bg-[#252525] border border-[#333] rounded-lg cursor-pointer transition-all hover:bg-[rgba(0,255,136,0.1)] hover:border-[#00ff88]">
-                                    <IconCheckSquare className="w-4 h-4 fill-[#999] shrink-0" />
-                                    <input type="checkbox" className="accent-[#00ff88]" checked={quizSettings.questionTypes.includes('true-false')} onChange={() => {
+                                <label className="flex items-center gap-2.5 p-2.5 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg cursor-pointer transition-all hover:bg-gemini-green/10 hover:border-gemini-green">
+                                    <IconCheckSquare className="w-4 h-4 fill-gemini-gray shrink-0" />
+                                    <input type="checkbox" className="accent-gemini-green" checked={quizSettings.questionTypes.includes('true-false')} onChange={() => {
                                         const newTypes = quizSettings.questionTypes.includes('true-false')
                                             ? quizSettings.questionTypes.filter((t: string) => t !== 'true-false')
                                             : [...quizSettings.questionTypes, 'true-false'];
@@ -133,9 +133,9 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
                                     }} />
                                     <span className="tool-option-label text-sm text-[#ccc]">True/False</span>
                                 </label>
-                                <label className="flex items-center gap-2.5 p-2.5 bg-[#252525] border border-[#333] rounded-lg cursor-pointer transition-all hover:bg-[rgba(0,255,136,0.1)] hover:border-[#00ff88]">
-                                    <IconCheckSquare className="w-4 h-4 fill-[#999] shrink-0" />
-                                    <input type="checkbox" className="accent-[#00ff88]" checked={quizSettings.questionTypes.includes('fill-in-the-blank')} onChange={() => {
+                                <label className="flex items-center gap-2.5 p-2.5 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg cursor-pointer transition-all hover:bg-gemini-green/10 hover:border-gemini-green">
+                                    <IconCheckSquare className="w-4 h-4 fill-gemini-gray shrink-0" />
+                                    <input type="checkbox" className="accent-gemini-green" checked={quizSettings.questionTypes.includes('fill-in-the-blank')} onChange={() => {
                                         const newTypes = quizSettings.questionTypes.includes('fill-in-the-blank')
                                             ? quizSettings.questionTypes.filter((t: string) => t !== 'fill-in-the-blank')
                                             : [...quizSettings.questionTypes, 'fill-in-the-blank'];
@@ -145,13 +145,13 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
                                 </label>
                             </div>
                         </div>
-                        <div className="tool-section bg-[#1a1a1a] border border-[#333] rounded-xl p-4 mb-5">
-                            <div className="tool-section-title text-xs font-semibold text-[#00ff88] uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Quiz Settings</div>
+                        <div className="tool-section bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 mb-5">
+                            <div className="tool-section-title text-xs font-semibold text-gemini-green uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Quiz Settings</div>
                             <div className="tool-options grid gap-4">
                                 <div>
                                     <label className="tool-option-label text-sm text-[#ccc] mb-2 block">Difficulty</label>
-                                    <input type="range" min="0" max="2" step="1" value={quizSettings.difficulty === 'easy' ? 0 : quizSettings.difficulty === 'medium' ? 1 : 2} onChange={(e) => handleQuizSettingChange('difficulty', e.target.value === '0' ? 'easy' : e.target.value === '1' ? 'medium' : 'hard')} className="w-full accent-[#00ff88]" />
-                                    <div className="flex justify-between text-xs text-[#999]">
+                                    <input type="range" min="0" max="2" step="1" value={quizSettings.difficulty === 'easy' ? 0 : quizSettings.difficulty === 'medium' ? 1 : 2} onChange={(e) => handleQuizSettingChange('difficulty', e.target.value === '0' ? 'easy' : e.target.value === '1' ? 'medium' : 'hard')} className="w-full accent-gemini-green" />
+                                    <div className="flex justify-between text-xs text-gemini-gray">
                                         <span>Easy</span>
                                         <span>Medium</span>
                                         <span>Hard</span>
@@ -161,26 +161,26 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
                                     <span className="tool-option-label text-sm text-[#ccc]">Timed Quiz</span>
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" checked={quizSettings.timed} onChange={() => handleQuizSettingChange('timed', !quizSettings.timed)} className="sr-only peer" />
-                                        <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-4 peer-focus:ring-green-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                        <div className="w-11 h-6 bg-gemini-dark-500 rounded-full peer peer-focus:ring-4 peer-focus:ring-green-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gemini-dark-400 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gemini-green"></div>
                                     </label>
                                 </div>
                                 {quizSettings.timed && (
                                     <div>
                                         <label className="tool-option-label text-sm text-[#ccc] mb-2 block">Time Limit (minutes)</label>
-                                        <input type="number" value={quizSettings.timeLimit} onChange={(e) => handleQuizSettingChange('timeLimit', Number(e.target.value))} className="w-full p-2 bg-[#252525] border border-[#333] rounded-lg text-white" />
+                                        <input type="number" value={quizSettings.timeLimit} onChange={(e) => handleQuizSettingChange('timeLimit', Number(e.target.value))} className="w-full p-2 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg text-white" />
                                     </div>
                                 )}
                             </div>
                         </div>
-                        <div className="tool-section bg-[#1a1a1a] border border-[#333] rounded-xl p-4 mb-5">
-                            <div className="tool-section-title text-xs font-semibold text-[#00ff88] uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Evaluation</div>
+                        <div className="tool-section bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 mb-5">
+                            <div className="tool-section-title text-xs font-semibold text-gemini-green uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Evaluation</div>
                             <div className="tool-options grid gap-2.5">
-                                <button className="tool-option flex items-center gap-2.5 p-2.5 bg-[#252525] border border-[#333] rounded-lg cursor-pointer transition-all hover:bg-[rgba(0,255,136,0.1)] hover:border-[#00ff88]">
-                                    <IconCheck className="w-4 h-4 fill-[#999] shrink-0" />
+                                <button className="tool-option flex items-center gap-2.5 p-2.5 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg cursor-pointer transition-all hover:bg-gemini-green/10 hover:border-gemini-green">
+                                    <IconCheck className="w-4 h-4 fill-gemini-gray shrink-0" />
                                     <span className="tool-option-label text-sm text-[#ccc]">Auto-Grading</span>
                                 </button>
-                                <button className="tool-option flex items-center gap-2.5 p-2.5 bg-[#252525] border border-[#333] rounded-lg cursor-pointer transition-all hover:bg-[rgba(0,255,136,0.1)] hover:border-[#00ff88]">
-                                    <IconUserCheck className="w-4 h-4 fill-[#999] shrink-0" />
+                                <button className="tool-option flex items-center gap-2.5 p-2.5 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg cursor-pointer transition-all hover:bg-gemini-green/10 hover:border-gemini-green">
+                                    <IconUserCheck className="w-4 h-4 fill-gemini-gray shrink-0" />
                                     <span className="tool-option-label text-sm text-[#ccc]">Performance Review</span>
                                 </button>
                             </div>
@@ -190,41 +190,41 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
             case 'mindmap':
                 return (
                     <>
-                        <div className="tool-section bg-[#1a1a1a] border border-[#333] rounded-xl p-4 mb-5">
-                            <div className="tool-section-title text-xs font-semibold text-[#00ff88] uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Layouts</div>
+                        <div className="tool-section bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 mb-5">
+                            <div className="tool-section-title text-xs font-semibold text-gemini-green uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Layouts</div>
                             <div className="tool-options grid gap-2.5">
                                 <div className="flex gap-4">
                                     <label className="flex items-center gap-2 text-sm text-[#ccc]">
 
-                                        <input type="radio" name="layout" value="organic" checked={mindmapSettings.layout === 'organic'} onChange={() => handleMindmapSettingChange('layout', 'organic')} className="accent-[#00ff88]" />
+                                        <input type="radio" name="layout" value="organic" checked={mindmapSettings.layout === 'organic'} onChange={() => handleMindmapSettingChange('layout', 'organic')} className="accent-gemini-green" />
                                         Organic
                                     </label>
                                     <label className="flex items-center gap-2 text-sm text-[#ccc]">
 
-                                        <input type="radio" name="layout" value="radial" checked={mindmapSettings.layout === 'radial'} onChange={() => handleMindmapSettingChange('layout', 'radial')} className="accent-[#00ff88]" />
+                                        <input type="radio" name="layout" value="radial" checked={mindmapSettings.layout === 'radial'} onChange={() => handleMindmapSettingChange('layout', 'radial')} className="accent-gemini-green" />
                                         Radial
                                     </label>
                                     <label className="flex items-center gap-2 text-sm text-[#ccc]">
-                                        <input type="radio" name="layout" value="linear" checked={mindmapSettings.layout === 'linear'} onChange={() => handleMindmapSettingChange('layout', 'linear')} className="accent-[#00ff88]" />
+                                        <input type="radio" name="layout" value="linear" checked={mindmapSettings.layout === 'linear'} onChange={() => handleMindmapSettingChange('layout', 'linear')} className="accent-gemini-green" />
                                         Linear
                                     </label>
                                 </div>
                             </div>
                         </div>
-                        <div className="tool-section bg-[#1a1a1a] border border-[#333] rounded-xl p-4 mb-5">
-                            <div className="tool-section-title text-xs font-semibold text-[#00ff88] uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Customization</div>
+                        <div className="tool-section bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 mb-5">
+                            <div className="tool-section-title text-xs font-semibold text-gemini-green uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Customization</div>
                             <div className="tool-options grid gap-4">
-                                <button className="tool-option flex items-center gap-2.5 p-2.5 bg-[#252525] border border-[#333] rounded-lg cursor-pointer transition-all hover:bg-[rgba(0,255,136,0.1)] hover:border-[#00ff88]">
-                                    <IconPlusCircle className="w-4 h-4 fill-[#999] shrink-0" />
+                                <button className="tool-option flex items-center gap-2.5 p-2.5 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg cursor-pointer transition-all hover:bg-gemini-green/10 hover:border-gemini-green">
+                                    <IconPlusCircle className="w-4 h-4 fill-gemini-gray shrink-0" />
                                     <span className="tool-option-label text-sm text-[#ccc]">Add Relationship</span>
                                 </button>
-                                <button className="tool-option flex items-center gap-2.5 p-2.5 bg-[#252525] border border-[#333] rounded-lg cursor-pointer transition-all hover:bg-[rgba(0,255,136,0.1)] hover:border-[#00ff88]">
-                                    <IconType className="w-4 h-4 fill-[#999] shrink-0" />
+                                <button className="tool-option flex items-center gap-2.5 p-2.5 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg cursor-pointer transition-all hover:bg-gemini-green/10 hover:border-gemini-green">
+                                    <IconType className="w-4 h-4 fill-gemini-gray shrink-0" />
                                     <span className="tool-option-label text-sm text-[#ccc]">Styling</span>
                                 </button>
                                 <div>
                                     <label className="tool-option-label text-sm text-[#ccc] mb-2 block">Theme</label>
-                                    <select value={mindmapSettings.theme} onChange={(e) => handleMindmapSettingChange('theme', e.target.value)} className="w-full p-2 bg-[#252525] border border-[#333] rounded-lg text-white">
+                                    <select value={mindmapSettings.theme} onChange={(e) => handleMindmapSettingChange('theme', e.target.value)} className="w-full p-2 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg text-white">
                                         <option value="default">Default</option>
                                         <option value="dark">Dark</option>
                                         <option value="light">Light</option>
@@ -232,29 +232,29 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
                                 </div>
                             </div>
                         </div>
-                        <div className="tool-section bg-[#1a1a1a] border border-[#333] rounded-xl p-4 mb-5">
-                            <div className="tool-section-title text-xs font-semibold text-[#00ff88] uppercase tracking-wider mb-3.5 flex items-center gap-1.5">View</div>
+                        <div className="tool-section bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 mb-5">
+                            <div className="tool-section-title text-xs font-semibold text-gemini-green uppercase tracking-wider mb-3.5 flex items-center gap-1.5">View</div>
                             <div className="tool-options grid gap-4">
                                 <div className="flex items-center justify-between">
                                     <span className="tool-option-label text-sm text-[#ccc]">Focus Mode</span>
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" checked={mindmapSettings.focusMode} onChange={() => handleMindmapSettingChange('focusMode', !mindmapSettings.focusMode)} className="sr-only peer" />
-                                        <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-4 peer-focus:ring-green-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                        <div className="w-11 h-6 bg-gemini-dark-500 rounded-full peer peer-focus:ring-4 peer-focus:ring-green-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gemini-dark-400 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gemini-green"></div>
                                     </label>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <span className="tool-option-label text-sm text-[#ccc]">Presentation Mode</span>
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" checked={mindmapSettings.presentationMode} onChange={() => handleMindmapSettingChange('presentationMode', !mindmapSettings.presentationMode)} className="sr-only peer" />
-                                        <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-4 peer-focus:ring-green-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                        <div className="w-11 h-6 bg-gemini-dark-500 rounded-full peer peer-focus:ring-4 peer-focus:ring-green-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gemini-dark-400 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gemini-green"></div>
                                     </label>
                                 </div>
                                 <div>
                                     <label className="tool-option-label text-sm text-[#ccc] mb-2 block">Search</label>
-                                    <input type="text" value={mindmapSettings.searchTerm} onChange={(e) => handleMindmapSettingChange('searchTerm', e.target.value)} className="w-full p-2 bg-[#252525] border border-[#333] rounded-lg text-white" placeholder="Search nodes..." />
+                                    <input type="text" value={mindmapSettings.searchTerm} onChange={(e) => handleMindmapSettingChange('searchTerm', e.target.value)} className="w-full p-2 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg text-white" placeholder="Search nodes..." />
                                 </div>
-                                <button className="tool-option flex items-center gap-2.5 p-2.5 bg-[#252525] border border-[#333] rounded-lg cursor-pointer transition-all hover:bg-[rgba(0,255,136,0.1)] hover:border-[#00ff88]">
-                                    <IconSearch className="w-4 h-4 fill-[#999] shrink-0" />
+                                <button className="tool-option flex items-center gap-2.5 p-2.5 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg cursor-pointer transition-all hover:bg-gemini-green/10 hover:border-gemini-green">
+                                    <IconSearch className="w-4 h-4 fill-gemini-gray shrink-0" />
                                     <span className="tool-option-label text-sm text-[#ccc]">Filter</span>
                                 </button>
                             </div>
@@ -264,40 +264,40 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
             case 'summary':
                 return (
                     <>
-                        <div className="tool-section bg-[#1a1a1a] border border-[#333] rounded-xl p-4 mb-5">
-                            <div className="tool-section-title text-xs font-semibold text-[#00ff88] uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Content</div>
+                        <div className="tool-section bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 mb-5">
+                            <div className="tool-section-title text-xs font-semibold text-gemini-green uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Content</div>
                             <div className="tool-options grid gap-4">
                                 <div>
                                     <label className="tool-option-label text-sm text-[#ccc] mb-2 block">Summary Length: {summarySettings.summaryLength}%</label>
-                                    <input type="range" min="10" max="100" step="10" value={summarySettings.summaryLength} onChange={(e) => handleSummarySettingChange('summaryLength', Number(e.target.value))} className="w-full accent-[#00ff88]" />
+                                    <input type="range" min="10" max="100" step="10" value={summarySettings.summaryLength} onChange={(e) => handleSummarySettingChange('summaryLength', Number(e.target.value))} className="w-full accent-gemini-green" />
                                 </div>
                                 <div>
                                     <label className="tool-option-label text-sm text-[#ccc] mb-2 block">Format</label>
                                     <div className="flex gap-4">
                                         <label className="flex items-center gap-2 text-sm text-[#ccc]">
-                                            <IconLayoutList className="w-4 h-4 fill-[#999] shrink-0" />
-                                            <input type="radio" name="summary-format" value="paragraph" checked={summarySettings.summaryFormat === 'paragraph'} onChange={() => handleSummarySettingChange('summaryFormat', 'paragraph')} className="accent-[#00ff88]" />
+                                            <IconLayoutList className="w-4 h-4 fill-gemini-gray shrink-0" />
+                                            <input type="radio" name="summary-format" value="paragraph" checked={summarySettings.summaryFormat === 'paragraph'} onChange={() => handleSummarySettingChange('summaryFormat', 'paragraph')} className="accent-gemini-green" />
                                             Paragraph
                                         </label>
                                         <label className="flex items-center gap-2 text-sm text-[#ccc]">
-                                            <IconListOrdered className="w-4 h-4 fill-[#999] shrink-0" />
-                                            <input type="radio" name="summary-format" value="bullets" checked={summarySettings.summaryFormat === 'bullets'} onChange={() => handleSummarySettingChange('summaryFormat', 'bullets')} className="accent-[#00ff88]" />
+                                            <IconListOrdered className="w-4 h-4 fill-gemini-gray shrink-0" />
+                                            <input type="radio" name="summary-format" value="bullets" checked={summarySettings.summaryFormat === 'bullets'} onChange={() => handleSummarySettingChange('summaryFormat', 'bullets')} className="accent-gemini-green" />
                                             Bullets
                                         </label>
                                     </div>
                                 </div>
                                 <div>
                                     <label className="tool-option-label text-sm text-[#ccc] mb-2 block">Keywords</label>
-                                    <input type="text" value={summarySettings.keywords} onChange={(e) => handleSummarySettingChange('keywords', e.target.value)} className="w-full p-2 bg-[#252525] border border-[#333] rounded-lg text-white" placeholder="e.g., AI, machine learning" />
+                                    <input type="text" value={summarySettings.keywords} onChange={(e) => handleSummarySettingChange('keywords', e.target.value)} className="w-full p-2 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg text-white" placeholder="e.g., AI, machine learning" />
                                 </div>
                             </div>
                         </div>
-                        <div className="tool-section bg-[#1a1a1a] border border-[#333] rounded-xl p-4 mb-5">
-                            <div className="tool-section-title text-xs font-semibold text-[#00ff88] uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Style</div>
+                        <div className="tool-section bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 mb-5">
+                            <div className="tool-section-title text-xs font-semibold text-gemini-green uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Style</div>
                             <div className="tool-options grid gap-4">
                                 <div>
                                     <label className="tool-option-label text-sm text-[#ccc] mb-2 block">Tone</label>
-                                    <select value={summarySettings.tone} onChange={(e) => handleSummarySettingChange('tone', e.target.value)} className="w-full p-2 bg-[#252525] border border-[#333] rounded-lg text-white">
+                                    <select value={summarySettings.tone} onChange={(e) => handleSummarySettingChange('tone', e.target.value)} className="w-full p-2 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg text-white">
                                         <option value="professional">Professional</option>
                                         <option value="casual">Casual</option>
                                         <option value="academic">Academic</option>
@@ -305,31 +305,31 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
                                 </div>
                                 <div>
                                     <label className="tool-option-label text-sm text-[#ccc] mb-2 block">Language</label>
-                                    <input type="text" value={summarySettings.language} onChange={(e) => handleSummarySettingChange('language', e.target.value)} className="w-full p-2 bg-[#252525] border border-[#333] rounded-lg text-white" />
+                                    <input type="text" value={summarySettings.language} onChange={(e) => handleSummarySettingChange('language', e.target.value)} className="w-full p-2 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg text-white" />
                                 </div>
                             </div>
                         </div>
-                        <div className="tool-section bg-[#1a1a1a] border border-[#333] rounded-xl p-4 mb-5">
-                            <div className="tool-section-title text-xs font-semibold text-[#00ff88] uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Advanced</div>
+                        <div className="tool-section bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 mb-5">
+                            <div className="tool-section-title text-xs font-semibold text-gemini-green uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Advanced</div>
                             <div className="tool-options grid gap-4">
                                 <div className="flex items-center justify-between">
                                     <span className="tool-option-label text-sm text-[#ccc]">Key Sentences</span>
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" checked={summarySettings.keySentences} onChange={() => handleSummarySettingChange('keySentences', !summarySettings.keySentences)} className="sr-only peer" />
-                                        <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-4 peer-focus:ring-green-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                        <div className="w-11 h-6 bg-gemini-dark-500 rounded-full peer peer-focus:ring-4 peer-focus:ring-green-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gemini-dark-400 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gemini-green"></div>
                                     </label>
                                 </div>
                                 <div>
                                     <label className="tool-option-label text-sm text-[#ccc] mb-2 block">Summary Type</label>
                                     <div className="flex gap-4">
                                         <label className="flex items-center gap-2 text-sm text-[#ccc]">
-                                            <IconFlaskConical className="w-4 h-4 fill-[#999] shrink-0" />
-                                            <input type="radio" name="summary-type" value="abstractive" checked={summarySettings.summaryType === 'abstractive'} onChange={() => handleSummarySettingChange('summaryType', 'abstractive')} className="accent-[#00ff88]" />
+                                            <IconFlaskConical className="w-4 h-4 fill-gemini-gray shrink-0" />
+                                            <input type="radio" name="summary-type" value="abstractive" checked={summarySettings.summaryType === 'abstractive'} onChange={() => handleSummarySettingChange('summaryType', 'abstractive')} className="accent-gemini-green" />
                                             Abstractive
                                         </label>
                                         <label className="flex items-center gap-2 text-sm text-[#ccc]">
-                                            <IconBox className="w-4 h-4 fill-[#999] shrink-0" />
-                                            <input type="radio" name="summary-type" value="extractive" checked={summarySettings.summaryType === 'extractive'} onChange={() => handleSummarySettingChange('summaryType', 'extractive')} className="accent-[#00ff88]" />
+                                            <IconBox className="w-4 h-4 fill-gemini-gray shrink-0" />
+                                            <input type="radio" name="summary-type" value="extractive" checked={summarySettings.summaryType === 'extractive'} onChange={() => handleSummarySettingChange('summaryType', 'extractive')} className="accent-gemini-green" />
                                             Extractive
                                         </label>
                                     </div>
@@ -341,39 +341,39 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
             case 'insights':
                 return (
                     <>
-                        <div className="tool-section bg-[#1a1a1a] border border-[#333] rounded-xl p-4 mb-5">
-                            <div className="tool-section-title text-xs font-semibold text-[#00ff88] uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Extraction Type</div>
+                        <div className="tool-section bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 mb-5">
+                            <div className="tool-section-title text-xs font-semibold text-gemini-green uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Extraction Type</div>
                             <div className="tool-options grid gap-2.5">
-                                <label className="flex items-center gap-2.5 p-2.5 bg-[#252525] border border-[#333] rounded-lg cursor-pointer transition-all hover:bg-[rgba(0,255,136,0.1)] hover:border-[#00ff88]">
-                                    <input type="checkbox" className="accent-[#00ff88]" checked={insightsSettings.keyEntities} onChange={() => handleInsightsSettingChange('keyEntities', !insightsSettings.keyEntities)} />
+                                <label className="flex items-center gap-2.5 p-2.5 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg cursor-pointer transition-all hover:bg-gemini-green/10 hover:border-gemini-green">
+                                    <input type="checkbox" className="accent-gemini-green" checked={insightsSettings.keyEntities} onChange={() => handleInsightsSettingChange('keyEntities', !insightsSettings.keyEntities)} />
                                     <span className="tool-option-label text-sm text-[#ccc]">Key Entities</span>
                                 </label>
-                                <label className="flex items-center gap-2.5 p-2.5 bg-[#252525] border border-[#333] rounded-lg cursor-pointer transition-all hover:bg-[rgba(0,255,136,0.1)] hover:border-[#00ff88]">
-                                    <input type="checkbox" className="accent-[#00ff88]" checked={insightsSettings.topics} onChange={() => handleInsightsSettingChange('topics', !insightsSettings.topics)} />
+                                <label className="flex items-center gap-2.5 p-2.5 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg cursor-pointer transition-all hover:bg-gemini-green/10 hover:border-gemini-green">
+                                    <input type="checkbox" className="accent-gemini-green" checked={insightsSettings.topics} onChange={() => handleInsightsSettingChange('topics', !insightsSettings.topics)} />
                                     <span className="tool-option-label text-sm text-[#ccc]">Topics</span>
                                 </label>
                             </div>
                         </div>
-                        <div className="tool-section bg-[#1a1a1a] border border-[#333] rounded-xl p-4 mb-5">
-                            <div className="tool-section-title text-xs font-semibold text-[#00ff88] uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Custom</div>
+                        <div className="tool-section bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 mb-5">
+                            <div className="tool-section-title text-xs font-semibold text-gemini-green uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Custom</div>
                             <div className="tool-options grid gap-2.5">
-                                <input type="text" value={insightsSettings.customExtraction} onChange={(e) => handleInsightsSettingChange('customExtraction', e.target.value)} className="w-full p-2 bg-[#252525] border border-[#333] rounded-lg text-white" placeholder="Custom extraction query..." />
+                                <input type="text" value={insightsSettings.customExtraction} onChange={(e) => handleInsightsSettingChange('customExtraction', e.target.value)} className="w-full p-2 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg text-white" placeholder="Custom extraction query..." />
                             </div>
                         </div>
                     </>
                 );
             case 'flashcards':
                 return (
-                    <div className="tool-section bg-[#1a1a1a] border border-[#333] rounded-xl p-4 mb-5">
-                        <div className="tool-section-title text-xs font-semibold text-[#00ff88] uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Deck Settings</div>
+                    <div className="tool-section bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 mb-5">
+                        <div className="tool-section-title text-xs font-semibold text-gemini-green uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Deck Settings</div>
                         <div className="tool-options grid gap-4">
                             <div>
                                 <label className="tool-option-label text-sm text-[#ccc] mb-2 block">Number of Cards</label>
-                                <input type="number" min="5" max="50" step="5" value={flashcardsData?.flashcards?.length || 10} readOnly className="w-full p-2 bg-[#252525] border border-[#333] rounded-lg text-white opacity-50 cursor-not-allowed" />
+                                <input type="number" min="5" max="50" step="5" value={flashcardsData?.flashcards?.length || 10} readOnly className="w-full p-2 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg text-white opacity-50 cursor-not-allowed" />
                             </div>
                             <div>
                                 <label className="tool-option-label text-sm text-[#ccc] mb-2 block">Difficulty</label>
-                                <select className="w-full p-2 bg-[#252525] border border-[#333] rounded-lg text-white">
+                                <select className="w-full p-2 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg text-white">
                                     <option value="mixed">Mixed</option>
                                     <option value="easy">Easy</option>
                                     <option value="hard">Hard</option>
@@ -392,14 +392,14 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     };
 
     return (
-        <aside className="sidebar-right w-[320px] bg-[#111] border-l border-[#222] flex flex-col overflow-hidden h-[100vh]">
-            <div className="right-sidebar-header p-4 border-b border-[#222] bg-[#1a1a1a] flex justify-between items-center">
+        <aside className="sidebar-right w-[320px] bg-gemini-dark-200 border-l border-gemini-dark-400 flex flex-col overflow-hidden h-[100vh]">
+            <div className="right-sidebar-header p-4 border-b border-gemini-dark-400 bg-gemini-dark-300 flex justify-between items-center">
                 <h3 className="right-sidebar-title text-base font-semibold text-white flex items-center gap-2">
-                    <IconCircle className="w-5 h-5 fill-[#00ff88]" />
+                    <IconCircle className="w-5 h-5 fill-gemini-green" />
                     Tools
                 </h3>
                 <button
-                    className={`apply-btn px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-all flex items-center gap-1.5 ${isApplyDisabled ? 'bg-[#333] text-[#666] cursor-not-allowed' : 'bg-[#00ff88] text-black hover:bg-[#00dd77]'}`}
+                    className={`apply-btn px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-all flex items-center gap-1.5 ${isApplyDisabled ? 'bg-gemini-dark-500 text-gemini-gray cursor-not-allowed' : 'bg-gemini-green text-black hover:bg-gemini-green-300'}`}
                     onClick={applyTools}
                     disabled={isApplyDisabled}
                 >
@@ -410,9 +410,9 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
             <div className="right-sidebar-content flex-1 overflow-y-auto p-5">
                 {renderToolSection()}
             </div>
-            <div className="action-buttons p-5 border-t border-[#333] flex flex-col gap-3 flex-shrink-0">
+            <div className="action-buttons p-5 border-t border-gemini-dark-500 flex flex-col gap-3 flex-shrink-0">
                 <button
-                    className="action-btn action-btn-export w-full p-3 rounded-lg text-sm font-semibold cursor-pointer transition-all flex items-center justify-center gap-2 border-none bg-[#00ff88] text-black hover:bg-[#00dd77]"
+                    className="action-btn action-btn-export w-full p-3 rounded-lg text-sm font-semibold cursor-pointer transition-all flex items-center justify-center gap-2 border-none bg-gemini-green text-black hover:bg-gemini-green-300"
                     onClick={() => {
                         let data = null;
                         if (mode === 'editor') {

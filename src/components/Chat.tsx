@@ -60,17 +60,17 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
     }, [inputValue]);
 
     return (
-        <div className="chat-container flex flex-col h-full w-full bg-[#0a0a0a] text-[#e0e0e0]">
+        <div className="chat-container flex flex-col h-full w-full bg-gemini-dark text-[#e0e0e0]">
             {/* Header */}
-            <div className="flex items-center justify-between px-8 py-3 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/5 sticky top-0 z-20">
+            <div className="flex items-center justify-between px-8 py-3 bg-gemini-dark/80 backdrop-blur-md border-b border-gemini-dark-500 sticky top-0 z-20">
                 <div className="flex items-center gap-6">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[#00ff88]/10 flex items-center justify-center">
-                            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-[#00ff88]"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" /></svg>
+                        <div className="w-8 h-8 rounded-lg bg-gemini-green/10 flex items-center justify-center">
+                            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-gemini-green"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" /></svg>
                         </div>
                         <div>
                             <h3 className="text-xs font-bold text-white uppercase tracking-[0.2em]">Research Assistant</h3>
-                            <p className="text-[10px] text-[#666] font-medium uppercase tracking-wider">AI Insight Engine</p>
+                            <p className="text-[10px] text-gemini-gray font-medium uppercase tracking-wider">AI Insight Engine</p>
                         </div>
                     </div>
                 </div>
@@ -96,8 +96,8 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                             >
                                 <div className="max-w-3xl mx-auto flex gap-8">
                                     <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-bold text-xs tracking-tighter shadow-xl transform transition-transform group-hover:scale-110 ${msg.sender === 'user'
-                                        ? 'bg-gradient-to-br from-[#00ff88] to-[#00cc66] text-black ring-4 ring-[#00ff88]/10'
-                                        : 'bg-[#1a1a1a] border border-white/10 text-[#00ff88] ring-4 ring-white/5'
+                                        ? 'bg-gradient-to-br from-gemini-green to-gemini-green-400 text-black ring-4 ring-gemini-green/10'
+                                        : 'bg-gemini-dark-300 border border-gemini-dark-500 text-gemini-green ring-4 ring-white/5'
                                         }`}>
                                         {msg.sender === 'user' ? 'JD' : (
                                             <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" /></svg>
@@ -126,7 +126,7 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                                                         td: ({ children }) => <td className="border p-2 align-top">{children}</td>,
                                                         ul: ({ children }) => <ul className="list-disc pl-4 mb-4">{children}</ul>,
                                                         li: ({ children }) => <li className="mb-1">{children}</li>,
-                                                        a: ({ href, children }) => <a href={href} className="text-[#00ff88] underline" target="_blank" rel="noreferrer">{children}</a>,
+                                                        a: ({ href, children }) => <a href={href} className="text-gemini-green underline" target="_blank" rel="noreferrer">{children}</a>,
                                                         code: ({ node, inline, className, children, ...props }: any) => {
                                                             const match = /language-(\w+)/.exec(className || '');
                                                             return !inline && match ? (
@@ -134,7 +134,7 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                                                                     style={vscDarkPlus as any}
                                                                     language={match[1]}
                                                                     PreTag="div"
-                                                                    className="rounded-lg !bg-[#111] !p-4 border border-white/10 my-4"
+                                                                    className="rounded-lg !bg-gemini-dark-200 !p-4 border border-gemini-dark-500 my-4"
                                                                     {...props}
                                                                 >
                                                                     {String(children).replace(/\n$/, '')}
@@ -163,12 +163,12 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                 {isTyping && (
                     <div className="py-12 px-8 bg-white/[0.01]">
                         <div className="max-w-3xl mx-auto flex gap-8">
-                            <div className="w-10 h-10 rounded-xl bg-[#1a1a1a] border border-white/10 flex items-center justify-center">
-                                <div className="w-4 h-4 border-2 border-[#00ff88] border-t-transparent rounded-full animate-spin"></div>
+                            <div className="w-10 h-10 rounded-xl bg-gemini-dark-300 border border-gemini-dark-500 flex items-center justify-center">
+                                <div className="w-4 h-4 border-2 border-gemini-green border-t-transparent rounded-full animate-spin"></div>
                             </div>
                             <div className="pt-2">
                                 <div className="flex gap-1 items-center px-1">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#00ff88] animate-pulse">Processing Insights...</span>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.25em] text-gemini-green animate-pulse">Processing Insights...</span>
                                 </div>
                                 <div className="h-4 w-48 bg-white/5 rounded-full mt-4 animate-pulse"></div>
                             </div>
@@ -179,12 +179,12 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
             </div>
 
             {/* Premium Floating Input */}
-            <div className="absolute bottom-0 left-0 right-0 p-6 pt-12 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/90 to-transparent pointer-events-none">
+            <div className="absolute bottom-0 left-0 right-0 p-6 pt-12 bg-gradient-to-t from-gemini-dark via-gemini-dark/90 to-transparent pointer-events-none">
                 <div className="max-w-3xl mx-auto pointer-events-auto">
-                    <div className="group bg-[#111] border border-white/10 rounded-2xl flex flex-col p-2 transition-all shadow-2xl shadow-black focus-within:border-[#00ff88]/50 focus-within:ring-4 focus-within:ring-[#00ff88]/5">
+                    <div className="group bg-gemini-dark-200 border border-gemini-dark-500 rounded-2xl flex flex-col p-2 transition-all shadow-2xl shadow-black focus-within:border-gemini-green/50 focus-within:ring-4 focus-within:ring-gemini-green/5">
                         <textarea
                             ref={textareaRef}
-                            className="w-full bg-transparent border-none text-[#fff] text-base resize-none outline-none px-4 py-3 min-h-[50px] max-h-48 leading-relaxed placeholder:text-[#444] font-medium"
+                            className="w-full bg-transparent border-none text-[#fff] text-base resize-none outline-none px-4 py-3 min-h-[50px] max-h-48 leading-relaxed placeholder:text-gemini-dark-500 font-medium"
                             placeholder="Message Research Assistant..."
                             rows={1}
                             value={inputValue}
@@ -193,14 +193,14 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                         />
                         <div className="flex items-center justify-between px-2 pb-2">
                             <div className="flex items-center gap-2 px-2">
-                                <div className="flex items-center gap-1.5 px-2 py-1 bg-white/5 rounded-md text-[9px] font-black text-[#666] uppercase tracking-widest border border-white/5">
+                                <div className="flex items-center gap-1.5 px-2 py-1 bg-white/5 rounded-md text-[9px] font-black text-gemini-gray uppercase tracking-widest border border-white/5">
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                                     Encrypted
                                 </div>
-                                <div className="text-[9px] font-bold text-[#333] uppercase">Shift + Enter for newline</div>
+                                <div className="text-[9px] font-bold text-gemini-dark-500 uppercase">Shift + Enter for newline</div>
                             </div>
                             <button
-                                className="w-10 h-10 bg-[#00ff88] rounded-xl flex items-center justify-center cursor-pointer transition-all hover:scale-105 active:scale-95 disabled:grayscale disabled:opacity-20 disabled:cursor-not-allowed shadow-[0_4px_12px_rgba(0,255,136,0.3)]"
+                                className="w-10 h-10 bg-gemini-green rounded-xl flex items-center justify-center cursor-pointer transition-all hover:scale-105 active:scale-95 disabled:grayscale disabled:opacity-20 disabled:cursor-not-allowed shadow-[0_4px_12px_rgba(0,255,136,0.3)]"
                                 onClick={handleSend}
                                 disabled={!inputValue.trim()}
                             >

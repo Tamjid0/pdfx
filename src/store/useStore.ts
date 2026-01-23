@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 export type PreviewPreset = 'professional' | 'academic' | 'minimal' | 'creative';
+export type Mode = 'summary' | 'insights' | 'notes' | 'quiz' | 'flashcards' | 'mindmap' | 'editor' | 'chat' | 'slides';
 
 interface AppState {
     htmlPreview: string | null;

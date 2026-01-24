@@ -58,6 +58,7 @@ interface AppState {
 
     // Preview Settings
     previewPreset: PreviewPreset;
+    prompt: string;
 
     // Actions
     setHtmlPreview: (html: string | null) => void;
@@ -98,6 +99,7 @@ interface AppState {
 
     // Preview Actions
     setPreviewPreset: (preset: PreviewPreset) => void;
+    setPrompt: (prompt: string) => void;
 
     openExportModal: (mode: string, content: any) => void;
     closeExportModal: () => void;
@@ -184,6 +186,7 @@ export const useStore = create<AppState>((set) => ({
     activeInsightsToggles: {},
 
     previewPreset: 'professional',
+    prompt: '',
 
     setHtmlPreview: (html) => set({ htmlPreview: html }),
     setIsLoading: (loading) => set({ isLoading: loading }),
@@ -232,6 +235,7 @@ export const useStore = create<AppState>((set) => ({
     closeExportModal: () => set({ showExportModal: false }),
 
     setPreviewPreset: (preset) => set({ previewPreset: preset }),
+    setPrompt: (prompt) => set({ prompt }),
 
     // Templates State
     templates: [],

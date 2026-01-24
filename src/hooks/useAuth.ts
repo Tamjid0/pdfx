@@ -13,12 +13,39 @@ import { auth } from "../lib/firebase";
 
 export const useAuth = () => {
     const [user, setUser] = useState<User | null>(null);
+    const [mongoUser, setMongoUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const syncWithBackend = async (fbUser: User) => {
+        try {
+            const response = await fetch('/api/v1/auth/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    firebaseUid: fbUser.uid,
+                    email: fbUser.email,
+                    displayName: fbUser.displayName,
+                    photoURL: fbUser.photoURL
+                }),
+            });
+            const result = await response.json();
+            if (result.success) {
+                setMongoUser(result.data);
+            }
+        } catch (err) {
+            console.error('Failed to sync with backend:', err);
+        }
+    };
+
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
             setUser(user);
+            if (user) {
+                await syncWithBackend(user);
+            } else {
+                setMongoUser(null);
+            }
             setLoading(false);
         });
 
@@ -79,6 +106,7 @@ export const useAuth = () => {
 
     return {
         user,
+        mongoUser,
         loading,
         error,
         login,

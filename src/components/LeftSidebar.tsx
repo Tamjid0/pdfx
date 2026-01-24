@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { fetchTemplates } from "../services/apiService";
 import { useStore } from "../store/useStore";
+import { useAuth } from "../hooks/useAuth";
 import * as apiService from "../services/apiService";
 
 interface Template {
@@ -24,6 +25,9 @@ const LeftSidebar: React.FC = () => {
         templates, // From store
         setTemplates, // From store
     } = useStore();
+
+    const { user } = useAuth();
+    const isGuest = !user;
 
     const [activeTab, setActiveTab] = useState<"stats" | "format">("stats");
     // const [templates, setTemplates] = useState<Template[]>([]); // Removed local state
@@ -178,7 +182,15 @@ const LeftSidebar: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="basic-tools-card bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4">
+                        <div className="basic-tools-card bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 relative group">
+                            {isGuest && (
+                                <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] z-10 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="bg-gemini-dark-200 border border-white/10 px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-xl scale-90">
+                                        <svg className="w-3 h-3 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                        <span className="text-[9px] text-white font-bold uppercase tracking-widest">Login Required</span>
+                                    </div>
+                                </div>
+                            )}
                             <div className="basic-tools-title text-xs font-semibold text-gemini-green uppercase tracking-wider mb-4">Quick Tools</div>
                             <div className="grid grid-cols-2 gap-2.5">
                                 <div className="tool-btn flex flex-col items-center justify-center p-3 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg cursor-pointer transition-all text-[#ccc] text-xs text-center hover:bg-gemini-green/10 hover:border-gemini-green hover:text-white">
@@ -254,7 +266,15 @@ const LeftSidebar: React.FC = () => {
                                 </p>
                             )}
                         </div>
-                        <div className="custom-prompt flex-shrink-0 pt-0">
+                        <div className="custom-prompt flex-shrink-0 pt-0 relative group">
+                            {isGuest && (
+                                <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] z-10 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="bg-gemini-dark-200 border border-white/10 px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-xl">
+                                        <svg className="w-3 h-3 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                        <span className="text-[10px] text-white font-bold uppercase tracking-widest">Login to Unlock</span>
+                                    </div>
+                                </div>
+                            )}
                             <div className="bg-gemini-dark-300 border border-gemini-dark-500 rounded-lg p-4">
                                 <h4 className="text-xs font-semibold text-gemini-green uppercase tracking-wider mb-3">Custom Instructions</h4>
                                 <textarea

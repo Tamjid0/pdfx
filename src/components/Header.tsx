@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../hooks/useAuth';
 
 const Header: React.FC = () => {
-    const { user, logout } = useAuth();
+    const { user, mongoUser, logout } = useAuth();
     const router = useRouter();
 
     const handleLogout = async () => {
@@ -36,24 +36,41 @@ const Header: React.FC = () => {
                 </nav>
             </div>
             <div className="flex gap-3 items-center">
-
                 {user ? (
-                    <div className="flex items-center gap-3 px-3 py-1.5 bg-gemini-dark-300 border border-gemini-dark-500 rounded-full cursor-pointer transition-all ml-3 hover:border-gemini-green hover:bg-[#252525]">
-                        <div className="relative">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gemini-green to-gemini-green-400 flex items-center justify-center font-semibold text-sm text-black uppercase">
-                                {user.displayName ? user.displayName.charAt(0) : (user.email ? user.email.charAt(0) : 'U')}
+                    <div className="flex items-center gap-4">
+                        {/* Credits Badge */}
+                        {mongoUser && (
+                            <div className="flex items-center gap-2 px-3 py-1 bg-gemini-green/10 border border-gemini-green/20 rounded-full">
+                                <span className="text-[10px] font-black tracking-widest text-gemini-green uppercase">Credits: {mongoUser.credits}</span>
+                                {mongoUser.tier === 'premium' && (
+                                    <span className="w-1.5 h-1.5 bg-gemini-green rounded-full shadow-[0_0_8px_rgba(0,255,136,0.8)]"></span>
+                                )}
                             </div>
-                            <div className="w-2 h-2 bg-gemini-green rounded-full border-2 border-gemini-dark-300 absolute bottom-0 right-0"></div>
+                        )}
+
+                        <div className="flex items-center gap-3 px-3 py-1.5 bg-gemini-dark-300 border border-gemini-dark-500 rounded-full cursor-pointer transition-all ml-3 hover:border-gemini-green hover:bg-[#252525]">
+                            <div className="relative">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gemini-green to-gemini-green-400 flex items-center justify-center font-semibold text-sm text-black uppercase">
+                                    {(user.displayName || mongoUser?.displayName || user.email || 'U').charAt(0)}
+                                </div>
+                                <div className="w-2 h-2 bg-gemini-green rounded-full border-2 border-gemini-dark-300 absolute bottom-0 right-0"></div>
+                            </div>
+                            <span className="text-sm font-medium text-white truncate max-w-[120px]">
+                                {user.displayName || mongoUser?.displayName || user.email?.split('@')[0] || 'User'}
+                            </span>
+                            <button onClick={handleLogout} className="text-gemini-gray no-underline px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer hover:text-gemini-green hover:bg-gemini-green/10">Logout</button>
                         </div>
-                        <span className="text-sm font-medium text-white truncate max-w-[120px]">
-                            {user.displayName || user.email?.split('@')[0] || 'User'}
-                        </span>
-                        <button onClick={handleLogout} className="text-gemini-gray no-underline px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer hover:text-gemini-green hover:bg-gemini-green/10">Logout</button>
                     </div>
                 ) : (
-                    <div className="flex items-center gap-3 ml-3">
-                        <Link href="/login" className="text-gemini-gray no-underline px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer hover:text-gemini-green hover:bg-gemini-green/10">Login</Link>
-                        <Link href="/signup" className="bg-gemini-green text-black border-none px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer transition-all shadow-md shadow-gemini-green/30 flex items-center gap-2 hover:bg-gemini-green-300 hover:shadow-lg hover:shadow-gemini-green/40 hover:-translate-y-px">Sign Up</Link>
+                    <div className="flex items-center gap-4 ml-3">
+                        <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full">
+                            <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse"></div>
+                            <span className="text-[10px] font-black tracking-widest text-gray-400 uppercase">Guest Access</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Link href="/login" className="text-gemini-gray no-underline px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer hover:text-white hover:bg-white/5">Login</Link>
+                            <Link href="/signup" className="bg-gemini-green text-black border-none px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer transition-all shadow-md shadow-gemini-green/30 hover:bg-gemini-green-300">Sign Up</Link>
+                        </div>
                     </div>
                 )}
             </div>

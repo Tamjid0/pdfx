@@ -9,6 +9,7 @@ import { useStore } from "../store/useStore";
 
 import { useFileUpload } from "../hooks/useFileUpload";
 import { useChat } from "../hooks/useChat";
+import AuthGuard from "../components/auth/AuthGuard";
 
 const Home = () => {
     const [isMounted, setIsMounted] = useState(false);
@@ -215,45 +216,47 @@ const Home = () => {
     };
 
     return (
-        <div className="flex flex-col h-screen bg-[#0a0a0a] text-white font-sans">
-            <Header />
-            <MainLayout
-                view={view}
-                mode={mode}
-                isMounted={isMounted}
-                isLoading={isLoading}
-                leftPanelView={leftPanelView}
-                isPreviewMode={isPreviewMode}
-                htmlPreview={htmlPreview}
-                activeNotesToggles={activeNotesToggles}
-                activeInsightsToggles={activeInsightsToggles}
-                chatHistory={chatHistory}
-                isTyping={isTyping}
-                mindmapData={mindmapData}
-                isSummaryGenerated={isSummaryGenerated}
-                isInsightsGenerated={isInsightsGenerated}
-                isNotesGenerated={isNotesGenerated}
-                isFlashcardsGenerated={isFlashcardsGenerated}
-                isQuizGenerated={isQuizGenerated}
-                isMindmapGenerated={isMindmapGenerated}
-                isSlideMode={isSlideMode}
-                backToImport={backToImport}
-                setLeftPanelView={setLeftPanelView}
-                setMode={setMode}
-                setPreviewMode={setPreviewMode}
-                handleEditorChange={handleEditorChange}
-                handleFileUpload={handleFileUpload}
-                handlePasteContent={handlePasteContent}
-                handleScrapeUrl={handleScrapeUrl}
-                handleGenerate={handleGenerate}
-                handleExport={handleExport}
-                handleSendMessage={handleSendMessage}
-                getHasGenerated={getHasGenerated}
-                fileType={useStore.getState().fileType}
-                fileId={useStore.getState().fileId}
-            />
-            <ExportModal />
-        </div>
+        <AuthGuard>
+            <div className="flex flex-col h-screen bg-[#0a0a0a] text-white font-sans">
+                <Header />
+                <MainLayout
+                    view={view}
+                    mode={mode}
+                    isMounted={isMounted}
+                    isLoading={isLoading}
+                    leftPanelView={leftPanelView}
+                    isPreviewMode={isPreviewMode}
+                    htmlPreview={htmlPreview}
+                    activeNotesToggles={activeNotesToggles}
+                    activeInsightsToggles={activeInsightsToggles}
+                    chatHistory={chatHistory}
+                    isTyping={isTyping}
+                    mindmapData={mindmapData}
+                    isSummaryGenerated={isSummaryGenerated}
+                    isInsightsGenerated={isInsightsGenerated}
+                    isNotesGenerated={isNotesGenerated}
+                    isFlashcardsGenerated={isFlashcardsGenerated}
+                    isQuizGenerated={isQuizGenerated}
+                    isMindmapGenerated={isMindmapGenerated}
+                    isSlideMode={isSlideMode}
+                    backToImport={backToImport}
+                    setLeftPanelView={setLeftPanelView}
+                    setMode={setMode}
+                    setPreviewMode={setPreviewMode}
+                    handleEditorChange={handleEditorChange}
+                    handleFileUpload={handleFileUpload}
+                    handlePasteContent={handlePasteContent}
+                    handleScrapeUrl={handleScrapeUrl}
+                    handleGenerate={handleGenerate}
+                    handleExport={handleExport}
+                    handleSendMessage={handleSendMessage}
+                    getHasGenerated={getHasGenerated}
+                    fileType={useStore.getState().fileType}
+                    fileId={useStore.getState().fileId}
+                />
+                <ExportModal />
+            </div>
+        </AuthGuard>
     );
 };
 

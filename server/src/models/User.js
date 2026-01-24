@@ -1,11 +1,18 @@
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
-    id: { type: String, required: true }, // Keeping for migration purposes if needed
-    firstName: { type: String, required: true },
-    lastName: { type: String, required: true },
+    firebaseUid: { type: String, required: true, unique: true, index: true },
+    displayName: { type: String },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    photoURL: { type: String },
+    password: { type: String }, // Optional for Firebase/Social users
+    tier: { type: String, enum: ['free', 'premium'], default: 'free' },
+    credits: { type: Number, default: 10 },
+    usage: {
+        totalFiles: { type: Number, default: 0 },
+        totalWords: { type: Number, default: 0 }
+    },
+    lastLogin: { type: Date, default: Date.now }
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);

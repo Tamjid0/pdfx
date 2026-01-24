@@ -1,6 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useStore } from '../store/useStore';
+import { useAuth } from '../hooks/useAuth';
 
 // Importing icons (assuming these are available or will be provided)
 // For now, using generic SVG paths. In a real app, you'd import from a library like react-icons or lucide-react
@@ -30,6 +33,10 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     onApplyTools,
     hasGenerated
 }) => {
+    const { user } = useAuth();
+    const isGuest = !user;
+    const router = useRouter();
+
     const {
         mode,
         summarySettings, setSummarySettings,
@@ -110,7 +117,15 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
             case 'quiz':
                 return (
                     <>
-                        <div className="tool-section bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 mb-5">
+                        <div className="tool-section bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 mb-5 relative group">
+                            {isGuest && (
+                                <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-10 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="bg-gemini-dark-200 border border-white/10 px-3 py-2 rounded-lg flex items-center gap-2 shadow-2xl">
+                                        <svg className="w-3 h-3 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                        <span className="text-[10px] text-white font-bold uppercase tracking-tight">Login to Unlock</span>
+                                    </div>
+                                </div>
+                            )}
                             <div className="tool-section-title text-xs font-semibold text-gemini-green uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Question Types</div>
                             <div className="tool-options grid gap-2.5">
                                 <label className="flex items-center gap-2.5 p-2.5 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg cursor-pointer transition-all hover:bg-gemini-green/10 hover:border-gemini-green">
@@ -190,7 +205,15 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
             case 'mindmap':
                 return (
                     <>
-                        <div className="tool-section bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 mb-5">
+                        <div className="tool-section bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 mb-5 relative group">
+                            {isGuest && (
+                                <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-10 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="bg-gemini-dark-200 border border-white/10 px-3 py-2 rounded-lg flex items-center gap-2 shadow-2xl">
+                                        <svg className="w-3 h-3 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                        <span className="text-[10px] text-white font-bold uppercase tracking-tight">Login to Unlock</span>
+                                    </div>
+                                </div>
+                            )}
                             <div className="tool-section-title text-xs font-semibold text-gemini-green uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Layouts</div>
                             <div className="tool-options grid gap-2.5">
                                 <div className="flex gap-4">
@@ -364,7 +387,15 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
                 );
             case 'flashcards':
                 return (
-                    <div className="tool-section bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 mb-5">
+                    <div className="tool-section bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 mb-5 relative group">
+                        {isGuest && (
+                            <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-10 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="bg-gemini-dark-200 border border-white/10 px-3 py-2 rounded-lg flex items-center gap-2 shadow-2xl">
+                                    <svg className="w-3 h-3 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                    <span className="text-[10px] text-white font-bold uppercase tracking-tight">Login to Unlock</span>
+                                </div>
+                            </div>
+                        )}
                         <div className="tool-section-title text-xs font-semibold text-gemini-green uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Deck Settings</div>
                         <div className="tool-options grid gap-4">
                             <div>
@@ -399,12 +430,21 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
                     Tools
                 </h3>
                 <button
-                    className={`apply-btn px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-all flex items-center gap-1.5 ${isApplyDisabled ? 'bg-gemini-dark-500 text-gemini-gray cursor-not-allowed' : 'bg-gemini-green text-black hover:bg-gemini-green-300'}`}
-                    onClick={applyTools}
+                    className={`apply-btn px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-all flex items-center gap-1.5 ${isApplyDisabled ? 'bg-gemini-dark-500 text-gemini-gray cursor-not-allowed' : (isGuest ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-gemini-green text-black hover:bg-gemini-green-300')}`}
+                    onClick={isGuest ? () => router.push('/login') : applyTools}
                     disabled={isApplyDisabled}
                 >
-                    <IconCheck className="w-3.5 h-3.5 fill-current" />
-                    {buttonText}
+                    {isGuest ? (
+                        <>
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                            Sign in to Save
+                        </>
+                    ) : (
+                        <>
+                            <IconCheck className="w-3.5 h-3.5 fill-current" />
+                            {buttonText}
+                        </>
+                    )}
                 </button>
             </div>
             <div className="right-sidebar-content flex-1 overflow-y-auto p-5">

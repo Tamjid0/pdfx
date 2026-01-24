@@ -13,6 +13,7 @@ import templateRoutes from './template.routes.js';
 import exportRoutes from './export.routes.js';
 import scrapeRoutes from './scrape.routes.js';
 import jobRoutes from './job.routes.js';
+import authRoutes from './auth.routes.js';
 
 const router = Router();
 
@@ -30,5 +31,6 @@ router.use('/templates', templateRoutes);
 router.use('/export', exportRoutes);
 router.use('/scrape', scrapeRoutes);
 router.use('/jobs', jobRoutes);
+router.use('/auth', authRoutes);
 
 export default router;

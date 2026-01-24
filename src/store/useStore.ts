@@ -100,6 +100,7 @@ interface AppState {
     // Preview Actions
     setPreviewPreset: (preset: PreviewPreset) => void;
     setPrompt: (prompt: string) => void;
+    setStats: (stats: any) => void;
 
     openExportModal: (mode: string, content: any) => void;
     closeExportModal: () => void;
@@ -109,6 +110,9 @@ interface AppState {
     setTemplates: (templates: any[]) => void;
     pdfSearchText: string | null;
     setPdfSearchText: (text: string | null) => void;
+
+    // Study Continuity
+    loadProject: (documentId: string) => Promise<void>;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -244,4 +248,57 @@ export const useStore = create<AppState>((set) => ({
     // PDF Search State
     pdfSearchText: null,
     setPdfSearchText: (text) => set({ pdfSearchText: text }),
+
+    // Study Continuity - Restoration Logic
+    loadProject: async (documentId) => {
+        set({ isLoading: true });
+        try {
+            const response = await fetch(`/api/v1/documents/${documentId}`);
+            if (!response.ok) throw new Error('Failed to load project');
+            const data = await response.json();
+
+            // Populate workspace state from stored project data
+            set({
+                fileId: data.documentId,
+                fileType: data.type === 'application/pdf' ? 'pdf' : (data.type.includes('presentation') ? 'pptx' : 'text'),
+                htmlPreview: data.extractedText || '',
+                summaryData: data.summaryData,
+                notesData: data.notesData,
+                flashcardsData: data.flashcardsData,
+                quizData: data.quizData,
+                mindmapData: data.mindmapData,
+                insightsData: data.insightsData,
+                chatHistory: data.chatHistory || [],
+
+                // Flags
+                isSummaryGenerated: !!data.summaryData,
+                isNotesGenerated: !!data.notesData,
+                isFlashcardsGenerated: !!data.flashcardsData,
+                isQuizGenerated: !!data.quizData,
+                isMindmapGenerated: !!data.mindmapData,
+                isInsightsGenerated: !!data.insightsData,
+
+                // View settings
+                view: 'editor',
+                mode: 'editor',
+                leftPanelView: data.type.includes('presentation') ? 'slides' : 'editor',
+                isSlideMode: data.type.includes('presentation')
+            });
+
+            // Special case for slides
+            if (data.type.includes('presentation') && data.chunks) {
+                const slides = data.chunks.map((chunk: any) => ({
+                    title: chunk.metadata?.slideTitle || `Slide ${chunk.metadata?.pageIndex}`,
+                    content: chunk.content
+                }));
+                set({ slides });
+            }
+
+        } catch (error) {
+            console.error('[Store] loadProject failed:', error);
+            alert('Failed to load project. Please try again.');
+        } finally {
+            set({ isLoading: false });
+        }
+    }
 }));

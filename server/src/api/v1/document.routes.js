@@ -166,4 +166,36 @@ router.get('/:documentId/page/:pageIndex', validate(getDocumentPageSchema), asyn
     }
 });
 
+/**
+ * POST /api/v1/documents/:documentId/sync
+ * Syncs AI-generated content (Chat, Summary, etc.) to the project record.
+ */
+router.post('/:documentId/sync', validate(getDocumentSchema), async (req, res) => {
+    const { documentId } = req.params;
+    const content = req.body; // Expects selective fields: summaryData, chatHistory, etc.
+
+    try {
+        const doc = await Document.findOneAndUpdate(
+            { documentId },
+            {
+                ...content,
+                lastAccessedAt: Date.now()
+            },
+            { new: true }
+        );
+
+        if (!doc) {
+            return res.status(404).json({ error: 'Document not found' });
+        }
+
+        res.json({
+            success: true,
+            message: 'Project synced successfully'
+        });
+    } catch (error) {
+        console.error('[DocumentRoutes] Error syncing content:', error);
+        res.status(500).json({ error: 'Failed to sync content' });
+    }
+});
+
 export default router;

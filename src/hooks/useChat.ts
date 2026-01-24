@@ -69,6 +69,11 @@ export const useChat = () => {
                                 timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
                             };
                         }
+
+                        // Sync with backend once state is updated
+                        apiService.syncProjectContent(fileId, { chatHistory: newHistory })
+                            .catch(err => console.error("[Sync] Chat history sync failed:", err));
+
                         return newHistory;
                     });
                     setIsTyping(false);

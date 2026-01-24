@@ -237,3 +237,30 @@ export async function getJobStatus(jobId: string) {
     }
     return response.json();
 }
+
+/**
+ * Syncs workspace content (Chat, Summary, etc.) to the backend
+ */
+export async function syncProjectContent(documentId: string, content: any) {
+    const response = await fetch(`/api/v1/documents/${documentId}/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(content),
+    });
+    if (!response.ok) {
+        throw new Error('Failed to sync project content');
+    }
+    return response.json();
+}
+
+/**
+ * Fetches all documents (projects) for a specific user
+ */
+export async function fetchUserDocuments(userId: string) {
+    const response = await fetch(`/api/v1/documents?userId=${userId}`);
+    if (!response.ok) {
+        throw new Error('Failed to fetch documents');
+    }
+    const result = await response.json();
+    return result.data;
+}

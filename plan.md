@@ -25,21 +25,22 @@ This plan bridges **Firebase Authentication** with your existing **MongoDB** and
 
 ---
 
-## 💬 Phase 3: State & Content Persistence
+## 💬 Phase 3: Study Continuity & Persistence
 **Goal:** Save all generated AI content so it's not lost on refresh.
 
-- [ ] **Chat Persistence**: Save `chatHistory` to MongoDB.
-- [ ] **Summary & Notes Storage**: Store generated summaries, flashcards, and mindmaps in a `Content` collection.
-- [ ] **Document Linking**: Ensure every piece of content is tied to both a `documentId` and a `firebase_uid`.
+- [ ] **Project Model**: Create a centralized MongoDB model to store Chat, Summary, Notes, and Quiz data linked to a specific File ID.
+- [ ] **Auto-Save Engine**: Automatically sync workspace state to MongoDB whenever AI content is generated.
+- [ ] **State Restoration**: Update the workspace to load existing project data on startup, allowing users to "pick up where they left off."
 
 ---
 
-## 🎨 Phase 4: UI Refinement & Polish
-**Goal:** Improve the user experience and dashboard.
+## 🖼️ Phase 4: The Modern User Dashboard
+**Goal:** A clean, SaaS-style hub for managing projects and credits.
 
-- [ ] **Recent Documents**: Add a "Recent Files" list to the dashboard sidebar.
-- [ ] **User Profile Page**: Allow users to update their `displayName` and see their storage stats.
-- [ ] **Loading States**: Add global premium loading overlays for database operations.
+- [ ] **Projects Page**: A grid-based gallery for all uploaded documents.
+- [ ] **Project Quick-View**: See previews of summaries and notes directly from the dashboard.
+- [ ] **Dynamic Export**: Generate downloadable files in real-time from stored content (No stale file storage).
+- [ ] **Account Management**: View credit usage and storage stats in a polished, user-friendly UI.
 
 ---
 

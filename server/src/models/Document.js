@@ -23,11 +23,21 @@ const documentSchema = new mongoose.Schema({
         language: { type: String },
         author: { type: String }
     },
+    // AI Generated Content (Persistent Storage)
+    summaryData: { type: mongoose.Schema.Types.Mixed, default: null },
+    notesData: { type: mongoose.Schema.Types.Mixed, default: null },
+    flashcardsData: { type: mongoose.Schema.Types.Mixed, default: null },
+    quizData: { type: mongoose.Schema.Types.Mixed, default: null },
+    mindmapData: { type: mongoose.Schema.Types.Mixed, default: null },
+    insightsData: { type: mongoose.Schema.Types.Mixed, default: null },
+    chatHistory: { type: [mongoose.Schema.Types.Mixed], default: [] },
+
     structure: { type: mongoose.Schema.Types.Mixed }, // Full DocumentGraph (Nodes)
     chunks: { type: mongoose.Schema.Types.Mixed },     // Segmented text for vectoring
     extractedText: { type: String },
     convertedPdfPath: { type: String },
-    isArchived: { type: Boolean, default: false }
+    isArchived: { type: Boolean, default: false },
+    lastAccessedAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
 const Document = mongoose.model('Document', documentSchema);

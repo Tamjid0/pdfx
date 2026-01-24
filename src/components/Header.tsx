@@ -29,10 +29,10 @@ const Header: React.FC = () => {
                     PDFy
                 </div>
                 <nav className="flex gap-2">
-                    <a className="text-gemini-gray no-underline px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer hover:text-gemini-green hover:bg-gemini-green/10 text-gemini-green bg-gemini-green/15">Dashboard</a>
-                    <a className="text-gemini-gray no-underline px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer hover:text-gemini-green hover:bg-gemini-green/10">Projects</a>
-                    <a className="text-gemini-gray no-underline px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer hover:text-gemini-green hover:bg-gemini-green/10">Templates</a>
-                    <a className="text-gemini-gray no-underline px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer hover:text-gemini-green hover:bg-gemini-green/10">Community</a>
+                    <Link href="/" className="text-gemini-gray no-underline px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer hover:text-gemini-green hover:bg-gemini-green/10">Workspace</Link>
+                    <Link href="/dashboard" className="text-gemini-gray no-underline px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer hover:text-gemini-green hover:bg-gemini-green/10 text-gemini-green bg-gemini-green/15">Projects</Link>
+                    <Link href="/templates" className="text-gemini-gray no-underline px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer hover:text-gemini-green hover:bg-gemini-green/10">Templates</Link>
+                    <Link href="/community" className="text-gemini-gray no-underline px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer hover:text-gemini-green hover:bg-gemini-green/10">Community</Link>
                 </nav>
             </div>
             <div className="flex gap-3 items-center">

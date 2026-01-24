@@ -152,26 +152,31 @@ const Home = () => {
                     const resultNotes = await apiService.fetchNotes(payload);
                     setNotesData(resultNotes);
                     setIsNotesGenerated(true);
+                    if (fileId) apiService.syncProjectContent(fileId, { notesData: resultNotes }).catch(console.error);
                     break;
                 case 'quiz':
                     const quiz = await apiService.fetchQuiz(payload);
                     setQuizData(quiz);
                     setIsQuizGenerated(true);
+                    if (fileId) apiService.syncProjectContent(fileId, { quizData: quiz }).catch(console.error);
                     break;
                 case 'flashcards':
                     const flashcards = await apiService.fetchFlashcards(payload);
                     setFlashcardsData(flashcards);
                     setIsFlashcardsGenerated(true);
+                    if (fileId) apiService.syncProjectContent(fileId, { flashcardsData: flashcards }).catch(console.error);
                     break;
                 case 'mindmap':
                     const mindmap = await apiService.fetchMindmap(payload);
                     setMindmapData(mindmap);
                     setIsMindmapGenerated(true);
+                    if (fileId) apiService.syncProjectContent(fileId, { mindmapData: mindmap }).catch(console.error);
                     break;
                 case 'summary':
                     const summary = await apiService.generateSummary(payload);
                     setSummaryData(summary);
                     setIsSummaryGenerated(true);
+                    if (fileId) apiService.syncProjectContent(fileId, { summaryData: summary }).catch(console.error);
                     break;
                 default:
                     break;

@@ -319,16 +319,20 @@ export const useStore = create<AppState>((set) => ({
                 mode: 'editor',
                 leftPanelView: isPptx ? 'slides' : 'editor',
                 isSlideMode: isPptx,
-                isProcessingSlides: false
+                isProcessingSlides: false,
+
+                // Reset rendering progress
+                renderingProgress: 100
             });
 
-            // Special case for slides
-            if (isPptx && data.chunks) {
+            // Special case for slides - Load slide data from chunks
+            if (isPptx && data.chunks && data.chunks.length > 0) {
                 const slides = data.chunks.map((chunk: any) => ({
-                    title: chunk.metadata?.slideTitle || `Slide ${chunk.metadata?.pageIndex}`,
+                    title: chunk.metadata?.slideTitle || `Slide ${chunk.metadata?.pageIndex || 1}`,
                     content: chunk.content
                 }));
                 set({ slides, currentSlideIndex: 0 });
+                console.log(`[Store] Loaded ${slides.length} slides for PPTX project`);
             }
 
         } catch (error) {

@@ -111,6 +111,9 @@ interface AppState {
     pdfSearchText: string | null;
     setPdfSearchText: (text: string | null) => void;
 
+    // Workspace Management
+    resetWorkspace: () => void;
+
     // Study Continuity
     loadProject: (documentId: string) => Promise<void>;
 }
@@ -248,6 +251,33 @@ export const useStore = create<AppState>((set) => ({
     // PDF Search State
     pdfSearchText: null,
     setPdfSearchText: (text) => set({ pdfSearchText: text }),
+
+    // Workspace Management
+    resetWorkspace: () => {
+        set({
+            htmlPreview: null,
+            mindmapData: null,
+            insightsData: null,
+            notesData: null,
+            quizData: null,
+            flashcardsData: null,
+            summaryData: null,
+            chatHistory: [],
+            fileId: null,
+            fileType: null,
+            isPreviewMode: false,
+            isSummaryGenerated: false,
+            isInsightsGenerated: false,
+            isNotesGenerated: false,
+            isFlashcardsGenerated: false,
+            isQuizGenerated: false,
+            isMindmapGenerated: false,
+            stats: { wordCount: 0, charCount: 0, lineCount: 0, readTime: 0 },
+            slides: [],
+            currentSlideIndex: 0,
+            isSlideMode: false
+        });
+    },
 
     // Study Continuity - Restoration Logic
     loadProject: async (documentId) => {

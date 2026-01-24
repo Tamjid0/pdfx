@@ -80,7 +80,7 @@ const ModeSwitcher: React.FC<ModeSwitcherProps> = ({ currentMode, onModeChange }
                         <span>More</span>
                     </button>
                     {isDropdownOpen && (
-                        <div className="more-dropdown absolute top-full right-0 mt-2 bg-[#1a1a1a] border border-[#333] rounded-xl shadow-2xl min-w-[180px] z-[100] overflow-hidden">
+                        <div className="more-dropdown absolute top-full right-0 mt-2 bg-[#1a1a1a] border border-[#333] rounded-xl shadow-2xl min-w-[180px] z-[9999] overflow-hidden">
                             {hiddenModes.map(mode => (
                                 <button
                                     key={mode.id}

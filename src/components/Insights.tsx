@@ -14,34 +14,46 @@ interface InsightsProps {
 
 const Insights: React.FC<InsightsProps> = ({ onGenerate }) => {
     const {
-        insightsData, setInsightsData,
+        insightsData, setInsightsData, openExportModal
     } = useStore();
+
+    const insightsArray = Array.isArray(insightsData) ? insightsData : (insightsData?.insights || []);
 
     const handleContentChange = (e: React.FocusEvent<HTMLHeadingElement | HTMLParagraphElement>, index: number, field: 'title' | 'description') => {
         if (insightsData) {
-            const newInsights = [...insightsData.insights];
+            const newInsights = [...insightsArray];
             newInsights[index] = { ...newInsights[index], [field]: e.currentTarget.innerText };
-            setInsightsData({ ...insightsData, insights: newInsights });
+            if (Array.isArray(insightsData)) {
+                setInsightsData(newInsights);
+            } else {
+                setInsightsData({ ...insightsData, insights: newInsights });
+            }
         }
     };
 
     const addInsight = () => {
         if (insightsData) {
-            setInsightsData({
-                ...insightsData,
-                insights: [...insightsData.insights, { title: 'New Insight Title', description: 'New insight description...' }]
-            });
+            const newInsights = [...insightsArray, { title: 'New Insight Title', description: 'New insight description...' }];
+            if (Array.isArray(insightsData)) {
+                setInsightsData(newInsights);
+            } else {
+                setInsightsData({ ...insightsData, insights: newInsights });
+            }
         }
     };
 
     const deleteInsight = (index: number) => {
         if (insightsData) {
-            const newInsights = insightsData.insights.filter((_: Insight, i: number) => i !== index);
-            setInsightsData({ ...insightsData, insights: newInsights });
+            const newInsights = insightsArray.filter((_: Insight, i: number) => i !== index);
+            if (Array.isArray(insightsData)) {
+                setInsightsData(newInsights);
+            } else {
+                setInsightsData({ ...insightsData, insights: newInsights });
+            }
         }
     };
 
-    if (!insightsData || !insightsData.insights || insightsData.insights.length === 0) {
+    if (insightsArray.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-[#0a0a0a] rounded-xl border border-[#222]">
                 <div className="w-20 h-20 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-6 border border-[#333] shadow-inner text-[#00ff88]">
@@ -80,7 +92,7 @@ const Insights: React.FC<InsightsProps> = ({ onGenerate }) => {
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
                 <div className="max-w-4xl mx-auto grid grid-cols-1 gap-4">
-                    {insightsData.insights.map((insight: Insight, index: number) => (
+                    {insightsArray.map((insight: Insight, index: number) => (
                         <div key={index} className="group relative bg-[#111]/50 border border-[#222] rounded-xl p-5 transition-all hover:bg-[#111] hover:border-[#00ff88]/30 hover:-translate-y-1">
                             <div className="absolute top-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
                                 <button
@@ -128,7 +140,12 @@ const Insights: React.FC<InsightsProps> = ({ onGenerate }) => {
                     <span className="w-2 h-2 bg-[#00ff88]/20 rounded-full"></span>
                     <span className="w-2 h-2 bg-[#00ff88]/20 rounded-full"></span>
                 </div>
-                <button className="px-6 py-2.5 bg-[#00ff88] text-black rounded-xl text-xs font-bold hover:bg-[#00dd77] transition-all shadow-xl active:scale-95">PUSH TO EDITOR</button>
+                <button
+                    onClick={() => openExportModal('insights', insightsData)}
+                    className="px-6 py-2.5 bg-[#00ff88] text-black rounded-xl text-xs font-bold hover:bg-[#00dd77] transition-all shadow-xl active:scale-95"
+                >
+                    EXPORT INSIGHTS
+                </button>
             </div>
         </div>
     );

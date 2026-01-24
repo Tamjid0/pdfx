@@ -24,7 +24,7 @@ interface QuizProps {
 
 const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
     const {
-        quizData, setQuizData,
+        quizData, setQuizData, openExportModal
     } = useStore();
 
     const [selectedAnswers, setSelectedAnswers] = useState<Record<string, any>>({});
@@ -203,10 +203,16 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
                             </div>
                         </div>
                         <button
-                            className="px-6 py-3 bg-white text-black rounded-xl text-xs font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
+                            className="px-6 py-3 bg-white text-black rounded-xl text-xs font-black uppercase tracking-widest hover:bg-gray-200 transition-all mr-2"
                             onClick={() => onGenerate('quiz')}
                         >
                             Try Again
+                        </button>
+                        <button
+                            className="px-6 py-3 bg-[#00ff88] text-black rounded-xl text-xs font-black uppercase tracking-widest hover:bg-[#00dd77] transition-all shadow-xl"
+                            onClick={() => openExportModal('quiz', quizData)}
+                        >
+                            Export Quiz
                         </button>
                     </div>
                 )}

@@ -81,12 +81,14 @@ export function transformSummary(summaryData) {
 export function transformInsights(insightsData) {
     console.log('[Preview] Insights data:', insightsData);
 
-    if (!insightsData || !insightsData.insights) {
-        console.log('[Preview] No insights data or insights array');
+    const insightsArray = Array.isArray(insightsData) ? insightsData : (insightsData.insights || insightsData.data);
+
+    if (!insightsArray || !Array.isArray(insightsArray)) {
+        console.log('[Preview] No insights array found');
         return null;
     }
 
-    const sections = insightsData.insights.map((insight) => ({
+    const sections = insightsArray.map((insight) => ({
         heading: insight.title,
         content: insight.description,
         type: 'paragraph'
@@ -115,13 +117,15 @@ export function transformNotes(notesData) {
 
     const sections = [];
 
-    // Handle actual data structure: {notes: Array<{section, points}>}
-    if (notesData.notes && Array.isArray(notesData.notes)) {
-        notesData.notes.forEach((note) => {
+    // Handle actual data structure: {notes: Array<{section, points}>} or just the array itself
+    const notesArray = Array.isArray(notesData) ? notesData : (notesData.notes || notesData.data);
+
+    if (notesArray && Array.isArray(notesArray)) {
+        notesArray.forEach((note) => {
             if (note.section && note.points) {
                 sections.push({
                     heading: note.section,
-                    content: note.points.join('\n'),
+                    content: Array.isArray(note.points) ? note.points.join('\n') : note.points,
                     type: 'list'
                 });
             }
@@ -191,9 +195,11 @@ export function transformQuiz(quizData) {
  * Transform Flashcards data for preview
  */
 export function transformFlashcards(flashcardsData) {
-    if (!flashcardsData || !flashcardsData.flashcards) return null;
+    const cardsArray = Array.isArray(flashcardsData) ? flashcardsData : (flashcardsData.flashcards || flashcardsData.data);
 
-    const sections = flashcardsData.flashcards.map((card, index) => ({
+    if (!cardsArray || !Array.isArray(cardsArray)) return null;
+
+    const sections = cardsArray.map((card, index) => ({
         heading: `Card ${index + 1}: ${card.question}`,
         content: card.answer,
         type: 'paragraph'

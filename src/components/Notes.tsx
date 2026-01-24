@@ -14,63 +14,87 @@ interface NotesProps {
 
 const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
     const {
-        notesData, setNotesData,
+        notesData, setNotesData, openExportModal
     } = useStore();
+
+    const notesArray = Array.isArray(notesData) ? notesData : (notesData?.notes || []);
 
     const handleSectionTitleChange = (e: React.FocusEvent<HTMLHeadingElement>, sectionIndex: number) => {
         if (notesData) {
-            const newNotes = [...notesData.notes];
+            const newNotes = [...notesArray];
             newNotes[sectionIndex] = { ...newNotes[sectionIndex], section: e.currentTarget.innerText };
-            setNotesData({ ...notesData, notes: newNotes });
+            if (Array.isArray(notesData)) {
+                setNotesData(newNotes);
+            } else {
+                setNotesData({ ...notesData, notes: newNotes });
+            }
         }
     };
 
     // Changed to HTMLDivElement as it is attached to a div
     const handlePointChange = (e: React.FocusEvent<HTMLDivElement>, sectionIndex: number, pointIndex: number) => {
         if (notesData) {
-            const newNotes = [...notesData.notes];
+            const newNotes = [...notesArray];
             const newPoints = [...newNotes[sectionIndex].points];
             newPoints[pointIndex] = e.currentTarget.innerText;
             newNotes[sectionIndex] = { ...newNotes[sectionIndex], points: newPoints };
-            setNotesData({ ...notesData, notes: newNotes });
+            if (Array.isArray(notesData)) {
+                setNotesData(newNotes);
+            } else {
+                setNotesData({ ...notesData, notes: newNotes });
+            }
         }
     };
 
     const addSection = () => {
         if (notesData) {
-            setNotesData({
-                ...notesData,
-                notes: [...notesData.notes, { section: 'New Section', points: ['New insights here...'] }]
-            });
+            const newNotes = [...notesArray, { section: 'New Section', points: ['New insights here...'] }];
+            if (Array.isArray(notesData)) {
+                setNotesData(newNotes);
+            } else {
+                setNotesData({ ...notesData, notes: newNotes });
+            }
         }
     };
 
     const addPoint = (sectionIndex: number) => {
         if (notesData) {
-            const newNotes = [...notesData.notes];
+            const newNotes = [...notesArray];
             const newPoints = [...newNotes[sectionIndex].points, 'New point...'];
             newNotes[sectionIndex] = { ...newNotes[sectionIndex], points: newPoints };
-            setNotesData({ ...notesData, notes: newNotes });
+            if (Array.isArray(notesData)) {
+                setNotesData(newNotes);
+            } else {
+                setNotesData({ ...notesData, notes: newNotes });
+            }
         }
     };
 
     const deleteSection = (sectionIndex: number) => {
         if (notesData) {
-            const newNotes = notesData.notes.filter((_: NoteSection, i: number) => i !== sectionIndex);
-            setNotesData({ ...notesData, notes: newNotes });
+            const newNotes = notesArray.filter((_: NoteSection, i: number) => i !== sectionIndex);
+            if (Array.isArray(notesData)) {
+                setNotesData(newNotes);
+            } else {
+                setNotesData({ ...notesData, notes: newNotes });
+            }
         }
     };
 
     const deletePoint = (sectionIndex: number, pointIndex: number) => {
         if (notesData) {
-            const newNotes = [...notesData.notes];
+            const newNotes = [...notesArray];
             const newPoints = newNotes[sectionIndex].points.filter((_: string, i: number) => i !== pointIndex);
             newNotes[sectionIndex] = { ...newNotes[sectionIndex], points: newPoints };
-            setNotesData({ ...notesData, notes: newNotes });
+            if (Array.isArray(notesData)) {
+                setNotesData(newNotes);
+            } else {
+                setNotesData({ ...notesData, notes: newNotes });
+            }
         }
     };
 
-    if (!notesData || !notesData.notes || notesData.notes.length === 0) {
+    if (notesArray.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-[#0a0a0a] rounded-xl border border-[#222]">
                 <div className="w-20 h-20 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-6 border border-[#333] shadow-inner">
@@ -118,7 +142,7 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
                         <p className="text-[#666] text-sm uppercase tracking-widest font-mono">Curated Knowledge Base</p>
                     </div>
 
-                    {notesData.notes.map((noteSection: NoteSection, sectionIndex: number) => (
+                    {notesArray.map((noteSection: NoteSection, sectionIndex: number) => (
                         <div key={sectionIndex} className="group relative">
                             <div className="flex items-center gap-4 mb-6">
                                 <h3
@@ -182,7 +206,12 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
 
             <div className="p-6 bg-[#0f0f0f] border-t border-[#222] flex justify-end gap-4">
                 <button className="px-5 py-2.5 text-[#00ff88] text-xs font-black uppercase tracking-widest hover:bg-[#00ff88]/5 rounded-xl transition-all">Archive</button>
-                <button className="px-6 py-2.5 bg-white text-black rounded-xl text-xs font-bold hover:bg-gray-200 transition-all shadow-xl active:scale-95">EXPORT TO MD</button>
+                <button
+                    onClick={() => openExportModal('notes', notesData)}
+                    className="px-6 py-2.5 bg-[#00ff88] text-black rounded-xl text-xs font-bold hover:bg-[#00dd77] transition-all shadow-xl active:scale-95"
+                >
+                    EXPORT NOTES
+                </button>
             </div>
         </div>
     );

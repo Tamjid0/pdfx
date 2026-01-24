@@ -16,7 +16,8 @@ export const useFileUpload = () => {
         setMode,
         setIsProcessingSlides,
         setRenderingProgress,
-        setFileType
+        setFileType,
+        resetWorkspace
     } = useStore();
 
     const pollJobStatus = async (jobId: string, documentId: string): Promise<any> => {
@@ -59,6 +60,7 @@ export const useFileUpload = () => {
     };
 
     const handleFileUpload = async (file: File) => {
+        resetWorkspace();
         setIsLoading(true);
         try {
             const isSlideFile = file.name.endsWith('.pptx') || file.name.endsWith('.ppt') || file.name.endsWith('.key');

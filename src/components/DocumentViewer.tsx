@@ -30,7 +30,7 @@ const HIGHLIGHT_STYLE = `
     }
 
     .document-viewer .z-50 {
-        z-index: 9999 !important;
+        z-index: 90 !important;
         pointer-events: auto !important;
     }
 

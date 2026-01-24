@@ -12,7 +12,7 @@ interface SummaryProps {
 
 const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
     const {
-        summaryData, setSummaryData,
+        summaryData, setSummaryData, openExportModal
     } = useStore();
     const [copied, setCopied] = useState(false);
 
@@ -202,9 +202,9 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
                     <button className="px-5 py-2.5 text-gemini-green text-xs font-black uppercase tracking-widest hover:underline transition-all">Download .PDF</button>
                     <button
                         className="px-6 py-2.5 bg-gemini-green text-black rounded-xl text-xs font-bold hover:bg-gemini-green-300 transition-all shadow-[0_0_20px_rgba(0,255,136,0.15)] active:scale-95"
-                        onClick={() => alert('Summary exported to main editor!')}
+                        onClick={() => openExportModal('summary', summaryData)}
                     >
-                        PUSH TO MAIN EDITOR
+                        EXPORT
                     </button>
                 </div>
             </div>

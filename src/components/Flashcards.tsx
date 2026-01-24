@@ -14,10 +14,12 @@ interface FlashcardsProps {
 
 const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
     const {
-        flashcardsData, setFlashcardsData,
+        flashcardsData, setFlashcardsData, openExportModal
     } = useStore();
 
     const [flippedCards, setFlippedCards] = useState<number[]>([]);
+
+    const cardsArray = Array.isArray(flashcardsData) ? flashcardsData : (flashcardsData?.flashcards || []);
 
     const handleCardClick = (e: React.MouseEvent, index: number) => {
         // Only flip if not clicking on an editable element
@@ -30,29 +32,39 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
 
     const handleContentChange = (e: React.FocusEvent<HTMLParagraphElement>, index: number, field: 'question' | 'answer') => {
         if (flashcardsData) {
-            const newCards = [...flashcardsData.flashcards];
+            const newCards = [...cardsArray];
             newCards[index] = { ...newCards[index], [field]: e.currentTarget.innerText };
-            setFlashcardsData({ ...flashcardsData, flashcards: newCards });
+            if (Array.isArray(flashcardsData)) {
+                setFlashcardsData(newCards);
+            } else {
+                setFlashcardsData({ ...flashcardsData, flashcards: newCards });
+            }
         }
     };
 
     const addCard = () => {
         if (flashcardsData) {
-            setFlashcardsData({
-                ...flashcardsData,
-                flashcards: [...flashcardsData.flashcards, { question: 'New Question', answer: 'New Answer' }]
-            });
+            const newCards = [...cardsArray, { question: 'New Question', answer: 'New Answer' }];
+            if (Array.isArray(flashcardsData)) {
+                setFlashcardsData(newCards);
+            } else {
+                setFlashcardsData({ ...flashcardsData, flashcards: newCards });
+            }
         }
     };
 
     const deleteCard = (index: number) => {
         if (flashcardsData) {
-            const newCards = flashcardsData.flashcards.filter((_: Flashcard, i: number) => i !== index);
-            setFlashcardsData({ ...flashcardsData, flashcards: newCards });
+            const newCards = cardsArray.filter((_: Flashcard, i: number) => i !== index);
+            if (Array.isArray(flashcardsData)) {
+                setFlashcardsData(newCards);
+            } else {
+                setFlashcardsData({ ...flashcardsData, flashcards: newCards });
+            }
         }
     };
 
-    if (!flashcardsData || !flashcardsData.flashcards || flashcardsData.flashcards.length === 0) {
+    if (cardsArray.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-[#0a0a0a] rounded-xl border border-[#222]">
                 <div className="w-20 h-20 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-6 border border-[#333] shadow-inner text-[#00ff88]">
@@ -92,7 +104,7 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
             <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
                 <p className="text-[#666] text-[10px] font-black uppercase tracking-[0.3em] mb-8 text-center">Interactive Sessions • Click to reveal</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-                    {flashcardsData.flashcards.map((card: Flashcard, index: number) => (
+                    {cardsArray.map((card: Flashcard, index: number) => (
                         <div key={index} className="relative group">
                             <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button
@@ -158,7 +170,12 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
 
             <div className="p-6 bg-[#0f0f0f] border-t border-[#222] flex justify-between items-center">
                 <button className="text-[10px] font-black text-[#444] uppercase tracking-widest hover:text-white transition-all">Clear Session</button>
-                <button className="px-8 py-2.5 bg-[#00ff88] text-black rounded-xl text-xs font-bold hover:bg-[#00dd77] transition-all shadow-xl active:scale-95">START QUARTERLY REVIEW</button>
+                <button
+                    onClick={() => openExportModal('flashcards', flashcardsData)}
+                    className="px-8 py-2.5 bg-[#00ff88] text-black rounded-xl text-xs font-bold hover:bg-[#00dd77] transition-all shadow-xl active:scale-95"
+                >
+                    EXPORT CARDS
+                </button>
             </div>
         </div>
     );

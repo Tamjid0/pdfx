@@ -147,6 +147,7 @@ const Home = () => {
                     const resultInsights = await apiService.fetchInsights(payload);
                     setInsightsData(resultInsights);
                     setIsInsightsGenerated(true);
+                    if (fileId) apiService.syncProjectContent(fileId, { insightsData: resultInsights }).catch(console.error);
                     break;
                 case 'notes':
                     const resultNotes = await apiService.fetchNotes(payload);

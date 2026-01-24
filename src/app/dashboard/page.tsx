@@ -145,7 +145,7 @@ const ProjectsPage = () => {
 
                                             <div className="flex items-center gap-3 mb-4">
                                                 <div className="flex -space-x-1">
-                                                    {['Summary', 'Notes', 'Quiz', 'Mindmap'].map(type => {
+                                                    {['Summary', 'Notes', 'Insights', 'Quiz', 'Mindmap'].map(type => {
                                                         const isComplete = project[`${type.toLowerCase()}Data`];
                                                         return (
                                                             <div
@@ -227,7 +227,7 @@ const ProjectsPage = () => {
                                 >
                                     Open Session &rarr;
                                 </button>
-                                {['Summary', 'Notes', 'Flashcards', 'Quiz'].map(mode => (
+                                {['Summary', 'Notes', 'Insights', 'Flashcards', 'Quiz'].map(mode => (
                                     <button
                                         key={mode}
                                         disabled={!selectedProject[`${mode.toLowerCase()}Data`]}
@@ -243,35 +243,84 @@ const ProjectsPage = () => {
                         {/* Modal Body */}
                         <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                <div className="space-y-6">
-                                    <div className="flex items-center gap-3">
-                                        <span className="w-4 h-1 bg-gemini-green rounded-full"></span>
-                                        <h4 className="text-[9px] font-bold text-white/50 uppercase tracking-[0.25em]">Abstract Synthesis</h4>
+                                <div className="space-y-8">
+                                    {/* Summary Section */}
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <span className="w-4 h-1 bg-gemini-green rounded-full"></span>
+                                            <h4 className="text-[9px] font-bold text-white/50 uppercase tracking-[0.25em]">Abstract Synthesis</h4>
+                                        </div>
+                                        <div className="bg-white/[0.02] rounded-2xl p-6 border border-white/5 leading-relaxed text-white/70 overflow-hidden">
+                                            {selectedProject.summaryData ? (
+                                                <div className="prose prose-invert prose-sm max-w-none line-clamp-[6]"
+                                                    dangerouslySetInnerHTML={{ __html: typeof selectedProject.summaryData === 'string' ? selectedProject.summaryData : (selectedProject.summaryData.summary || selectedProject.summaryData.html) }}>
+                                                </div>
+                                            ) : (
+                                                <p className="text-gemini-gray italic text-center py-6 text-[11px]">Summary session pending.</p>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="bg-white/[0.02] rounded-2xl p-8 border border-white/5 min-h-[200px] leading-relaxed text-white/70">
-                                        {selectedProject.summaryData ? (
-                                            <div className="prose prose-invert prose-sm max-w-none line-clamp-[10]"
-                                                dangerouslySetInnerHTML={{ __html: typeof selectedProject.summaryData === 'string' ? selectedProject.summaryData : (selectedProject.summaryData.summary || selectedProject.summaryData.html) }}>
-                                            </div>
-                                        ) : (
-                                            <p className="text-gemini-gray italic text-center py-10 text-sm">Session initialization required for deep synthesis.</p>
-                                        )}
+
+                                    {/* Insights Section */}
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <span className="w-4 h-1 bg-gemini-green rounded-full"></span>
+                                            <h4 className="text-[9px] font-bold text-white/50 uppercase tracking-[0.25em]">Core Insights</h4>
+                                        </div>
+                                        <div className="bg-white/[0.02] rounded-2xl p-6 border border-white/5 max-h-[250px] overflow-y-auto no-scrollbar">
+                                            {selectedProject.insightsData ? (
+                                                <div className="space-y-4">
+                                                    {(Array.isArray(selectedProject.insightsData) ? selectedProject.insightsData : (selectedProject.insightsData.insights || [])).slice(0, 3).map((i: any, idx: number) => (
+                                                        <div key={idx} className="border-l border-gemini-green/20 pl-4 py-1">
+                                                            <h5 className="text-white text-xs font-bold mb-1">{i.title}</h5>
+                                                            <p className="text-[10px] text-gemini-gray line-clamp-2">{i.description}</p>
+                                                        </div>
+                                                    ))}
+                                                    {(Array.isArray(selectedProject.insightsData) ? selectedProject.insightsData : (selectedProject.insightsData.insights || [])).length > 3 && (
+                                                        <p className="text-gemini-green text-[9px] font-bold uppercase tracking-widest pt-2">+ More in Workspace</p>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <p className="text-gemini-gray italic text-center py-6 text-[11px]">Insight extraction pending.</p>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="space-y-6">
-                                    <h4 className="text-[9px] font-bold text-white/50 uppercase tracking-[0.25em]">Vault Metas</h4>
-                                    <div className="grid grid-cols-1 gap-3">
-                                        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-4 flex justify-between items-center group hover:bg-white/[0.03]">
-                                            <span className="text-gemini-gray text-[10px] font-bold uppercase tracking-widest">Cognitive Scope</span>
-                                            <span className="text-white text-xs font-bold">{selectedProject.chatHistory?.length || 0} Interactions</span>
+
+                                <div className="space-y-8">
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <span className="w-4 h-1 bg-white/10 rounded-full"></span>
+                                            <h4 className="text-[9px] font-bold text-white/50 uppercase tracking-[0.25em]">Vault Metas</h4>
                                         </div>
-                                        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-4 flex justify-between items-center group hover:bg-white/[0.03]">
-                                            <span className="text-gemini-gray text-[10px] font-bold uppercase tracking-widest">Data Health</span>
-                                            <span className="text-gemini-green text-[10px] font-bold uppercase tracking-widest">Verified</span>
+                                        <div className="grid grid-cols-1 gap-3">
+                                            <div className="bg-white/[0.02] border border-white/5 rounded-xl p-4 flex justify-between items-center group hover:bg-white/[0.03]">
+                                                <span className="text-gemini-gray text-[10px] font-bold uppercase tracking-widest">Cognitive Scope</span>
+                                                <span className="text-white text-xs font-bold">{selectedProject.chatHistory?.length || 0} Interactions</span>
+                                            </div>
+                                            <div className="bg-white/[0.02] border border-white/5 rounded-xl p-4 flex justify-between items-center group hover:bg-white/[0.03]">
+                                                <span className="text-gemini-gray text-[10px] font-bold uppercase tracking-widest">Study Assets</span>
+                                                <div className="flex gap-2">
+                                                    {selectedProject.notesData && <span className="text-gemini-green text-[9px] font-bold px-2 py-0.5 bg-gemini-green/10 rounded">NOTES</span>}
+                                                    {selectedProject.flashcardsData && <span className="text-gemini-green text-[9px] font-bold px-2 py-0.5 bg-gemini-green/10 rounded">CARDS</span>}
+                                                    {selectedProject.quizData && <span className="text-gemini-green text-[9px] font-bold px-2 py-0.5 bg-gemini-green/10 rounded">QUIZ</span>}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="bg-gemini-green/5 border border-gemini-green/10 rounded-2xl p-6">
-                                        <p className="text-white/70 text-xs leading-relaxed font-medium tracking-tight">Structured intelligence verified. Launch the workspace to explore the full cognitive graph of this document.</p>
+
+                                    <div className="bg-gemini-green/5 border border-gemini-green/10 rounded-2xl p-8 relative overflow-hidden group">
+                                        <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-gemini-green/10 blur-2xl rounded-full"></div>
+                                        <div className="relative z-10">
+                                            <p className="text-white text-sm font-bold tracking-tight mb-2">Workspace Ready</p>
+                                            <p className="text-gemini-gray text-[11px] leading-relaxed font-medium mb-6">Launch the full session to explore the complete interactive knowledge network and test your recall with custom AI flashcards.</p>
+                                            <button
+                                                onClick={() => handleOpenProject(selectedProject.documentId)}
+                                                className="w-full py-3 bg-white text-black rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-gemini-green transition-all"
+                                            >
+                                                Start Deep Study Session
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

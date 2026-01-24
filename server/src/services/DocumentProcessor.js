@@ -121,6 +121,12 @@ export class DocumentProcessor {
      * 2. PDF -> Scanned Images (WebP/PNG)
      */
     async convert(documentId, filePath, userId = 'guest', onProgress = null) {
+        // Handle case where userId is omitted and onProgress is passed as 3rd argument
+        if (typeof userId === 'function') {
+            onProgress = userId;
+            userId = 'guest';
+        }
+
         const docDir = path.join(this.getUserDir(userId), documentId);
         const jsonPath = path.join(docDir, 'metadata.json');
 

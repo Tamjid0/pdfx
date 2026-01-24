@@ -110,6 +110,7 @@ export const uploadFile = async (req, res, next) => {
                 fileName: originalname,
                 originalName: originalname,
                 mimeType: mimetype,
+                userId: userId,
             });
             jobId = job.id;
         }

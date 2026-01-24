@@ -23,7 +23,7 @@ export const initDocumentWorker = async () => {
 
     try {
         _worker = new Worker('document-processing', async (job) => {
-            const { filePath, mimeType, fileName, documentId } = job.data;
+            const { filePath, mimeType, fileName, documentId, userId = 'guest' } = job.data;
             logger.info(`Processing job ${job.id}: ${fileName}`);
 
             try {
@@ -34,6 +34,7 @@ export const initDocumentWorker = async () => {
                 await documentProcessor.convert(
                     documentId,
                     filePath,
+                    userId,
                     async (progress) => {
                         await job.updateProgress(progress);
                     }

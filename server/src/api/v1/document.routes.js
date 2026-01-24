@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
 
     try {
         const documents = await Document.find({ userId, isArchived: false })
-            .select('documentId type originalFile metadata createdAt')
+            .select('documentId type originalFile metadata createdAt summaryData notesData insightsData flashcardsData quizData mindmapData chatHistory')
             .sort({ createdAt: -1 });
 
         res.json({

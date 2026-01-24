@@ -2,13 +2,14 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 import { useAuth } from '../hooks/useAuth';
 
 const Header: React.FC = () => {
     const { user, mongoUser, logout } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
 
     const handleLogout = async () => {
         try {
@@ -18,6 +19,8 @@ const Header: React.FC = () => {
             console.error('Logout failed:', error);
         }
     };
+
+    const isActive = (path: string) => pathname === path;
 
     return (
         <div className="bg-gradient-to-r from-gemini-dark-200 to-gemini-dark-300 h-16 flex items-center justify-between px-8 border-b border-gemini-green/10 shadow-lg z-50">
@@ -29,10 +32,10 @@ const Header: React.FC = () => {
                     PDFy
                 </div>
                 <nav className="flex gap-2">
-                    <Link href="/" className="text-gemini-gray no-underline px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer hover:text-gemini-green hover:bg-gemini-green/10">Workspace</Link>
-                    <Link href="/dashboard" className="text-gemini-gray no-underline px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer hover:text-gemini-green hover:bg-gemini-green/10 text-gemini-green bg-gemini-green/15">Projects</Link>
-                    <Link href="/templates" className="text-gemini-gray no-underline px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer hover:text-gemini-green hover:bg-gemini-green/10">Templates</Link>
-                    <Link href="/community" className="text-gemini-gray no-underline px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer hover:text-gemini-green hover:bg-gemini-green/10">Community</Link>
+                    <Link href="/" className={`text-gemini-gray no-underline px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer hover:text-gemini-green hover:bg-gemini-green/10 ${isActive('/') ? 'text-gemini-green bg-gemini-green/15' : ''}`}>Workspace</Link>
+                    <Link href="/dashboard" className={`text-gemini-gray no-underline px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer hover:text-gemini-green hover:bg-gemini-green/10 ${isActive('/dashboard') ? 'text-gemini-green bg-gemini-green/15' : ''}`}>Projects</Link>
+                    <Link href="/templates" className={`text-gemini-gray no-underline px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer hover:text-gemini-green hover:bg-gemini-green/10 ${isActive('/templates') ? 'text-gemini-green bg-gemini-green/15' : ''}`}>Templates</Link>
+                    <Link href="/community" className={`text-gemini-gray no-underline px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer hover:text-gemini-green hover:bg-gemini-green/10 ${isActive('/community') ? 'text-gemini-green bg-gemini-green/15' : ''}`}>Community</Link>
                 </nav>
             </div>
             <div className="flex gap-3 items-center">

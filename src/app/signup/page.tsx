@@ -6,22 +6,26 @@ import AuthLayout from '@/components/auth/AuthLayout';
 import AuthInput from '@/components/auth/AuthInput';
 import AuthButton from '@/components/auth/AuthButton';
 import SocialButton from '@/components/auth/SocialButton';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function SignupPage() {
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+    const [authError, setAuthError] = useState<string | null>(null);
+    const { signup, loading } = useAuth();
     const router = useRouter();
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsLoading(true);
-        // TODO: Integrate Firebase Auth
-        setTimeout(() => {
-            setIsLoading(false);
+        setAuthError(null);
+        try {
+            await signup(email, password);
+            // Optional: Save fullName to user profile here if needed
             router.push('/');
-        }, 1000);
+        } catch (err: any) {
+            setAuthError(err.message || 'Failed to create account');
+        }
     };
 
     return (
@@ -35,6 +39,11 @@ export default function SignupPage() {
             }}
         >
             <form onSubmit={handleSignup} className="flex flex-col gap-2">
+                {authError && (
+                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-xs font-medium mb-4 animate-in fade-in slide-in-from-top-1">
+                        {authError}
+                    </div>
+                )}
                 <AuthInput
                     label="Full name"
                     type="text"
@@ -68,7 +77,7 @@ export default function SignupPage() {
                     </p>
                 </div>
 
-                <AuthButton type="submit" isLoading={isLoading}>
+                <AuthButton type="submit" isLoading={loading}>
                     Create account
                 </AuthButton>
 

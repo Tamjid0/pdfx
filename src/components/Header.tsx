@@ -4,13 +4,19 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+import { useAuth } from '../hooks/useAuth';
+
 const Header: React.FC = () => {
-    const { user, logout } = { user: null as any, logout: () => { } }; // Mock auth for now
+    const { user, logout } = useAuth();
     const router = useRouter();
 
-    const handleLogout = () => {
-        logout();
-        router.push('/login');
+    const handleLogout = async () => {
+        try {
+            await logout();
+            router.push('/login');
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
     };
 
     return (
@@ -34,10 +40,14 @@ const Header: React.FC = () => {
                 {user ? (
                     <div className="flex items-center gap-3 px-3 py-1.5 bg-gemini-dark-300 border border-gemini-dark-500 rounded-full cursor-pointer transition-all ml-3 hover:border-gemini-green hover:bg-[#252525]">
                         <div className="relative">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gemini-green to-gemini-green-400 flex items-center justify-center font-semibold text-sm text-black">{user.firstName.charAt(0)}{user.lastName.charAt(0)}</div>
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gemini-green to-gemini-green-400 flex items-center justify-center font-semibold text-sm text-black uppercase">
+                                {user.displayName ? user.displayName.charAt(0) : (user.email ? user.email.charAt(0) : 'U')}
+                            </div>
                             <div className="w-2 h-2 bg-gemini-green rounded-full border-2 border-gemini-dark-300 absolute bottom-0 right-0"></div>
                         </div>
-                        <span className="text-sm font-medium text-white">{user.firstName} {user.lastName}</span>
+                        <span className="text-sm font-medium text-white truncate max-w-[120px]">
+                            {user.displayName || user.email?.split('@')[0] || 'User'}
+                        </span>
                         <button onClick={handleLogout} className="text-gemini-gray no-underline px-4 py-2 rounded-md text-sm font-medium transition-all cursor-pointer hover:text-gemini-green hover:bg-gemini-green/10">Logout</button>
                     </div>
                 ) : (

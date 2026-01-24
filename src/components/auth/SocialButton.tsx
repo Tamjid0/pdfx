@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAuth } from '../../hooks/useAuth';
 
 interface SocialButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     provider: 'google' | 'github';
@@ -6,11 +7,23 @@ interface SocialButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement
 
 const SocialButton: React.FC<SocialButtonProps> = ({ provider, ...props }) => {
     const isGoogle = provider === 'google';
+    const { loginWithGoogle, loginWithGithub, loading } = useAuth();
+
+    const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
+        if (props.onClick) props.onClick(e);
+        if (isGoogle) {
+            await loginWithGoogle();
+        } else {
+            await loginWithGithub();
+        }
+    };
 
     return (
         <button
             {...props}
-            className="w-full py-3 px-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-medium rounded-xl transition-all duration-200 flex items-center justify-center gap-3 shadow-sm active:scale-[0.98] font-sans"
+            onClick={handleClick}
+            disabled={props.disabled || loading}
+            className="w-full py-3 px-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-medium rounded-xl transition-all duration-200 flex items-center justify-center gap-3 shadow-sm active:scale-[0.98] font-sans disabled:opacity-50 disabled:cursor-not-allowed"
         >
             {isGoogle ? (
                 <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">

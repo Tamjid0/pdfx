@@ -257,10 +257,14 @@ export const useStore = create<AppState>((set) => ({
             if (!response.ok) throw new Error('Failed to load project');
             const data = await response.json();
 
+            const typeStr = (data.type || '').toLowerCase();
+            const isPptx = typeStr.includes('presentation') || typeStr.includes('powerpoint') || typeStr.includes('pptx');
+            const isPdf = typeStr.includes('pdf');
+
             // Populate workspace state from stored project data
             set({
                 fileId: data.documentId,
-                fileType: data.type === 'application/pdf' ? 'pdf' : (data.type.includes('presentation') ? 'pptx' : 'text'),
+                fileType: isPdf ? 'pdf' : (isPptx ? 'pptx' : 'text'),
                 htmlPreview: data.extractedText || '',
                 summaryData: data.summaryData,
                 notesData: data.notesData,
@@ -278,20 +282,21 @@ export const useStore = create<AppState>((set) => ({
                 isMindmapGenerated: !!data.mindmapData,
                 isInsightsGenerated: !!data.insightsData,
 
-                // View settings
+                // View settings - Critical for rendering the file immediately
                 view: 'editor',
                 mode: 'editor',
-                leftPanelView: data.type.includes('presentation') ? 'slides' : 'editor',
-                isSlideMode: data.type.includes('presentation')
+                leftPanelView: isPptx ? 'slides' : 'editor',
+                isSlideMode: isPptx,
+                isProcessingSlides: false
             });
 
             // Special case for slides
-            if (data.type.includes('presentation') && data.chunks) {
+            if (isPptx && data.chunks) {
                 const slides = data.chunks.map((chunk: any) => ({
                     title: chunk.metadata?.slideTitle || `Slide ${chunk.metadata?.pageIndex}`,
                     content: chunk.content
                 }));
-                set({ slides });
+                set({ slides, currentSlideIndex: 0 });
             }
 
         } catch (error) {

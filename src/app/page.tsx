@@ -52,7 +52,7 @@ const Home = () => {
         stats, setStats,
         openExportModal,
         summaryData, insightsData, notesData, quizData, flashcardsData,
-        isSlideMode, setIsSlideMode, setSlides,
+        isSlideMode, setIsSlideMode, setSlides, fileType
     } = useStore();
 
     const backToImport = () => {
@@ -256,8 +256,8 @@ const Home = () => {
                     handleExport={handleExport}
                     handleSendMessage={handleSendMessage}
                     getHasGenerated={getHasGenerated}
-                    fileType={useStore.getState().fileType}
-                    fileId={useStore.getState().fileId}
+                    fileType={fileType}
+                    fileId={fileId}
                 />
                 <ExportModal />
             </div>

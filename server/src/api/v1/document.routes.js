@@ -99,15 +99,24 @@ router.get('/:documentId/pdf', validate(getDocumentSchema), async (req, res) => 
         const doc = await Document.findOne({ documentId });
         if (!doc) return res.status(404).json({ error: 'Document not found' });
 
-        const pdfPath = doc.originalFile?.path;
+        // Prioritize converted PDF (for PPTX) or fallback to original (for natively uploaded PDFs)
+        let pdfPath;
+        if (doc.convertedPdfPath) {
+            pdfPath = path.isAbsolute(doc.convertedPdfPath) ? doc.convertedPdfPath : path.join(process.cwd(), doc.convertedPdfPath);
+        } else {
+            pdfPath = doc.originalFile?.path;
+        }
 
         if (!pdfPath || !fs.existsSync(pdfPath)) {
+            console.error(`[DocumentRoutes] PDF not found at: ${pdfPath}`);
             return res.status(404).json({ error: 'PDF file missing on disk' });
         }
 
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Content-Type', 'application/pdf');
         res.sendFile(pdfPath);
     } catch (error) {
+        console.error('[DocumentRoutes] Error serving PDF:', error);
         res.status(500).json({ error: 'Failed to serve PDF' });
     }
 });

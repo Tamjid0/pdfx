@@ -2,11 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../hooks/useAuth';
-import { useStore } from '../store/useStore';
-import * as apiService from '../services/apiService';
-import Header from '../components/Header';
-import LoadingOverlay from '../components/LoadingOverlay';
+import { useAuth } from '../../hooks/useAuth';
+import { useStore } from '../../store/useStore';
+import * as apiService from '../../services/apiService';
+import Header from '../../components/Header';
+import LoadingOverlay from '../../components/LoadingOverlay';
 
 const ProjectsPage = () => {
     const { user, loading: authLoading } = useAuth();

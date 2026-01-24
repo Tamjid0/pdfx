@@ -25,9 +25,21 @@ if (!fs.existsSync(indexesDir)) {
     fs.mkdirSync(indexesDir, { recursive: true });
 }
 
+import { DocumentProcessor } from '../services/DocumentProcessor.js';
+import { addDocumentJob, isRedisConnected } from '../services/queueService.js';
+import User from '../models/User.js';
+
+const documentProcessor = new DocumentProcessor();
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, uploadsDir);
+        const userId = req.body.userId || 'guest';
+        const userDir = path.join(uploadsDir, userId);
+
+        if (!fs.existsSync(userDir)) {
+            fs.mkdirSync(userDir, { recursive: true });
+        }
+        cb(null, userDir);
     },
     filename: (req, file, cb) => {
         const fileId = crypto.randomBytes(16).toString('hex');
@@ -37,11 +49,6 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
-
-import { DocumentProcessor } from '../services/DocumentProcessor.js';
-import { addDocumentJob, isRedisConnected } from '../services/queueService.js';
-
-const documentProcessor = new DocumentProcessor();
 
 /**
  * Shared embedding logic for background worker
@@ -59,12 +66,26 @@ export const uploadFile = async (req, res, next) => {
     }
 
     const { filename, path: filePath, originalname, mimetype } = req.file;
+    const userId = req.body.userId || 'guest';
     const documentId = crypto.randomUUID();
 
     try {
         // --- PHASE 1: Fast JSON Extraction (Synchronous) ---
         // This extracts the DocumentGraph (Nodes) immediately so Chat and UI work instantly.
-        const extractionResult = await documentProcessor.extract(filePath, mimetype, originalname, documentId);
+        const extractionResult = await documentProcessor.extract(filePath, mimetype, originalname, documentId, userId);
+
+        // --- MONGODB USER STATS UPDATE (Fire and Forget) ---
+        if (userId !== 'guest') {
+            User.findOneAndUpdate(
+                { firebaseUid: userId },
+                {
+                    $inc: {
+                        'usage.totalFiles': 1,
+                        'usage.totalWords': extractionResult.extractedText ? extractionResult.extractedText.split(/\s+/).length : 0
+                    }
+                }
+            ).catch(err => logger.error(`[StatsUpdate] Failed for user ${userId}: ${err.message}`));
+        }
 
         // --- PHASE 2: Immediate Embedding (Synchronous) ---
         // We use the chunks generated from the JSON graph for the vector store.

@@ -7,11 +7,11 @@ import { ImageExtractor } from './ImageExtractor.js';
 import LibreOfficeService from './LibreOfficeService.js';
 import crypto from 'crypto';
 
-const STORAGE_DIR = path.resolve(process.cwd(), 'src/database/documents');
+const BASE_STORAGE_DIR = path.resolve(process.cwd(), 'uploads');
 
-// Ensure storage exists
-if (!fs.existsSync(STORAGE_DIR)) {
-    fs.mkdirSync(STORAGE_DIR, { recursive: true });
+// Ensure base storage exists
+if (!fs.existsSync(BASE_STORAGE_DIR)) {
+    fs.mkdirSync(BASE_STORAGE_DIR, { recursive: true });
 }
 
 import PdfImageRenderer from './PdfImageRenderer.js';
@@ -24,13 +24,30 @@ export class DocumentProcessor {
     }
 
     /**
+     * Gets the user-specific storage directory
+     */
+    getUserDir(userId) {
+        const userDir = path.join(BASE_STORAGE_DIR, userId);
+        if (!fs.existsSync(userDir)) {
+            fs.mkdirSync(userDir, { recursive: true });
+        }
+        return userDir;
+    }
+
+    /**
      * Phase 1: FAST extraction. Returns the DocumentGraph (JSON Nodes) and saves it.
      */
-    async extract(filePath, mime, originalName, forcedDocumentId = null) {
+    async extract(filePath, mime, originalName, forcedDocumentId = null, userId = 'guest') {
         let documentGraph;
         const documentId = forcedDocumentId || crypto.randomUUID();
+        const userDir = this.getUserDir(userId);
+        const docDir = path.join(userDir, documentId);
 
-        console.log(`[DocumentProcessor] Fast JSON Extraction: ${originalName} (${mime})`);
+        if (!fs.existsSync(docDir)) {
+            fs.mkdirSync(docDir, { recursive: true });
+        }
+
+        console.log(`[DocumentProcessor] Fast JSON Extraction: ${originalName} (User: ${userId})`);
 
         if (mime === 'application/pdf') {
             documentGraph = await this.pdfExtractor.extract(filePath, originalName);
@@ -46,27 +63,38 @@ export class DocumentProcessor {
         }
 
         documentGraph.documentId = documentId;
-        documentGraph.originalFilePath = filePath; // Save absolute path for native PDF serving
+        documentGraph.userId = userId;
 
         // Extract internal images (embedded in chunks)
-        await ImageExtractor.extractAndSave(documentId, documentGraph);
+        // Note: ImageExtractor will need to be updated to handle the new directory structure
+        await ImageExtractor.extractAndSave(documentId, documentGraph, docDir);
+
         const chunks = StructuredChunker.chunkByStructure(documentGraph);
         const flatText = StructuredChunker.deriveTextFromGraph(documentGraph);
 
-        // Save to MongoDB
+        // Calculate file size
+        const stats = fs.statSync(filePath);
+
+        // Save to MongoDB (Production Grade Schema)
         const documentData = {
             documentId,
+            userId,
             type: documentGraph.type || mime,
+            storage: {
+                type: 'local',
+                key: path.relative(process.cwd(), docDir),
+                url: `/api/v1/documents/${documentId}/view` // Dynamic retrieval endpoint
+            },
             originalFile: {
                 name: originalName,
                 mime: mime,
+                size: stats.size,
                 path: filePath
             },
             metadata: documentGraph.metadata,
             structure: documentGraph,
             chunks,
-            extractedText: flatText,
-            originalFilePath: filePath
+            extractedText: flatText
         };
 
         try {
@@ -75,14 +103,13 @@ export class DocumentProcessor {
                 documentData,
                 { upsert: true, new: true }
             );
-            console.log(`[DocumentProcessor] Document ${documentId} saved to MongoDB.`);
+            console.log(`[DocumentProcessor] Document ${documentId} synced to MongoDB for User ${userId}.`);
         } catch (mongoError) {
             console.error(`[DocumentProcessor] Failed to save to MongoDB: ${mongoError.message}`);
-            // Fallback to local JSON if MongoDB fails during transition (optional, but safer)
         }
 
-        // Save JSON to disk (Temporary backup during migration)
-        const jsonPath = path.join(STORAGE_DIR, `${documentId}.json`);
+        // Save JSON to disk (Temporary metadata backup)
+        const jsonPath = path.join(docDir, `metadata.json`);
         fs.writeFileSync(jsonPath, JSON.stringify({ ...documentGraph, chunks, extractedText: flatText }, null, 2));
 
         return { documentId, documentGraph, chunks, extractedText: flatText };
@@ -93,32 +120,37 @@ export class DocumentProcessor {
      * 1. PPTX -> PDF (if needed)
      * 2. PDF -> Scanned Images (WebP/PNG)
      */
-    async convert(documentId, filePath, onProgress = null) {
-        const jsonPath = path.join(STORAGE_DIR, `${documentId}.json`);
-        if (!fs.existsSync(jsonPath)) throw new Error('Document JSON not found for conversion');
+    async convert(documentId, filePath, userId = 'guest', onProgress = null) {
+        const docDir = path.join(this.getUserDir(userId), documentId);
+        const jsonPath = path.join(docDir, 'metadata.json');
+
+        if (!fs.existsSync(jsonPath)) throw new Error('Document metadata not found for conversion');
 
         const data = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
-        const outputDir = path.join(STORAGE_DIR, documentId);
         let pdfPath = filePath;
 
         try {
             // A. PPTX to PDF Conversion
             if (data.type && data.type.includes('presentation')) {
                 if (onProgress) await onProgress(10);
-                pdfPath = await LibreOfficeService.convertToPdf(filePath, outputDir);
-                data.convertedPdfPath = path.relative(STORAGE_DIR, pdfPath);
+                pdfPath = await LibreOfficeService.convertToPdf(filePath, docDir);
+                data.convertedPdfPath = path.relative(process.cwd(), pdfPath);
+
+                // Update local metadata
                 fs.writeFileSync(jsonPath, JSON.stringify(data, null, 2));
+
+                // Update MongoDB
+                await Document.findOneAndUpdate({ documentId }, { convertedPdfPath: data.convertedPdfPath });
             }
 
             // B. PDF to Static Images (for Flicker-Free Source)
             if (onProgress) await onProgress(40);
-            console.log(`[DocumentProcessor] Generating static images for: ${documentId}`);
+            console.log(`[DocumentProcessor] Generating static images for: ${documentId} (User: ${userId})`);
 
             const totalPages = await PdfImageRenderer.renderToImages(
                 pdfPath,
-                outputDir,
+                docDir,
                 (p) => {
-                    // Map 0-100 of rendering to 40-100 of total job
                     if (onProgress) onProgress(40 + (p * 0.6));
                 }
             );
@@ -136,15 +168,15 @@ export class DocumentProcessor {
     /**
      * Legacy/Unified method
      */
-    async process(filePath, mime, originalName, forcedDocumentId = null, onProgress = null) {
-        const result = await this.extract(filePath, mime, originalName, forcedDocumentId);
+    async process(filePath, mime, originalName, forcedDocumentId = null, userId = 'guest', onProgress = null) {
+        const result = await this.extract(filePath, mime, originalName, forcedDocumentId, userId);
         // Always run convert for PDF and PPTX now to generate images
-        await this.convert(result.documentId, filePath, onProgress);
+        await this.convert(result.documentId, filePath, userId, onProgress);
         return result;
     }
 
-    async processFile(file) {
-        return this.process(file.path, file.mimetype, file.originalname);
+    async processFile(file, userId = 'guest') {
+        return this.process(file.path, file.mimetype, file.originalname, null, userId);
     }
 
     derivePlainText(docGraph) {

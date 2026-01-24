@@ -10,11 +10,12 @@ export class ImageExtractor {
     /**
      * Extracts images from a DocumentGraph and saves them to disk
      * @param {string} documentId - The document ID
-     * @param {DocumentRoot} docGraph - The document graph containing images
+     * @param {Object} docGraph - The document graph containing images
+     * @param {string} docDir - The specific directory for this document
      * @returns {Promise<{extractedCount: number, imagePaths: string[]}>}
      */
-    static async extractAndSave(documentId, docGraph) {
-        const imageDir = path.join(process.cwd(), 'src', 'database', 'documents', documentId, 'images');
+    static async extractAndSave(documentId, docGraph, docDir) {
+        const imageDir = path.join(docDir, 'images');
 
         // Ensure image directory exists
         if (!fs.existsSync(imageDir)) {
@@ -46,7 +47,7 @@ export class ImageExtractor {
                             documentId
                         );
 
-                        // Update the node to reference the file path
+                        // Update the node to reference the file path (via API for local)
                         imageNode.content.url = result.relativePath;
                         imagePaths.push(result.absolutePath);
                         extractedCount++;
@@ -57,11 +58,11 @@ export class ImageExtractor {
             }
         }
 
-        // Save the updated DocumentGraph back to disk
+        // Save the updated DocumentGraph back to disk (metadata)
         if (extractedCount > 0) {
-            const docPath = path.join(process.cwd(), 'src', 'database', 'documents', `${documentId}.json`);
+            const docPath = path.join(docDir, `metadata.json`);
             fs.writeFileSync(docPath, JSON.stringify(docGraph, null, 2));
-            console.log(`[ImageExtractor] Updated ${documentId}.json with ${extractedCount} file paths`);
+            console.log(`[ImageExtractor] Updated metadata.json in ${docDir} with ${extractedCount} file paths`);
         }
 
         return { extractedCount, imagePaths };

@@ -45,8 +45,11 @@ export async function fetchTemplates() {
     return response.json();
 }
 
-export async function uploadFile(file: File) {
+export async function uploadFile(file: File, userId?: string) {
     const formData = new FormData();
+    if (userId) {
+        formData.append('userId', userId);
+    }
     formData.append('file', file);
 
     const response = await fetch('/api/v1/upload/upload-document', {

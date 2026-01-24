@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useStore } from '../store/useStore';
+import { useAuth } from '../hooks/useAuth';
 import * as apiService from '../services/apiService';
 
 export const useFileUpload = () => {
+    const { user } = useAuth();
     const {
         setIsLoading,
         setHtmlPreview,
@@ -62,7 +64,7 @@ export const useFileUpload = () => {
             const isSlideFile = file.name.endsWith('.pptx') || file.name.endsWith('.ppt') || file.name.endsWith('.key');
             const isPdfFile = file.name.endsWith('.pdf');
 
-            const response = await apiService.uploadFile(file);
+            const response = await apiService.uploadFile(file, user?.uid || 'guest');
             const { jobId, documentId } = response;
 
             setHtmlPreview(response.extractedText || "");

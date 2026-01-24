@@ -8,85 +8,113 @@ import Document from '../../models/Document.js';
 
 const router = express.Router();
 
-const DOCUMENTS_DIR = path.resolve(process.cwd(), 'src/database/documents');
+const BASE_UPLOADS_DIR = path.resolve(process.cwd(), 'uploads');
 
 /**
- * GET /api/documents/:documentId/images/:filename
- * Serves extracted images from disk
+ * GET /api/v1/documents
+ * List documents for a user
  */
-router.get('/:documentId/images/:filename', validate(getDocumentImageSchema), (req, res) => {
-    const { documentId, filename } = req.params;
+router.get('/', async (req, res) => {
+    const { userId } = req.query;
 
-    const imagePath = path.join(DOCUMENTS_DIR, documentId, 'images', filename);
-
-    if (!fs.existsSync(imagePath)) {
-        return res.status(404).json({ error: 'Image not found' });
+    if (!userId) {
+        return res.status(400).json({ error: 'userId is required to list documents' });
     }
 
-    // Serve the image file
-    res.sendFile(imagePath);
+    try {
+        const documents = await Document.find({ userId, isArchived: false })
+            .select('documentId type originalFile metadata createdAt')
+            .sort({ createdAt: -1 });
+
+        res.json({
+            success: true,
+            data: documents
+        });
+    } catch (error) {
+        console.error('[DocumentRoutes] Error listing documents:', error);
+        res.status(500).json({ error: 'Failed to list documents' });
+    }
+});
+
+/**
+ * GET /api/v1/documents/:documentId/images/:filename
+ * Serves extracted images from disk via document lookup
+ */
+router.get('/:documentId/images/:filename', validate(getDocumentImageSchema), async (req, res) => {
+    const { documentId, filename } = req.params;
+
+    try {
+        const doc = await Document.findOne({ documentId });
+        if (!doc || !doc.storage?.key) {
+            return res.status(404).json({ error: 'Document or storage path not found' });
+        }
+
+        const imagePath = path.join(process.cwd(), doc.storage.key, 'images', filename);
+
+        if (!fs.existsSync(imagePath)) {
+            return res.status(404).json({ error: 'Image not found' });
+        }
+
+        res.sendFile(imagePath);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to serve image' });
+    }
 });
 
 /**
  * GET /api/v1/documents/:documentId/pages/:pageIndex
  * Serves the pre-rendered static PNG of a specific page
  */
-router.get('/:documentId/pages/:pageIndex', validate(getDocumentPageSchema), (req, res) => {
+router.get('/:documentId/pages/:pageIndex', validate(getDocumentPageSchema), async (req, res) => {
     const { documentId, pageIndex } = req.params;
 
-    // Pages are stored as 1.png, 2.png etc. 
-    // The validation schema transforms pageIndex to Number.
-    const imagePath = path.join(DOCUMENTS_DIR, documentId, 'pages', `${pageIndex}.png`);
+    try {
+        const doc = await Document.findOne({ documentId });
+        if (!doc || !doc.storage?.key) {
+            return res.status(404).json({ error: 'Document or storage path not found' });
+        }
 
-    if (!fs.existsSync(imagePath)) {
-        return res.status(404).json({ error: 'Page image not found' });
+        const imagePath = path.join(process.cwd(), doc.storage.key, 'pages', `${pageIndex}.png`);
+
+        if (!fs.existsSync(imagePath)) {
+            return res.status(404).json({ error: 'Page image not found' });
+        }
+
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Cache-Control', 'public, max-age=31536000');
+        res.sendFile(imagePath);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to serve page image' });
     }
-
-    res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache aggressively (1 year)
-    res.sendFile(imagePath);
 });
 
 /**
  * GET /api/v1/documents/:documentId/pdf
- * Serves the converted PDF of a presentation
+ * Serves the converted PDF or original source
  */
 router.get('/:documentId/pdf', validate(getDocumentSchema), async (req, res) => {
     const { documentId } = req.params;
 
     try {
         const doc = await Document.findOne({ documentId });
+        if (!doc) return res.status(404).json({ error: 'Document not found' });
 
-        if (!doc) {
-            return res.status(404).json({ error: 'Document not found' });
-        }
+        const pdfPath = doc.originalFile?.path;
 
-        if (!doc.convertedPdfPath && !doc.originalFilePath) {
-            return res.status(404).json({ error: 'PDF source not found for this document' });
-        }
-
-        let pdfPath;
-        if (doc.convertedPdfPath) {
-            pdfPath = path.join(DOCUMENTS_DIR, doc.convertedPdfPath);
-        } else {
-            pdfPath = doc.originalFilePath;
-        }
-
-        if (!fs.existsSync(pdfPath)) {
+        if (!pdfPath || !fs.existsSync(pdfPath)) {
             return res.status(404).json({ error: 'PDF file missing on disk' });
         }
 
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         res.sendFile(pdfPath);
     } catch (error) {
-        console.error('[DocumentRoutes] Error serving PDF:', error);
         res.status(500).json({ error: 'Failed to serve PDF' });
     }
 });
 
 /**
- * GET /api/documents/:documentId
- * Retrieves the full DocumentGraph JSON from MongoDB
+ * GET /api/v1/documents/:documentId
+ * Retrieves the full Document JSON from MongoDB
  */
 router.get('/:documentId', validate(getDocumentSchema), async (req, res) => {
     const { documentId } = req.params;
@@ -98,18 +126,16 @@ router.get('/:documentId', validate(getDocumentSchema), async (req, res) => {
             return res.status(404).json({ error: 'Document not found' });
         }
 
-        // Return the structure (or the whole doc depending on preference)
-        // Here we return what the client expects: the full data object
         res.json(doc);
     } catch (error) {
-        console.error('[DocumentRoutes] Error reading document from MongoDB:', error);
+        console.error('[DocumentRoutes] Error reading document:', error);
         res.status(500).json({ error: 'Failed to read document' });
     }
 });
 
 /**
- * GET /api/documents/:documentId/page/:pageIndex
- * Retrieves a specific page/slide from the document
+ * GET /api/v1/documents/:documentId/page/:pageIndex
+ * Retrieves a specific page metadata from the document structure
  */
 router.get('/:documentId/page/:pageIndex', validate(getDocumentPageSchema), async (req, res) => {
     const { documentId, pageIndex } = req.params;
@@ -117,8 +143,8 @@ router.get('/:documentId/page/:pageIndex', validate(getDocumentPageSchema), asyn
     try {
         const doc = await Document.findOne({ documentId });
 
-        if (!doc) {
-            return res.status(404).json({ error: 'Document not found' });
+        if (!doc || !doc.structure?.pages) {
+            return res.status(404).json({ error: 'Document or structure not found' });
         }
 
         const page = doc.structure.pages.find(p => p.index === pageIndex);
@@ -136,7 +162,6 @@ router.get('/:documentId/page/:pageIndex', validate(getDocumentPageSchema), asyn
             }
         });
     } catch (error) {
-        console.error('[DocumentRoutes] Error reading page from MongoDB:', error);
         res.status(500).json({ error: 'Failed to read page' });
     }
 });

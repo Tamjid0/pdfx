@@ -20,7 +20,8 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ mode, children
         insightsData,
         notesData,
         quizData,
-        flashcardsData
+        flashcardsData,
+        openExportModal
     } = useStore();
 
     // Keyboard shortcuts
@@ -100,7 +101,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ mode, children
                             onClick={() => {
                                 const currentData = getModeData();
                                 if (currentData) {
-                                    const { openExportModal } = useStore.getState();
                                     openExportModal(mode as any, currentData);
                                 }
                             }}

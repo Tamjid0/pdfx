@@ -6,16 +6,18 @@ interface ExportModalProps { }
 
 export const ExportModal: React.FC<ExportModalProps> = () => {
     const {
-        isExportModalOpen,
-        setExportModalOpen,
-        exportContext
+        showExportModal,
+        closeExportModal,
+        exportMode,
+        exportContent
     } = useStore();
 
     const [isExporting, setIsExporting] = useState(false);
 
-    if (!isExportModalOpen || !exportContext) return null;
+    if (!showExportModal || !exportContent) return null;
 
-    const { mode, data } = exportContext;
+    const mode = exportMode;
+    const data = exportContent;
 
     const renderDataToHtml = (mode: string, data: any): string => {
         if (mode === 'editor') return data || '';
@@ -129,7 +131,7 @@ export const ExportModal: React.FC<ExportModalProps> = () => {
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
-            setExportModalOpen(false);
+            closeExportModal();
         } catch (error) {
             console.error('Export error:', error);
             alert('Failed to export document. Please try again.');
@@ -164,7 +166,7 @@ export const ExportModal: React.FC<ExportModalProps> = () => {
             { id: 'docx', label: 'Word Document', icon: '📝', desc: 'Editable Microsoft Word file', format: 'docx' },
         ];
 
-        if (mode === 'quiz' || (mode === 'preview' && exportContext.data?.quiz)) {
+        if (mode === 'quiz' || (mode === 'preview' && data?.quiz)) {
             options.push({ id: 'csv', label: 'CSV Spreadsheet', icon: '📊', desc: 'Results in a spreadsheet format', format: 'csv' });
         }
 
@@ -175,7 +177,7 @@ export const ExportModal: React.FC<ExportModalProps> = () => {
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
             <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
-                onClick={() => !isExporting && setExportModalOpen(false)}
+                onClick={() => !isExporting && closeExportModal()}
             />
 
             <div className="relative w-full max-w-md bg-gemini-dark-200 border border-gemini-dark-500 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
@@ -185,7 +187,7 @@ export const ExportModal: React.FC<ExportModalProps> = () => {
                         <p className="text-xs text-gemini-gray mt-1">Select your preferred format for {mode}</p>
                     </div>
                     <button
-                        onClick={() => setExportModalOpen(false)}
+                        onClick={() => closeExportModal()}
                         className="p-2 hover:bg-[#333] rounded-full text-gray-400 hover:text-white transition-colors"
                         disabled={isExporting}
                     >

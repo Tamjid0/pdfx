@@ -275,7 +275,9 @@ export const useStore = create<AppState>((set) => ({
             stats: { wordCount: 0, charCount: 0, lineCount: 0, readTime: 0 },
             slides: [],
             currentSlideIndex: 0,
-            isSlideMode: false
+            isSlideMode: false,
+            view: 'editor',
+            mode: 'editor'
         });
     },
 

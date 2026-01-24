@@ -79,7 +79,7 @@ export function transformSummary(summaryData) {
  * Transform Insights data for preview
  */
 export function transformInsights(insightsData) {
-    console.log('[Preview] Insights data:', insightsData);
+    // console.log('[Preview] Insights data:', insightsData);
 
     const insightsArray = Array.isArray(insightsData) ? insightsData : (insightsData.insights || insightsData.data);
 
@@ -108,10 +108,10 @@ export function transformInsights(insightsData) {
  * Transform Notes data for preview
  */
 export function transformNotes(notesData) {
-    console.log('[Preview] Notes data:', notesData);
+    // console.log('[Preview] Notes data:', notesData);
 
     if (!notesData) {
-        console.log('[Preview] No notes data');
+        // console.log('[Preview] No notes data');
         return null;
     }
 
@@ -218,7 +218,7 @@ export function transformFlashcards(flashcardsData) {
  * Main transformer function - routes to appropriate transformer
  */
 export function transformModeContent(mode, data) {
-    console.log('[Preview] Transforming mode:', mode, 'with data:', data);
+    // console.log('[Preview] Transforming mode:', mode, 'with data:', JSON.stringify(data)?.slice(0, 100));
 
     let result = null;
 

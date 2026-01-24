@@ -112,7 +112,7 @@ const Home = () => {
     };
 
     const handleGenerate = async (targetMode: any) => {
-        if (!htmlPreview) return;
+        if (!htmlPreview && !fileId) return;
 
         const payload: any = { settings: {} };
         if (fileId) {

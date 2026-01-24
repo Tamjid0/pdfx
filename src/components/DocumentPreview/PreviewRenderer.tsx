@@ -23,6 +23,7 @@ export const PreviewRenderer: React.FC<PreviewRendererProps> = ({ mode, data }) 
 
     // Transform mode data to preview format (memoized)
     const previewData = useMemo<PreviewData | null>(() => {
+        if (!data) return null;
         return transformModeContent(mode, data);
     }, [mode, data]);
 

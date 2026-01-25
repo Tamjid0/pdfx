@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #212121;
+            color: #e5e5e5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #1a1a1a;
+            border-bottom: 1px solid #2f2f2f;
+            padding: 16px 24px;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .messages {
+            max-width: 768px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .welcome-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+        }
+
+        .welcome-text {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .welcome-text h2 {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .welcome-text p {
+            color: #9ca3af;
+            font-size: 16px;
+        }
+
+        .suggestion-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            width: 100%;
+            max-width: 768px;
+        }
+
+        .suggestion-card {
+            background-color: #2f2f2f;
+            border: 1px solid #3f3f3f;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .suggestion-card:hover {
+            background-color: #333333;
+            border-color: #4f4f4f;
+            transform: translateY(-2px);
+        }
+
+        .suggestion-card h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #e5e5e5;
+        }
+
+        .suggestion-card p {
+            font-size: 13px;
+            color: #9ca3af;
+            line-height: 1.5;
+        }
+
+        .message {
+            margin-bottom: 32px;
+            opacity: 0;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            line-height: 1.6;
+            color: #d1d1d1;
+        }
+
+        .user .message-content {
+            background-color: #2f2f2f;
+            padding: 12px 20px;
+            border-radius: 18px;
+            max-width: 80%;
+            color: white;
+        }
+
+        .assistant-message {
+            max-width: 100%;
+        }
+
+        .message-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .action-btn {
+            background: transparent;
+            border: 1px solid #3f3f3f;
+            color: #9ca3af;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background-color: #2f2f2f;
+            border-color: #4f4f4f;
+            color: #e5e5e5;
+        }
+
+        .action-btn.active {
+            color: #10b981;
+            border-color: #10b981;
+        }
+
+        .action-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .typing-indicator {
+            margin-bottom: 32px;
+            opacity: 0;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            padding-top: 4px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background-color: #6b7280;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        .input-container {
+            background-color: #1a1a1a;
+            border-top: 1px solid #2f2f2f;
+            padding: 16px 24px;
+        }
+
+        .input-wrapper {
+            max-width: 768px;
+            margin: 0 auto;
+        }
+
+        .input-box {
+            background-color: #2f2f2f;
+            border: 1px solid #3f3f3f;
+            border-radius: 24px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: end;
+            gap: 12px;
+            transition: border-color 0.2s;
+        }
+
+        .input-box:focus-within {
+            border-color: #4f4f4f;
+        }
+
+        #messageInput {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #e5e5e5;
+            font-size: 15px;
+            font-family: inherit;
+            resize: none;
+            max-height: 200px;
+            min-height: 24px;
+            line-height: 24px;
+        }
+
+        #messageInput::placeholder {
+            color: #6b7280;
+        }
+
+        .send-button {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .send-button:hover:not(:disabled) {
+            background: linear-gradient(135deg, #34d399 0%, #2dd4bf 100%);
+        }
+
+        .send-button:disabled {
+            background: #3f3f3f;
+            cursor: not-allowed;
+        }
+
+        .send-button svg {
+            width: 16px;
+            height: 16px;
+            color: white;
+        }
+
+        .footer-text {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .copied-toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #2f2f2f;
+            color: #e5e5e5;
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: 1px solid #3f3f3f;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .copied-toast.show {
+            opacity: 1;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AI Assistant</h1>
+    </div>
+
+    <div class="main-content">
+        <div class="messages-container" id="messagesContainer">
+            <div class="messages" id="messages">
+                <div class="welcome-section" id="welcomeSection">
+                    <div class="welcome-text">
+                        <h2>Chat with your documents</h2>
+                        <p>Upload a document and ask questions about it</p>
+                    </div>
+                    <div class="suggestion-cards">
+                        <div class="suggestion-card" onclick="useSuggestion('Summarize this document')">
+                            <h3>Summarize document</h3>
+                            <p>Get a concise summary of the key points</p>
+                        </div>
+                        <div class="suggestion-card" onclick="useSuggestion('Extract key information from this document')">
+                            <h3>Extract key info</h3>
+                            <p>Pull out important data and facts</p>
+                        </div>
+                        <div class="suggestion-card" onclick="useSuggestion('What are the main topics discussed?')">
+                            <h3>Main topics</h3>
+                            <p>Identify the core themes and subjects</p>
+                        </div>
+                        <div class="suggestion-card" onclick="useSuggestion('Answer questions about this document')">
+                            <h3>Ask questions</h3>
+                            <p>Get specific answers from your document</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <div class="input-wrapper">
+                <div class="input-box">
+                    <textarea id="messageInput" placeholder="Ask about your document..." rows="1"></textarea>
+                    <button class="send-button" id="sendButton" disabled>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                        </svg>
+                    </button>
+                </div>
+                <p class="footer-text">AI can make mistakes. Consider checking important information.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="copied-toast" id="copiedToast">Copied to clipboard</div>
+
+    <script>
+        var messagesContainer = document.getElementById('messagesContainer');
+        var messagesDiv = document.getElementById('messages');
+        var messageInput = document.getElementById('messageInput');
+        var sendButton = document.getElementById('sendButton');
+        var copiedToast = document.getElementById('copiedToast');
+        var welcomeSection = document.getElementById('welcomeSection');
+        var lastAssistantMessage = null;
+        var hasStartedChat = false;
+
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+            sendButton.disabled = !this.value.trim();
+        });
+
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        sendButton.addEventListener('click', sendMessage);
+
+        function useSuggestion(text) {
+            messageInput.value = text;
+            messageInput.dispatchEvent(new Event('input'));
+            messageInput.focus();
+            sendMessage();
+        }
+
+        function sendMessage() {
+            var text = messageInput.value.trim();
+            if (!text) return;
+
+            if (!hasStartedChat) {
+                hasStartedChat = true;
+                welcomeSection.classList.add('hidden');
+            }
+
+            addMessage('user', text);
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            sendButton.disabled = true;
+
+            showTypingIndicator();
+
+            setTimeout(function() {
+                hideTypingIndicator();
+                addMessage('assistant', 'This is a simulated AI response. In a real implementation, this would analyze your document and provide relevant information based on your question.');
+            }, 1000);
+        }
+
+        function addMessage(role, content) {
+            var messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + role;
+
+            if (role === 'assistant') {
+                var messageId = 'msg-' + Date.now();
+                messageDiv.innerHTML = '<div class="assistant-message"><div class="message-content">' + escapeHtml(content) + '</div><div class="message-actions"><button class="action-btn copy-btn" onclick="copyMessage(\'' + messageId + '\')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>Copy</button><button class="action-btn regenerate-btn" onclick="regenerateMessage()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Regenerate</button><button class="action-btn like-btn" onclick="toggleLike(this)"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"></path></svg></button><button class="action-btn dislike-btn" onclick="toggleDislike(this)"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5"></path></svg></button></div></div>';
+                messageDiv.id = messageId;
+                lastAssistantMessage = content;
+            } else {
+                messageDiv.innerHTML = '<div class="message-content">' + escapeHtml(content) + '</div>';
+            }
+
+            messagesDiv.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function copyMessage(messageId) {
+            var messageElement = document.getElementById(messageId);
+            var content = messageElement.querySelector('.message-content').textContent;
+            
+            navigator.clipboard.writeText(content).then(function() {
+                showCopiedToast();
+            });
+        }
+
+        function showCopiedToast() {
+            copiedToast.classList.add('show');
+            setTimeout(function() {
+                copiedToast.classList.remove('show');
+            }, 2000);
+        }
+
+        function regenerateMessage() {
+            if (lastAssistantMessage) {
+                var lastMsg = messagesDiv.lastElementChild;
+                if (lastMsg && lastMsg.classList.contains('assistant')) {
+                    lastMsg.remove();
+                }
+                
+                showTypingIndicator();
+                
+                setTimeout(function() {
+                    hideTypingIndicator();
+                    addMessage('assistant', 'This is a regenerated response. In a real implementation, this would reanalyze your document with the same question to provide a fresh perspective.');
+                }, 1000);
+            }
+        }
+
+        function toggleLike(btn) {
+            var isActive = btn.classList.contains('active');
+            var dislikeBtn = btn.parentElement.querySelector('.dislike-btn');
+            
+            if (isActive) {
+                btn.classList.remove('active');
+            } else {
+                btn.classList.add('active');
+                dislikeBtn.classList.remove('active');
+            }
+        }
+
+        function toggleDislike(btn) {
+            var isActive = btn.classList.contains('active');
+            var likeBtn = btn.parentElement.querySelector('.like-btn');
+            
+            if (isActive) {
+                btn.classList.remove('active');
+            } else {
+                btn.classList.add('active');
+                likeBtn.classList.remove('active');
+            }
+        }
+
+        function showTypingIndicator() {
+            var typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.innerHTML = '<div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+            messagesDiv.appendChild(typingDiv);
+            scrollToBottom();
+        }
+
+        function hideTypingIndicator() {
+            var typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

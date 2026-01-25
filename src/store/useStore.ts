@@ -129,6 +129,7 @@ interface AppState {
     setTemplates: (templates: any[]) => void;
     pdfSearchText: string | null;
     setPdfSearchText: (text: string | null) => void;
+    updateStats: (text: string) => void;
 
     // Workspace Management
     resetWorkspace: () => void;
@@ -137,7 +138,7 @@ interface AppState {
     loadProject: (documentId: string) => Promise<void>;
 }
 
-export const useStore = create<AppState>((set) => ({
+export const useStore = create<AppState>((set, get) => ({
     htmlPreview: null,
     isLoading: false,
     isPageLoading: false,
@@ -287,6 +288,14 @@ export const useStore = create<AppState>((set) => ({
     pdfSearchText: null,
     setPdfSearchText: (text) => set({ pdfSearchText: text }),
 
+    updateStats: (text) => {
+        const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+        const chars = text.length;
+        const lines = text.split("\n").length;
+        const readTime = Math.ceil(words / 200);
+        set({ stats: { wordCount: words, charCount: chars, lineCount: lines, readTime: readTime } });
+    },
+
     // Workspace Management
     resetWorkspace: () => {
         set({
@@ -367,6 +376,9 @@ export const useStore = create<AppState>((set) => ({
                 // Reset rendering progress
                 renderingProgress: 100
             });
+
+            // Recalculate stats for restored document
+            get().updateStats(data.extractedText || "");
 
             // Special case for slides - Load slide data from chunks
             if (isPptx && data.chunks && data.chunks.length > 0) {

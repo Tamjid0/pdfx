@@ -52,7 +52,7 @@ const Home = () => {
         stats, setStats,
         openExportModal,
         summaryData, insightsData, notesData, quizData, flashcardsData,
-        isSlideMode, setIsSlideMode, setSlides, fileType
+        isSlideMode, setIsSlideMode, setSlides, fileType, updateStats
     } = useStore();
 
     const backToImport = () => {
@@ -62,11 +62,7 @@ const Home = () => {
 
     const handleEditorChange = (html: string, text: string) => {
         setHtmlPreview(html);
-        const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
-        const chars = text.length;
-        const lines = text.split("\n").length;
-        const readTime = Math.ceil(words / 200);
-        setStats({ wordCount: words, charCount: chars, lineCount: lines, readTime: readTime });
+        updateStats(text);
     };
 
     const triggerBackgroundEmbedding = async (text: string, name?: string) => {
@@ -94,6 +90,7 @@ const Home = () => {
             setMode('editor');
 
             const textContent = new DOMParser().parseFromString(data.html, "text/html").body.textContent || "";
+            updateStats(textContent);
             triggerBackgroundEmbedding(textContent, url);
         } catch (error) {
             console.error("Error scraping URL:", error);
@@ -104,11 +101,13 @@ const Home = () => {
 
     const handlePasteContent = (content?: string) => {
         setView("editor");
-        setHtmlPreview(typeof content === 'string' ? content : "");
+        const safeContent = typeof content === 'string' ? content : "";
+        setHtmlPreview(safeContent);
         setMode('editor');
 
-        if (typeof content === 'string' && content.trim()) {
-            triggerBackgroundEmbedding(content, "Pasted Content");
+        if (safeContent.trim()) {
+            updateStats(safeContent);
+            triggerBackgroundEmbedding(safeContent, "Pasted Content");
         }
     };
 

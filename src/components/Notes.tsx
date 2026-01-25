@@ -1,5 +1,16 @@
-
+import React from 'react';
+import { useStore } from '../store/useStore';
+import type { Mode } from '../store/useStore';
 import LocalizedShimmer from './LocalizedShimmer';
+
+interface NoteSection {
+    section: string;
+    points: string[];
+}
+
+interface NotesProps {
+    onGenerate: (mode: Mode) => void;
+}
 
 const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
     const {

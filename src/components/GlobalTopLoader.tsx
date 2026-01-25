@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../store/useStore';
 
@@ -7,7 +9,7 @@ const GlobalTopLoader: React.FC = () => {
     const [visible, setVisible] = useState(false);
 
     useEffect(() => {
-        let interval: NodeJS.Timeout;
+        let interval: any;
 
         if (isPageLoading) {
             setVisible(true);

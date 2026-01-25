@@ -24,12 +24,24 @@ const LeftSidebar: React.FC = () => {
         setIsLoading,
         templates, // From store
         setTemplates, // From store
+        fileType,
     } = useStore();
 
     const { user } = useAuth();
     const isGuest = !user;
 
     const [activeTab, setActiveTab] = useState<"stats" | "format">("stats");
+
+    // Formatting is allowed only for text/pasted content
+    const isFormattingAllowed = fileType === null || fileType === 'text';
+
+    // Ensure activeTab is reset if formatting becomes disallowed
+    useEffect(() => {
+        if (!isFormattingAllowed && activeTab === 'format') {
+            setActiveTab('stats');
+        }
+    }, [isFormattingAllowed, activeTab]);
+
     // const [templates, setTemplates] = useState<Template[]>([]); // Removed local state
     // Initialize filtered templates with store templates immediately if available
     const [filteredTemplates, setFilteredTemplates] = useState<Template[]>(templates || []);
@@ -100,32 +112,34 @@ const LeftSidebar: React.FC = () => {
 
     return (
         <aside className="sidebar-left w-[320px] bg-gemini-dark-200 border-r border-gemini-dark-400 flex flex-col h-full overflow-hidden">
-            <div className="left-sidebar-tabs flex-shrink-0 flex bg-gemini-dark-300 border-b border-gemini-dark-500">
-                <button
-                    className={`left-tab-btn flex-1 p-4 bg-none border-none text-sm font-semibold cursor-pointer transition-all flex items-center justify-center gap-1.5 ${activeTab === "stats"
-                        ? "text-gemini-green border-b-2 border-gemini-green bg-gemini-green/10"
-                        : "text-gemini-gray border-b-2 border-transparent hover:text-white hover:bg-gemini-green/5"
-                        }`}
-                    onClick={() => setActiveTab("stats")}
-                >
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" />
-                    </svg>
-                    Stats
-                </button>
-                <button
-                    className={`left-tab-btn flex-1 p-4 bg-none border-none text-sm font-semibold cursor-pointer transition-all flex items-center justify-center gap-1.5 ${activeTab === "format"
-                        ? "text-gemini-green border-b-2 border-gemini-green bg-gemini-green/10"
-                        : "text-gemini-gray border-b-2 border-transparent hover:text-white hover:bg-gemini-green/5"
-                        }`}
-                    onClick={() => setActiveTab("format")}
-                >
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-                        <path d="M4 15h16v-2H4v2zm0 4h16v-2H4v2zm0-8h16V9H4v2zm0-6v2h16V5H4z" />
-                    </svg>
-                    Format
-                </button>
-            </div>
+            {isFormattingAllowed && (
+                <div className="left-sidebar-tabs flex-shrink-0 flex bg-gemini-dark-300 border-b border-gemini-dark-500">
+                    <button
+                        className={`left-tab-btn flex-1 p-4 bg-none border-none text-sm font-semibold cursor-pointer transition-all flex items-center justify-center gap-1.5 ${activeTab === "stats"
+                            ? "text-gemini-green border-b-2 border-gemini-green bg-gemini-green/10"
+                            : "text-gemini-gray border-b-2 border-transparent hover:text-white hover:bg-gemini-green/5"
+                            }`}
+                        onClick={() => setActiveTab("stats")}
+                    >
+                        <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" />
+                        </svg>
+                        Stats
+                    </button>
+                    <button
+                        className={`left-tab-btn flex-1 p-4 bg-none border-none text-sm font-semibold cursor-pointer transition-all flex items-center justify-center gap-1.5 ${activeTab === "format"
+                            ? "text-gemini-green border-b-2 border-gemini-green bg-gemini-green/10"
+                            : "text-gemini-gray border-b-2 border-transparent hover:text-white hover:bg-gemini-green/5"
+                            }`}
+                        onClick={() => setActiveTab("format")}
+                    >
+                        <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+                            <path d="M4 15h16v-2H4v2zm0 4h16v-2H4v2zm0-8h16V9H4v2zm0-6v2h16V5H4z" />
+                        </svg>
+                        Format
+                    </button>
+                </div>
+            )}
 
             <div className="left-tab-content flex-grow overflow-y-auto p-5">
                 {activeTab === "stats" && (

@@ -8,12 +8,14 @@ import ApiError from '../../utils/ApiError.js';
 const router = express.Router();
 
 router.post('/', validate(exportSchema), async (req, res, next) => {
-    const { format, html, data, mode, filename = 'exported-document' } = req.body;
+    const { format, mode, filename = 'exported-document' } = req.body;
+    const html = req.body.content || req.body.html;
+    const data = req.body.data;
 
     console.log(`[Export] Request: format=${format}, mode=${mode}, filename=${filename}`);
 
     if (!html && (format === 'pdf' || format === 'docx')) {
-        console.error('[Export] Error: No HTML content provided for PDF/DOCX export');
+        console.error('[Export] Error: No content/HTML provided for PDF/DOCX export');
         return res.status(400).json({ error: 'No content to export' });
     }
 

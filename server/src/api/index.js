@@ -38,7 +38,7 @@ router.use(v1NotesRoutes);
 router.use(v1MindmapRoutes);
 router.use(v1FormatRoutes);
 router.use(v1TemplateRoutes);
-router.use(v1ExportRoutes);
+router.use('/export', v1ExportRoutes);
 router.use(v1ScrapeRoutes);
 
 export default router;

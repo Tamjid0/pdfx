@@ -113,7 +113,7 @@ export const ExportModal: React.FC<ExportModalProps> = () => {
                 body.data = data;
             }
 
-            const response = await fetch('/api/export', {
+            const response = await fetch('/api/v1/export', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

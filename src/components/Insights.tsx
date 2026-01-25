@@ -2,6 +2,7 @@
 import React from 'react';
 import { useStore } from '../store/useStore';
 import type { Mode } from '../store/useStore';
+import LocalizedShimmer from './LocalizedShimmer';
 
 interface Insight {
     title: string;
@@ -14,7 +15,7 @@ interface InsightsProps {
 
 const Insights: React.FC<InsightsProps> = ({ onGenerate }) => {
     const {
-        insightsData, setInsightsData, openExportModal
+        insightsData, setInsightsData, openExportModal, isGeneratingInsights
     } = useStore();
 
     const insightsArray = Array.isArray(insightsData) ? insightsData : (insightsData?.insights || []);

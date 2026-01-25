@@ -11,7 +11,8 @@ import LoadingOverlay from '../../components/LoadingOverlay';
 
 const ProjectsPage = () => {
     const { user, loading: authLoading } = useAuth();
-    const { loadProject, isLoading: storeLoading, openExportModal } = useStore();
+    // Use granular page loading
+    const { loadProject, isPageLoading, setIsPageLoading, openExportModal } = useStore();
     const router = useRouter();
     const [projects, setProjects] = useState<any[]>([]);
     const [fetching, setFetching] = useState(true);
@@ -31,22 +32,26 @@ const ProjectsPage = () => {
     const loadProjects = async () => {
         try {
             setFetching(true);
+            setIsPageLoading(true);
             const data = await apiService.fetchUserDocuments(user?.uid || 'guest');
             setProjects(data);
         } catch (error) {
             console.error('Failed to load projects:', error);
         } finally {
             setFetching(false);
+            setIsPageLoading(false);
         }
     };
 
     const handleOpenProject = async (documentId: string) => {
+        setIsPageLoading(true);
         await loadProject(documentId);
+        setIsPageLoading(false);
         router.push('/');
     };
 
-    // We render the layout structure even if loading to avoid the "black screen" flash
-    const showLoader = authLoading || fetching;
+    // Page-level transition loader
+    const showLoader = isPageLoading || authLoading;
 
     return (
         <div className="flex flex-col h-screen bg-[#0a0a0a] text-white selection:bg-gemini-green/30">

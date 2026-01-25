@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import type { Mode } from '../store/useStore';
+import LocalizedShimmer from './LocalizedShimmer';
 
 type QuizQuestion = {
     type: 'mc';
@@ -24,7 +25,7 @@ interface QuizProps {
 
 const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
     const {
-        quizData, setQuizData, openExportModal
+        quizData, setQuizData, openExportModal, isGeneratingQuiz
     } = useStore();
 
     const [selectedAnswers, setSelectedAnswers] = useState<Record<string, any>>({});

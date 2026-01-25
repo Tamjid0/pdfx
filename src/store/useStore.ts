@@ -6,6 +6,17 @@ export type Mode = 'summary' | 'insights' | 'notes' | 'quiz' | 'flashcards' | 'm
 interface AppState {
     htmlPreview: string | null;
     isLoading: boolean;
+    isPageLoading: boolean;
+    isDocumentLoading: boolean;
+
+    // Generation Status
+    isGeneratingSummary: boolean;
+    isGeneratingInsights: boolean;
+    isGeneratingNotes: boolean;
+    isGeneratingFlashcards: boolean;
+    isGeneratingQuiz: boolean;
+    isGeneratingMindmap: boolean;
+
     view: 'import' | 'editor' | 'viewer';
     mode: 'summary' | 'insights' | 'notes' | 'quiz' | 'flashcards' | 'mindmap' | 'editor' | 'chat' | 'slides';
     leftPanelView: 'editor' | 'artboard' | 'slides';
@@ -63,6 +74,14 @@ interface AppState {
     // Actions
     setHtmlPreview: (html: string | null) => void;
     setIsLoading: (loading: boolean) => void;
+    setIsPageLoading: (loading: boolean) => void;
+    setIsDocumentLoading: (loading: boolean) => void;
+    setIsGeneratingSummary: (val: boolean) => void;
+    setIsGeneratingInsights: (val: boolean) => void;
+    setIsGeneratingNotes: (val: boolean) => void;
+    setIsGeneratingFlashcards: (val: boolean) => void;
+    setIsGeneratingQuiz: (val: boolean) => void;
+    setIsGeneratingMindmap: (val: boolean) => void;
     setView: (view: 'import' | 'editor' | 'viewer') => void;
     setMode: (mode: any) => void;
     setLeftPanelView: (view: 'editor' | 'artboard' | 'slides') => void;
@@ -121,6 +140,14 @@ interface AppState {
 export const useStore = create<AppState>((set) => ({
     htmlPreview: null,
     isLoading: false,
+    isPageLoading: false,
+    isDocumentLoading: false,
+    isGeneratingSummary: false,
+    isGeneratingInsights: false,
+    isGeneratingNotes: false,
+    isGeneratingFlashcards: false,
+    isGeneratingQuiz: false,
+    isGeneratingMindmap: false,
     view: 'import',
     mode: 'editor',
     leftPanelView: 'editor',
@@ -197,6 +224,14 @@ export const useStore = create<AppState>((set) => ({
 
     setHtmlPreview: (html) => set({ htmlPreview: html }),
     setIsLoading: (loading) => set({ isLoading: loading }),
+    setIsPageLoading: (loading) => set({ isPageLoading: loading }),
+    setIsDocumentLoading: (loading) => set({ isDocumentLoading: loading }),
+    setIsGeneratingSummary: (val) => set({ isGeneratingSummary: val }),
+    setIsGeneratingInsights: (val) => set({ isGeneratingInsights: val }),
+    setIsGeneratingNotes: (val) => set({ isGeneratingNotes: val }),
+    setIsGeneratingFlashcards: (val) => set({ isGeneratingFlashcards: val }),
+    setIsGeneratingQuiz: (val) => set({ isGeneratingQuiz: val }),
+    setIsGeneratingMindmap: (val) => set({ isGeneratingMindmap: val }),
     setView: (view) => set({ view: view }),
     setMode: (mode) => set({ mode: mode }),
     setLeftPanelView: (view) => set({ leftPanelView: view }),
@@ -277,7 +312,15 @@ export const useStore = create<AppState>((set) => ({
             currentSlideIndex: 0,
             isSlideMode: false,
             view: 'editor',
-            mode: 'editor'
+            mode: 'editor',
+            isPageLoading: false,
+            isDocumentLoading: false,
+            isGeneratingSummary: false,
+            isGeneratingInsights: false,
+            isGeneratingNotes: false,
+            isGeneratingFlashcards: false,
+            isGeneratingQuiz: false,
+            isGeneratingMindmap: false
         });
     },
 

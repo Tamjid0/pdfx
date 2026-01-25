@@ -57,7 +57,10 @@ const getLayoutedElements = (nodes: any[], edges: any[], options = {}) => {
 };
 
 
+import LocalizedShimmer from './LocalizedShimmer';
+
 const Mindmap: React.FC<MindmapProps> = ({ data, onGenerate }) => {
+    const { isGeneratingMindmap } = useStore();
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
@@ -97,14 +100,39 @@ const Mindmap: React.FC<MindmapProps> = ({ data, onGenerate }) => {
 
     if (!data || !data.nodes || data.nodes.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-                <p className="text-lg text-gray-400 mb-4">Click "Generate" to create a mind map.</p>
-                <button
-                    onClick={() => onGenerate('mindmap')}
-                    className="summary-btn px-4 py-2 bg-[#00ff88] text-black border-none rounded-md text-sm font-semibold cursor-pointer transition-all hover:bg-[#00dd77]"
-                >
-                    Generate Mind Map
-                </button>
+            <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-[#0a0a0a] rounded-xl border border-white/5">
+                {isGeneratingMindmap ? (
+                    <div className="w-full max-w-md">
+                        <div className="flex flex-col items-center mb-8">
+                            <div className="w-12 h-12 bg-gemini-green/5 rounded-2xl flex items-center justify-center mb-4 border border-gemini-green/10">
+                                <div className="w-6 h-6 border-2 border-gemini-green border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                            <h3 className="text-sm font-bold text-white uppercase tracking-[0.3em]">Architecting Mind Map...</h3>
+                        </div>
+                        <LocalizedShimmer blocks={3} />
+                    </div>
+                ) : (
+                    <>
+                        <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 border border-white/10 shadow-inner">
+                            <svg className="w-10 h-10 text-gemini-green drop-shadow-[0_0_8px_rgba(0,255,136,0.5)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                            </svg>
+                        </div>
+                        <h3 className="text-2xl font-bold text-white mb-3">Conceptual Network</h3>
+                        <p className="text-gemini-gray mb-8 max-w-sm leading-relaxed">
+                            Visualize the structural logic and thematic connections of your document with an interactive AI-generated mind map.
+                        </p>
+                        <button
+                            onClick={() => onGenerate('mindmap')}
+                            className="group relative px-8 py-3.5 bg-gemini-green text-black rounded-xl text-sm font-black transition-all hover:bg-gemini-green-300 active:scale-95 shadow-[0_5px_15px_rgba(0,255,136,0.3)] overflow-hidden"
+                        >
+                            <span className="relative z-10 flex items-center gap-2">
+                                CONSTRUCT MAP
+                                <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                            </span>
+                        </button>
+                    </>
+                )}
             </div>
         );
     }

@@ -1,20 +1,9 @@
 
-import React from 'react';
-import { useStore } from '../store/useStore';
-import type { Mode } from '../store/useStore';
-
-interface NoteSection {
-    section: string;
-    points: string[];
-}
-
-interface NotesProps {
-    onGenerate: (mode: Mode) => void;
-}
+import LocalizedShimmer from './LocalizedShimmer';
 
 const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
     const {
-        notesData, setNotesData, openExportModal
+        notesData, setNotesData, openExportModal, isGeneratingNotes
     } = useStore();
 
     const notesArray = Array.isArray(notesData) ? notesData : (notesData?.notes || []);
@@ -97,24 +86,38 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
     if (notesArray.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-[#0a0a0a] rounded-xl border border-[#222]">
-                <div className="w-20 h-20 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-6 border border-[#333] shadow-inner">
-                    <svg className="w-10 h-10 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-3">Structured Study Notes</h3>
-                <p className="text-gray-400 mb-8 max-w-sm leading-relaxed">
-                    Transform your document into a highly organized set of study notes, categorized by domain and level of importance.
-                </p>
-                <button
-                    onClick={() => onGenerate('notes')}
-                    className="group relative px-8 py-3.5 bg-[#00ff88] text-black rounded-xl text-sm font-black transition-all hover:bg-[#00dd77] active:scale-95 shadow-[0_5px_15px_rgba(0,255,136,0.3)]"
-                >
-                    <span className="relative z-10 flex items-center gap-2">
-                        GENERATE STUDY NOTES
-                        <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                    </span>
-                </button>
+                {isGeneratingNotes ? (
+                    <div className="w-full max-w-md">
+                        <div className="flex flex-col items-center mb-8">
+                            <div className="w-12 h-12 bg-gemini-green/5 rounded-2xl flex items-center justify-center mb-4 border border-gemini-green/10">
+                                <div className="w-6 h-6 border-2 border-gemini-green border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                            <h3 className="text-sm font-bold text-white uppercase tracking-[0.3em]">Synthesizing Notes...</h3>
+                        </div>
+                        <LocalizedShimmer blocks={3} />
+                    </div>
+                ) : (
+                    <>
+                        <div className="w-20 h-20 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-6 border border-[#333] shadow-inner">
+                            <svg className="w-10 h-10 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                        </div>
+                        <h3 className="text-2xl font-bold text-white mb-3">Structured Study Notes</h3>
+                        <p className="text-gray-400 mb-8 max-w-sm leading-relaxed">
+                            Transform your document into a highly organized set of study notes, categorized by domain and level of importance.
+                        </p>
+                        <button
+                            onClick={() => onGenerate('notes')}
+                            className="group relative px-8 py-3.5 bg-[#00ff88] text-black rounded-xl text-sm font-black transition-all hover:bg-[#00dd77] active:scale-95 shadow-[0_5px_15px_rgba(0,255,136,0.3)]"
+                        >
+                            <span className="relative z-10 flex items-center gap-2">
+                                GENERATE STUDY NOTES
+                                <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                            </span>
+                        </button>
+                    </>
+                )}
             </div>
         );
     }

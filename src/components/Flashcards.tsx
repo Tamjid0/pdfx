@@ -12,9 +12,11 @@ interface FlashcardsProps {
     onGenerate: (mode: Mode) => void;
 }
 
+import LocalizedShimmer from './LocalizedShimmer';
+
 const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
     const {
-        flashcardsData, setFlashcardsData, openExportModal
+        flashcardsData, setFlashcardsData, openExportModal, isGeneratingFlashcards
     } = useStore();
 
     const [flippedCards, setFlippedCards] = useState<number[]>([]);
@@ -67,21 +69,35 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
     if (cardsArray.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-[#0a0a0a] rounded-xl border border-[#222]">
-                <div className="w-20 h-20 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-6 border border-[#333] shadow-inner text-[#00ff88]">
-                    <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-3">Self-Quizzing Flashcards</h3>
-                <p className="text-gray-400 mb-8 max-w-sm leading-relaxed">
-                    Generate interactive flashcards to test your knowledge. Flip to reveal answers and edit them to match your learning style.
-                </p>
-                <button
-                    onClick={() => onGenerate('flashcards')}
-                    className="px-8 py-3.5 bg-[#00ff88] text-black rounded-xl text-sm font-black transition-all hover:bg-[#00dd77] active:scale-95 shadow-[0_5px_15px_rgba(0,255,136,0.3)]"
-                >
-                    GENERATE CARDS
-                </button>
+                {isGeneratingFlashcards ? (
+                    <div className="w-full max-w-md">
+                        <div className="flex flex-col items-center mb-8">
+                            <div className="w-12 h-12 bg-gemini-green/5 rounded-2xl flex items-center justify-center mb-4 border border-gemini-green/10">
+                                <div className="w-6 h-6 border-2 border-gemini-green border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                            <h3 className="text-sm font-bold text-white uppercase tracking-[0.3em]">Creating Flashcards...</h3>
+                        </div>
+                        <LocalizedShimmer blocks={2} />
+                    </div>
+                ) : (
+                    <>
+                        <div className="w-20 h-20 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-6 border border-[#333] shadow-inner text-[#00ff88]">
+                            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <h3 className="text-2xl font-bold text-white mb-3">Self-Quizzing Flashcards</h3>
+                        <p className="text-gray-400 mb-8 max-w-sm leading-relaxed">
+                            Generate interactive flashcards to test your knowledge. Flip to reveal answers and edit them to match your learning style.
+                        </p>
+                        <button
+                            onClick={() => onGenerate('flashcards')}
+                            className="px-8 py-3.5 bg-[#00ff88] text-black rounded-xl text-sm font-black transition-all hover:bg-[#00dd77] active:scale-95 shadow-[0_5px_15px_rgba(0,255,136,0.3)]"
+                        >
+                            GENERATE CARDS
+                        </button>
+                    </>
+                )}
             </div>
         );
     }

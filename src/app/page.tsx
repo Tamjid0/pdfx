@@ -83,7 +83,8 @@ const Home = () => {
 
 
     const handleScrapeUrl = async (url: string) => {
-        setIsLoading(true);
+        const { setIsPageLoading } = useStore.getState();
+        setIsPageLoading(true);
         try {
             const response = await fetch(`/api/v1/scrape?url=${encodeURIComponent(url)}`);
             if (!response.ok) throw new Error("Failed to scrape URL");
@@ -97,7 +98,7 @@ const Home = () => {
         } catch (error) {
             console.error("Error scraping URL:", error);
         } finally {
-            setIsLoading(false);
+            setIsPageLoading(false);
         }
     };
 
@@ -113,6 +114,10 @@ const Home = () => {
 
     const handleGenerate = async (targetMode: any) => {
         if (!htmlPreview && !fileId) return;
+        const {
+            setIsGeneratingSummary, setIsGeneratingInsights, setIsGeneratingNotes,
+            setIsGeneratingFlashcards, setIsGeneratingQuiz, setIsGeneratingMindmap
+        } = useStore.getState();
 
         const payload: any = { settings: {} };
         if (fileId) {
@@ -125,11 +130,12 @@ const Home = () => {
 
         let settings: any = {};
         switch (targetMode) {
-            case 'summary': settings = summarySettings; break;
-            case 'insights': settings = insightsSettings; break;
-            case 'notes': settings = notesSettings; break;
-            case 'quiz': settings = quizSettings; break;
-            case 'mindmap': settings = mindmapSettings; break;
+            case 'summary': settings = summarySettings; setIsGeneratingSummary(true); break;
+            case 'insights': settings = insightsSettings; setIsGeneratingInsights(true); break;
+            case 'notes': settings = notesSettings; setIsGeneratingNotes(true); break;
+            case 'quiz': settings = quizSettings; setIsGeneratingQuiz(true); break;
+            case 'mindmap': settings = mindmapSettings; setIsGeneratingMindmap(true); break;
+            case 'flashcards': setIsGeneratingFlashcards(true); break;
             default: settings = {};
         }
         payload.settings = settings;
@@ -140,7 +146,6 @@ const Home = () => {
             payload.settings = { ...settings, targetWordCount: targetWords };
         }
 
-        setIsLoading(true);
         try {
             switch (targetMode) {
                 case 'insights':
@@ -185,7 +190,14 @@ const Home = () => {
         } catch (error) {
             console.error(`Error fetching data for ${targetMode}:`, error);
         } finally {
-            setIsLoading(false);
+            switch (targetMode) {
+                case 'summary': setIsGeneratingSummary(false); break;
+                case 'insights': setIsGeneratingInsights(false); break;
+                case 'notes': setIsGeneratingNotes(false); break;
+                case 'quiz': setIsGeneratingQuiz(false); break;
+                case 'mindmap': setIsGeneratingMindmap(false); break;
+                case 'flashcards': setIsGeneratingFlashcards(false); break;
+            }
         }
     };
 

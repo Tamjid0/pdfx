@@ -48,7 +48,9 @@ const DocumentViewer: React.FC = () => {
         setCurrentSlideIndex,
         currentSlideIndex,
         pdfSearchText,
-        setPdfSearchText
+        setPdfSearchText,
+        isDocumentLoading,
+        setIsDocumentLoading
     } = useStore();
 
     const [numPages, setNumPages] = useState<number | null>(null);
@@ -281,6 +283,7 @@ const DocumentViewer: React.FC = () => {
 
     function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
         setNumPages(numPages);
+        setIsDocumentLoading(false);
     }
 
     const handleBackClick = () => {
@@ -463,9 +466,15 @@ const DocumentViewer: React.FC = () => {
                             onLoadSuccess={onDocumentLoadSuccess}
                             className="flex items-center justify-center"
                             loading={
-                                <div className="flex flex-col items-center gap-4 text-[#666]">
-                                    <div className="w-8 h-8 border-2 border-[#00ff88] border-t-transparent rounded-full animate-spin"></div>
-                                    <p className="text-xs uppercase tracking-widest">Loading PDF...</p>
+                                <div className="flex flex-col items-center gap-6 py-20 animate-in fade-in duration-700">
+                                    <div className="relative w-12 h-12">
+                                        <div className="absolute inset-0 rounded-full border border-white/5"></div>
+                                        <div className="absolute inset-0 rounded-full border border-t-gemini-green border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
+                                        <div className="absolute -inset-2 bg-gemini-green/5 blur-xl rounded-full"></div>
+                                    </div>
+                                    <div className="flex flex-col items-center gap-1">
+                                        <span className="text-white/20 text-[10px] font-bold uppercase tracking-[0.4em] animate-pulse">Rendering Document</span>
+                                    </div>
                                 </div>
                             }
                             error={

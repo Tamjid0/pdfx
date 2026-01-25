@@ -57,21 +57,35 @@ const Insights: React.FC<InsightsProps> = ({ onGenerate }) => {
     if (insightsArray.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-[#0a0a0a] rounded-xl border border-[#222]">
-                <div className="w-20 h-20 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-6 border border-[#333] shadow-inner text-[#00ff88]">
-                    <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-3">Core Insights</h3>
-                <p className="text-gray-400 mb-8 max-w-sm leading-relaxed">
-                    Extract deep patterns, hidden connections, and high-value conclusions from your reading material.
-                </p>
-                <button
-                    onClick={() => onGenerate('insights')}
-                    className="px-8 py-3.5 bg-[#00ff88] text-black rounded-xl text-sm font-black transition-all hover:bg-[#00dd77] active:scale-95 shadow-[0_5px_15px_rgba(0,255,136,0.3)]"
-                >
-                    EXTRACT INSIGHTS
-                </button>
+                {isGeneratingInsights ? (
+                    <div className="w-full max-w-md">
+                        <div className="flex flex-col items-center mb-8">
+                            <div className="w-12 h-12 bg-gemini-green/5 rounded-2xl flex items-center justify-center mb-4 border border-gemini-green/10">
+                                <div className="w-6 h-6 border-2 border-gemini-green border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                            <h3 className="text-sm font-bold text-white uppercase tracking-[0.3em]">Extracting Insights...</h3>
+                        </div>
+                        <LocalizedShimmer blocks={3} />
+                    </div>
+                ) : (
+                    <>
+                        <div className="w-20 h-20 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-6 border border-[#333] shadow-inner text-[#00ff88]">
+                            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
+                        <h3 className="text-2xl font-bold text-white mb-3">Core Insights</h3>
+                        <p className="text-gray-400 mb-8 max-w-sm leading-relaxed">
+                            Extract deep patterns, hidden connections, and high-value conclusions from your reading material.
+                        </p>
+                        <button
+                            onClick={() => onGenerate('insights')}
+                            className="px-8 py-3.5 bg-[#00ff88] text-black rounded-xl text-sm font-black transition-all hover:bg-[#00dd77] active:scale-95 shadow-[0_5px_15px_rgba(0,255,136,0.3)]"
+                        >
+                            EXTRACT INSIGHTS
+                        </button>
+                    </>
+                )}
             </div>
         );
     }
@@ -85,9 +99,15 @@ const Insights: React.FC<InsightsProps> = ({ onGenerate }) => {
                 </div>
                 <button
                     onClick={() => onGenerate('insights')}
-                    className="px-4 py-2 bg-[#1a1a1a] text-[#00ff88] border border-[#00ff88]/20 rounded-lg text-xs font-bold hover:bg-[#00ff88]/10 transition-all flex items-center gap-2"
+                    disabled={isGeneratingInsights}
+                    className="px-4 py-2 bg-[#1a1a1a] text-[#00ff88] border border-[#00ff88]/20 rounded-lg text-xs font-bold hover:bg-[#00ff88]/10 transition-all flex items-center gap-2 disabled:opacity-50"
                 >
-                    REGENERATE
+                    {isGeneratingInsights ? (
+                        <div className="w-3 h-3 border-2 border-[#00ff88] border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    )}
+                    {isGeneratingInsights ? 'EXTRACTING...' : 'REGENERATE'}
                 </button>
             </div>
 

@@ -205,7 +205,7 @@ const ProjectsPage = () => {
                     <div className="bg-[#111] border border-white/10 w-full max-w-4xl h-full max-h-[80vh] rounded-[2rem] overflow-hidden flex flex-col shadow-2xl relative z-10 animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
 
                         {/* Modal Header */}
-                        <div className="p-10 pb-6 border-b border-white/5 relative bg-gradient-to-br from-white/[0.01] to-transparent">
+                        <div className="p-10 pb-6 border-b border-white/5 z-20 relative bg-gradient-to-br from-white/[0.01] to-transparent">
                             <button
                                 onClick={() => setSelectedProject(null)}
                                 className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 text-gemini-gray hover:text-white hover:bg-white/10 transition-all active:scale-95"
@@ -230,7 +230,7 @@ const ProjectsPage = () => {
                                 </div>
                             </div>
 
-                            <div className="mt-8 flex gap-3">
+                            <div className="mt-8 flex flex-col md:flex-row md:items-center gap-4">
                                 <button
                                     onClick={() => handleOpenProject(selectedProject.documentId)}
                                     className="bg-gemini-green text-black px-8 py-3 rounded-xl font-black text-xs uppercase tracking-[0.15em] hover:bg-gemini-green-300 transition-all flex items-center gap-2 active:scale-95 shadow-lg shadow-gemini-green/10 whitespace-nowrap"
@@ -239,7 +239,9 @@ const ProjectsPage = () => {
                                         Open Session <span className="text-sm">&rarr;</span>
                                     </span>
                                 </button>
-                                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                                <div className="flex flex-wrap gap-2 items-center z-30">
+
+
                                     {['Summary', 'Notes', 'Insights', 'Flashcards', 'Quiz'].map(mode => (
                                         selectedProject[`${mode.toLowerCase()}Data`] && (
                                             <ProjectExportAction

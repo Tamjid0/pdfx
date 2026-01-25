@@ -162,7 +162,7 @@ const ProjectExportAction: React.FC<ProjectExportActionProps> = ({ mode, data, f
     };
 
     return (
-        <div className="relative inline-block">
+        <div className="relative inline-block z-10">
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 disabled={!data || isExporting}
@@ -182,7 +182,7 @@ const ProjectExportAction: React.FC<ProjectExportActionProps> = ({ mode, data, f
             </button>
 
             {isOpen && (
-                <div className="absolute top-full left-0 mt-3 w-56 bg-[#181818] border border-white/10 rounded-2xl shadow-2xl z-[110] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute top-full right-0 mt-3 w-56 bg-[#181818] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="p-3 border-b border-white/5 bg-white/[0.02]">
                         <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest px-2">Style Preset</span>
                         <div className="mt-2 grid grid-cols-1 gap-1">

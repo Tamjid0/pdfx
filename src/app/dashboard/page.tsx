@@ -8,6 +8,8 @@ import * as apiService from '../../services/apiService';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import LoadingOverlay from '../../components/LoadingOverlay';
+import ProjectExportAction from '../../components/dashboard/ProjectExportAction';
+import ProjectStylePreviewPopup from '../../components/dashboard/ProjectStylePreviewPopup';
 
 const ProjectsPage = () => {
     const { user, loading: authLoading } = useAuth();
@@ -17,6 +19,7 @@ const ProjectsPage = () => {
     const [projects, setProjects] = useState<any[]>([]);
     const [fetching, setFetching] = useState(true);
     const [selectedProject, setSelectedProject] = useState<any>(null);
+    const [previewTarget, setPreviewTarget] = useState<{ mode: string; data: any } | null>(null);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -142,7 +145,8 @@ const ProjectsPage = () => {
                                                     )}
                                                 </div>
                                                 <div className="flex flex-col items-end gap-0.5">
-                                                    <span className="text-[8px] font-bold uppercase tracking-widest text-white/20">{new Date(project.createdAt).toLocaleDateString()}</span>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-[#555] group-hover:text-gemini-green/60 transition-colors">{new Date(project.createdAt).toLocaleDateString()}</span>
+
                                                 </div>
                                             </div>
 
@@ -177,13 +181,14 @@ const ProjectsPage = () => {
                                                     e.stopPropagation();
                                                     handleOpenProject(project.documentId);
                                                 }}
-                                                className="w-8 h-8 bg-white/5 hover:bg-gemini-green hover:text-black rounded-lg transition-all flex items-center justify-center group/play border border-white/5 active:scale-90"
+                                                className="w-10 h-10 bg-white/5 hover:bg-gemini-green hover:text-black rounded-xl transition-all flex items-center justify-center group/play border border-white/5 active:scale-95 shadow-lg"
                                                 title="Open Workspace"
                                             >
-                                                <svg className="w-4 h-4 transition-transform group-hover/play:scale-105" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg className="w-5 h-5 transition-transform group-hover/play:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                                                 </svg>
                                             </button>
+
                                         </div>
                                     </div>
                                 ))}
@@ -228,20 +233,25 @@ const ProjectsPage = () => {
                             <div className="mt-8 flex gap-3">
                                 <button
                                     onClick={() => handleOpenProject(selectedProject.documentId)}
-                                    className="bg-gemini-green text-black px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-gemini-green-300 transition-all flex items-center gap-2 active:scale-95 shadow-lg shadow-gemini-green/10"
+                                    className="bg-gemini-green text-black px-8 py-3 rounded-xl font-black text-xs uppercase tracking-[0.15em] hover:bg-gemini-green-300 transition-all flex items-center gap-2 active:scale-95 shadow-lg shadow-gemini-green/10 whitespace-nowrap"
                                 >
-                                    Open Session &rarr;
+                                    <span className="flex items-center gap-2">
+                                        Open Session <span className="text-sm">&rarr;</span>
+                                    </span>
                                 </button>
-                                {['Summary', 'Notes', 'Insights', 'Flashcards', 'Quiz'].map(mode => (
-                                    <button
-                                        key={mode}
-                                        disabled={!selectedProject[`${mode.toLowerCase()}Data`]}
-                                        onClick={() => openExportModal(mode.toLowerCase(), selectedProject[`${mode.toLowerCase()}Data`])}
-                                        className="bg-white/5 hover:bg-white/10 text-white/90 px-4 py-3 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all disabled:opacity-20 border border-white/5"
-                                    >
-                                        Export {mode}
-                                    </button>
-                                ))}
+                                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                                    {['Summary', 'Notes', 'Insights', 'Flashcards', 'Quiz'].map(mode => (
+                                        selectedProject[`${mode.toLowerCase()}Data`] && (
+                                            <ProjectExportAction
+                                                key={mode}
+                                                mode={mode}
+                                                data={selectedProject[`${mode.toLowerCase()}Data`]}
+                                                filename={selectedProject.originalFile?.name?.split('.')[0] || 'project'}
+                                            />
+                                        )
+                                    ))}
+                                </div>
+
                             </div>
                         </div>
 
@@ -251,10 +261,22 @@ const ProjectsPage = () => {
                                 <div className="space-y-8">
                                     {/* Summary Section */}
                                     <div className="space-y-4">
-                                        <div className="flex items-center gap-3">
-                                            <span className="w-4 h-1 bg-gemini-green rounded-full"></span>
-                                            <h4 className="text-[9px] font-bold text-white/50 uppercase tracking-[0.25em]">Abstract Synthesis</h4>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <span className="w-4 h-1 bg-gemini-green rounded-full"></span>
+                                                <h4 className="text-[9px] font-bold text-white/50 uppercase tracking-[0.25em]">Abstract Synthesis</h4>
+                                            </div>
+                                            {selectedProject.summaryData && (
+                                                <button
+                                                    onClick={() => setPreviewTarget({ mode: 'summary', data: selectedProject.summaryData })}
+                                                    className="p-1.5 hover:bg-white/5 rounded-lg text-gemini-gray hover:text-gemini-green transition-all"
+                                                    title="View Styled Preview"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                                </button>
+                                            )}
                                         </div>
+
                                         <div className="bg-white/[0.02] rounded-2xl p-6 border border-white/5 leading-relaxed text-white/70 overflow-hidden">
                                             {selectedProject.summaryData ? (
                                                 <div className="prose prose-invert prose-sm max-w-none line-clamp-[6]"
@@ -268,10 +290,22 @@ const ProjectsPage = () => {
 
                                     {/* Insights Section */}
                                     <div className="space-y-4">
-                                        <div className="flex items-center gap-3">
-                                            <span className="w-4 h-1 bg-gemini-green rounded-full"></span>
-                                            <h4 className="text-[9px] font-bold text-white/50 uppercase tracking-[0.25em]">Core Insights</h4>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <span className="w-4 h-1 bg-gemini-green rounded-full"></span>
+                                                <h4 className="text-[9px] font-bold text-white/50 uppercase tracking-[0.25em]">Core Insights</h4>
+                                            </div>
+                                            {selectedProject.insightsData && (
+                                                <button
+                                                    onClick={() => setPreviewTarget({ mode: 'insights', data: selectedProject.insightsData })}
+                                                    className="p-1.5 hover:bg-white/5 rounded-lg text-gemini-gray hover:text-gemini-green transition-all"
+                                                    title="View Styled Preview"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                                </button>
+                                            )}
                                         </div>
+
                                         <div className="bg-white/[0.02] rounded-2xl p-6 border border-white/5 max-h-[250px] overflow-y-auto no-scrollbar">
                                             {selectedProject.insightsData ? (
                                                 <div className="space-y-4">
@@ -332,6 +366,13 @@ const ProjectsPage = () => {
                         </div>
                     </div>
                 </div>
+            )}
+            {previewTarget && (
+                <ProjectStylePreviewPopup
+                    mode={previewTarget.mode}
+                    data={previewTarget.data}
+                    onClose={() => setPreviewTarget(null)}
+                />
             )}
         </div>
     );

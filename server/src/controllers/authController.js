@@ -17,13 +17,16 @@ export const syncUser = async (req, res) => {
             });
         }
 
-        // Find existing user or create a new one
-        let user = await User.findOne({ firebaseUid });
+        // Find existing user by UID or Email to handle edge cases where UID might change
+        let user = await User.findOne({
+            $or: [{ firebaseUid }, { email }]
+        });
 
         if (user) {
-            // Update existing user profile info if it changed
+            // Update existing user profile info
             user.displayName = displayName || user.displayName;
             user.photoURL = photoURL || user.photoURL;
+            user.firebaseUid = firebaseUid; // Ensure UID is current
             user.lastLogin = Date.now();
             await user.save();
             logger.info(`User synced (updated): ${email}`);
@@ -51,10 +54,14 @@ export const syncUser = async (req, res) => {
             }
         });
     } catch (error) {
-        logger.error('Error in syncUser:', error);
+        logger.error('Error in syncUser:', {
+            error: error.message,
+            stack: error.stack,
+            body: req.body
+        });
         res.status(500).json({
             success: false,
-            message: 'Internal server error during auth sync'
+            message: `Internal server error during auth sync: ${error.message}`
         });
     }
 };

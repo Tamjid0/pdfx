@@ -133,8 +133,8 @@ export class StructuredChunker {
             topics.push(currentTopic);
         }
 
-        // Clean up duplicate/empty topics
-        return topics.filter(t => t.nodes.length > 5 || t.id !== 'intro');
+        // Return all detected topics without aggressive filtering
+        return topics;
     }
 
     /**

@@ -15,9 +15,11 @@ import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
 
 const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
     const {
-        summaryData, setSummaryData, openExportModal, isGeneratingSummary
+        summaryData, setSummaryData, openExportModal, isGeneratingSummary,
+        generationScope
     } = useStore();
     const [copied, setCopied] = useState(false);
+    const [showRegenerateScope, setShowRegenerateScope] = useState(false);
 
     const handleCopy = () => {
         if (!summaryData?.summary) return;
@@ -127,9 +129,9 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
                     </div>
                     <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] font-mono">Analysis Ready</h3>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 relative">
                     <button
-                        onClick={() => onGenerate('summary')}
+                        onClick={() => setShowRegenerateScope(!showRegenerateScope)}
                         disabled={isGeneratingSummary}
                         className="px-4 py-2 bg-gemini-dark-300 text-gemini-green border border-gemini-green/20 rounded-lg text-xs font-bold hover:bg-gemini-green/10 transition-all flex items-center gap-2 disabled:opacity-50"
                     >
@@ -140,6 +142,27 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
                         )}
                         {isGeneratingSummary ? 'REGENERATING...' : 'REGENERATE'}
                     </button>
+
+                    {showRegenerateScope && !isGeneratingSummary && (
+                        <div className="absolute top-full right-0 mt-3 w-80 bg-gemini-dark-300 border border-gemini-dark-500 rounded-3xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[100] animate-in fade-in zoom-in-95 duration-200">
+                            <div className="flex items-center justify-between mb-4">
+                                <h4 className="text-[10px] font-black text-white/60 uppercase tracking-[0.2em]">Select Scope</h4>
+                                <button onClick={() => setShowRegenerateScope(false)} className="text-white/20 hover:text-white transition-colors">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+                            <GenerationScopeSelector className="!space-y-4" />
+                            <button
+                                onClick={() => {
+                                    setShowRegenerateScope(false);
+                                    onGenerate('summary');
+                                }}
+                                className="w-full mt-6 py-3 bg-gemini-green text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gemini-green-300 transition-all shadow-[0_10px_20px_rgba(0,255,136,0.2)]"
+                            >
+                                Confirm & Regenerate
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 

@@ -33,10 +33,16 @@ export async function resolveScopedText(fileId, scope) {
         const selectedTopics = document.topics.filter(t => selectedTopicIds.includes(t.id));
         const nodeIds = new Set(selectedTopics.flatMap(t => t.nodes));
 
-        const allTextNodes = document.structure.pages.flatMap(p => p.nodes).filter(n => n.type === 'text');
+        // Robust path resolution: supports both direct pages and nested DocumentRoot structure
+        const pages = (document.structure?.pages || document.structure?.structure?.pages || []);
+
+        const allTextNodes = pages
+            .flatMap(p => p.nodes || [])
+            .filter(n => n.type === 'text');
+
         return allTextNodes
             .filter(n => nodeIds.has(n.id))
-            .map(n => n.content.text)
+            .map(n => n.content?.text || '')
             .join(' ');
     }
 

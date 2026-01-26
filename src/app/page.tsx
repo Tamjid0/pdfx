@@ -52,7 +52,8 @@ const Home = () => {
         stats, setStats,
         openExportModal,
         summaryData, insightsData, notesData, quizData, flashcardsData,
-        isSlideMode, setIsSlideMode, setSlides, fileType, updateStats
+        isSlideMode, setIsSlideMode, setSlides, fileType, updateStats,
+        resetWorkspace, setIsPageLoading, setTopics
     } = useStore();
 
     const backToImport = () => {
@@ -79,7 +80,7 @@ const Home = () => {
 
 
     const handleScrapeUrl = async (url: string) => {
-        const { setIsPageLoading } = useStore.getState();
+        resetWorkspace();
         setIsPageLoading(true);
         try {
             const response = await fetch(`/api/v1/scrape?url=${encodeURIComponent(url)}`);
@@ -100,6 +101,7 @@ const Home = () => {
     };
 
     const handlePasteContent = (content?: string) => {
+        resetWorkspace();
         setView("editor");
         const safeContent = typeof content === 'string' ? content : "";
         setHtmlPreview(safeContent);
@@ -115,10 +117,11 @@ const Home = () => {
         if (!htmlPreview && !fileId) return;
         const {
             setIsGeneratingSummary, setIsGeneratingInsights, setIsGeneratingNotes,
-            setIsGeneratingFlashcards, setIsGeneratingQuiz, setIsGeneratingMindmap
+            setIsGeneratingFlashcards, setIsGeneratingQuiz, setIsGeneratingMindmap,
+            generationScope
         } = useStore.getState();
 
-        const payload: any = { settings: {} };
+        const payload: any = { settings: {}, scope: generationScope };
         if (fileId) {
             payload.fileId = fileId;
         } else {

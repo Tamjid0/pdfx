@@ -6,21 +6,17 @@ import validate from '../../middleware/validate.js';
 import { insightsSchema } from '../../validations/insights.validation.js';
 import ApiError from '../../utils/ApiError.js';
 
+import { resolveScopedText } from '../../utils/scoping.js';
+
 const router = express.Router();
 
 router.post('/', aiGenerationLimiter, validate(insightsSchema), async (req, res, next) => {
-    const { text, fileId, settings } = req.body;
+    const { text, fileId, settings, scope } = req.body;
     let fullText = text;
 
     try {
         if (fileId) {
-            const vectorStore = await getVectorStore(fileId);
-            if (vectorStore) {
-                const allDocs = await vectorStore.similaritySearch("", 100);
-                fullText = allDocs.map(doc => doc.pageContent).join('\n\n');
-            } else {
-                throw new ApiError(404, `No document found for fileId: ${fileId}`);
-            }
+            fullText = await resolveScopedText(fileId, scope);
         }
 
         const { keyEntities = true, topics = false, customExtraction = '' } = settings || {};

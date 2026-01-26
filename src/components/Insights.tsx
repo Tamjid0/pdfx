@@ -3,6 +3,7 @@ import React from 'react';
 import { useStore } from '../store/useStore';
 import type { Mode } from '../store/useStore';
 import LocalizedShimmer from './LocalizedShimmer';
+import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
 
 interface Insight {
     title: string;
@@ -78,6 +79,11 @@ const Insights: React.FC<InsightsProps> = ({ onGenerate }) => {
                         <p className="text-gray-400 mb-8 max-w-sm leading-relaxed">
                             Extract deep patterns, hidden connections, and high-value conclusions from your reading material.
                         </p>
+
+                        <div className="w-full max-w-sm mb-10 bg-black/20 p-6 rounded-[2rem] border border-white/5 shadow-inner">
+                            <GenerationScopeSelector />
+                        </div>
+
                         <button
                             onClick={() => onGenerate('insights')}
                             className="px-8 py-3.5 bg-[#00ff88] text-black rounded-xl text-sm font-black transition-all hover:bg-[#00dd77] active:scale-95 shadow-[0_5px_15px_rgba(0,255,136,0.3)]"

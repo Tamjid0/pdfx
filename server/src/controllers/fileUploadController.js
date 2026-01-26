@@ -121,6 +121,8 @@ export const uploadFile = async (req, res, next) => {
             jobId: jobId,
             extractedText: extractionResult.extractedText,
             chunks: extractionResult.chunks,
+            topics: extractionResult.topics,
+            metadata: extractionResult.documentGraph?.metadata,
             message: jobId
                 ? 'JSON extraction complete. High-fidelity rendering processing in background.'
                 : 'Processed successfully.'

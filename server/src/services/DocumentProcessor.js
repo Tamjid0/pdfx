@@ -70,6 +70,7 @@ export class DocumentProcessor {
         await ImageExtractor.extractAndSave(documentId, documentGraph, docDir);
 
         const chunks = StructuredChunker.chunkByStructure(documentGraph);
+        const topics = StructuredChunker.detectTopics(documentGraph);
         const flatText = StructuredChunker.deriveTextFromGraph(documentGraph);
 
         // Calculate file size
@@ -94,6 +95,7 @@ export class DocumentProcessor {
             metadata: documentGraph.metadata,
             structure: documentGraph,
             chunks,
+            topics,
             extractedText: flatText
         };
 
@@ -110,9 +112,9 @@ export class DocumentProcessor {
 
         // Save JSON to disk (Temporary metadata backup)
         const jsonPath = path.join(docDir, `metadata.json`);
-        fs.writeFileSync(jsonPath, JSON.stringify({ ...documentGraph, chunks, extractedText: flatText }, null, 2));
+        fs.writeFileSync(jsonPath, JSON.stringify({ ...documentGraph, chunks, topics, extractedText: flatText }, null, 2));
 
-        return { documentId, documentGraph, chunks, extractedText: flatText };
+        return { documentId, documentGraph, chunks, topics, extractedText: flatText };
     }
 
     /**

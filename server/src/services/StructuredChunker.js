@@ -69,6 +69,75 @@ export class StructuredChunker {
     }
 
     /**
+     * Detects logical topics based on font size increases (headings)
+     * @param {DocumentRoot} docGraph 
+     * @returns {Array<{id: string, title: string, startPage: number, nodes: string[]}>}
+     */
+    static detectTopics(docGraph) {
+        const topics = [];
+        let currentTopic = null;
+
+        // Calculate a global baseline for font sizes if possible, 
+        // or just look for local spikes in font size.
+        const fontHeights = [];
+        docGraph.structure.pages.forEach(page => {
+            page.nodes.filter(n => n.type === 'text').forEach(n => {
+                if (n.content.style?.height) fontHeights.push(n.content.style.height);
+            });
+        });
+
+        // Median/Average font size
+        const sortedHeights = fontHeights.sort((a, b) => a - b);
+        const baselineSize = sortedHeights[Math.floor(sortedHeights.length * 0.5)] || 12;
+
+        for (const page of docGraph.structure.pages) {
+            const textNodes = page.nodes.filter(node => node.type === 'text');
+
+            for (const node of textNodes) {
+                const height = node.content.style?.height || 0;
+
+                // If font is significantly larger than baseline (> 30% larger)
+                // and it's not too long (likely a heading)
+                if (height > baselineSize * 1.3 && node.content.text.length < 100) {
+                    // Start a new topic
+                    if (currentTopic) {
+                        currentTopic.endPage = page.index;
+                        topics.push(currentTopic);
+                    }
+
+                    currentTopic = {
+                        id: crypto.randomUUID(),
+                        title: node.content.text.trim(),
+                        startPage: page.index,
+                        nodes: [node.id]
+                    };
+                } else {
+                    // Append to current topic if it exists
+                    if (currentTopic) {
+                        currentTopic.nodes.push(node.id);
+                    } else {
+                        // Fallback first topic
+                        currentTopic = {
+                            id: 'intro',
+                            title: 'Introduction',
+                            startPage: 0,
+                            nodes: [node.id]
+                        };
+                    }
+                }
+            }
+        }
+
+        if (currentTopic) {
+            currentTopic.endPage = docGraph.structure.pages.length - 1;
+            topics.push(currentTopic);
+        }
+
+        // Clean up duplicate/empty topics
+        return topics.filter(t => t.nodes.length > 5 || t.id !== 'intro');
+    }
+
+    /**
      * Derives plain text from DocumentGraph (legacy compatibility)
      * @param {DocumentRoot} docGraph
      * @returns {string}
@@ -78,3 +147,5 @@ export class StructuredChunker {
         return chunks.map(chunk => chunk.content).join('\n\n');
     }
 }
+
+import crypto from 'crypto';

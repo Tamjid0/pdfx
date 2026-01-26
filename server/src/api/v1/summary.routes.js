@@ -4,25 +4,23 @@ import { getVectorStore } from '../../services/vectorStoreService.js';
 import { aiGenerationLimiter } from '../../middleware/rateLimitMiddleware.js';
 import validate from '../../middleware/validate.js';
 import { summarySchema } from '../../validations/summary.validation.js';
+import Document from '../../models/Document.js';
 import ApiError from '../../utils/ApiError.js';
+import { resolveScopedText } from '../../utils/scoping.js';
 
 const router = express.Router();
 
 router.post('/', aiGenerationLimiter, validate(summarySchema), async (req, res, next) => {
-    const { text, fileId, settings } = req.body;
+    const { text, fileId, settings, scope } = req.body;
     let fullText = text;
 
     try {
-        // If a fileId is provided, retrieve the full text from the vector store
         if (fileId) {
-            const vectorStore = await getVectorStore(fileId);
-            if (vectorStore) {
-                // Workaround to get all documents from a MemoryVectorStore
-                const allDocs = await vectorStore.similaritySearch("", 100);
-                fullText = allDocs.map(doc => doc.pageContent).join('\n\n');
-            } else {
-                throw new ApiError(404, `No document found for fileId: ${fileId}`);
-            }
+            fullText = await resolveScopedText(fileId, scope);
+        }
+
+        if (!fullText) {
+            throw new ApiError(400, "No content available for specified scope.");
         }
 
         const {

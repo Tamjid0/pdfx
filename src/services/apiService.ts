@@ -13,7 +13,12 @@ export async function formatContent(html: string, prompt: string) {
     return response.json();
 }
 
-type GenerationPayload = { text?: string; fileId?: string; settings?: any } | string;
+type GenerationPayload = {
+    text?: string;
+    fileId?: string;
+    settings?: any;
+    scope?: { type: 'all' | 'pages' | 'topics', value: any };
+} | string;
 
 function getPayload(arg1: GenerationPayload, arg2?: any) {
     if (typeof arg1 === 'string') {

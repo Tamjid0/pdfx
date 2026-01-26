@@ -13,6 +13,10 @@ export const summarySchema = {
             summaryType: z.enum(['abstractive', 'extractive']).optional(),
             targetWordCount: z.number().min(0).optional(),
         }).optional(),
+        scope: z.object({
+            type: z.enum(['all', 'pages', 'topics']),
+            value: z.any() // Array of page numbers or topic IDs
+        }).optional()
     }).refine((data) => data.text || data.fileId, {
         message: "Either text or fileId must be provided",
         path: ["text"],

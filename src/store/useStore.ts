@@ -34,6 +34,7 @@ interface AppState {
         charCount: number;
         lineCount: number;
         readTime: number;
+        pageCount: number;
     };
     isPreviewMode: boolean;
     isTyping: boolean;
@@ -70,6 +71,12 @@ interface AppState {
     // Preview Settings
     previewPreset: PreviewPreset;
     prompt: string;
+
+    // Smart Chunking & Scope
+    topics: any[];
+    setTopics: (topics: any[]) => void;
+    generationScope: { type: 'all' | 'pages' | 'topics', value: any };
+    setGenerationScope: (scope: { type: 'all' | 'pages' | 'topics', value: any }) => void;
 
     // Actions
     setHtmlPreview: (html: string | null) => void;
@@ -129,7 +136,7 @@ interface AppState {
     setTemplates: (templates: any[]) => void;
     pdfSearchText: string | null;
     setPdfSearchText: (text: string | null) => void;
-    updateStats: (text: string) => void;
+    updateStats: (text: string, pageCount?: number) => void;
 
     // Workspace Management
     resetWorkspace: () => void;
@@ -161,7 +168,7 @@ export const useStore = create<AppState>((set, get) => ({
     chatHistory: [],
     fileId: null,
     fileType: null,
-    stats: { wordCount: 0, charCount: 0, lineCount: 0, readTime: 0 },
+    stats: { wordCount: 0, charCount: 0, lineCount: 0, readTime: 0, pageCount: 1 },
     isPreviewMode: false,
     isTyping: false,
     showExportModal: false,
@@ -223,6 +230,9 @@ export const useStore = create<AppState>((set, get) => ({
     previewPreset: 'professional',
     prompt: '',
 
+    topics: [],
+    generationScope: { type: 'all', value: null },
+
     setHtmlPreview: (html) => set({ htmlPreview: html }),
     setIsLoading: (loading) => set({ isLoading: loading }),
     setIsPageLoading: (loading) => set({ isPageLoading: loading }),
@@ -280,6 +290,9 @@ export const useStore = create<AppState>((set, get) => ({
     setPreviewPreset: (preset) => set({ previewPreset: preset }),
     setPrompt: (prompt) => set({ prompt }),
 
+    setTopics: (topics) => set({ topics }),
+    setGenerationScope: (scope) => set({ generationScope: scope }),
+
     // Templates State
     templates: [],
     setTemplates: (templates) => set({ templates }),
@@ -288,12 +301,20 @@ export const useStore = create<AppState>((set, get) => ({
     pdfSearchText: null,
     setPdfSearchText: (text) => set({ pdfSearchText: text }),
 
-    updateStats: (text) => {
+    updateStats: (text, pageCount) => {
         const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
         const chars = text.length;
         const lines = text.split("\n").length;
         const readTime = Math.ceil(words / 200);
-        set({ stats: { wordCount: words, charCount: chars, lineCount: lines, readTime: readTime } });
+        set((state) => ({
+            stats: {
+                wordCount: words,
+                charCount: chars,
+                lineCount: lines,
+                readTime: readTime,
+                pageCount: pageCount !== undefined ? pageCount : state.stats.pageCount
+            }
+        }));
     },
 
     // Workspace Management
@@ -316,7 +337,7 @@ export const useStore = create<AppState>((set, get) => ({
             isFlashcardsGenerated: false,
             isQuizGenerated: false,
             isMindmapGenerated: false,
-            stats: { wordCount: 0, charCount: 0, lineCount: 0, readTime: 0 },
+            stats: { wordCount: 0, charCount: 0, lineCount: 0, readTime: 0, pageCount: 1 },
             slides: [],
             currentSlideIndex: 0,
             isSlideMode: false,
@@ -366,6 +387,8 @@ export const useStore = create<AppState>((set, get) => ({
                 isMindmapGenerated: !!data.mindmapData,
                 isInsightsGenerated: !!data.insightsData,
 
+                topics: data.topics || [],
+
                 // View settings - Critical for rendering the file immediately
                 view: 'editor',
                 mode: 'editor',
@@ -378,7 +401,7 @@ export const useStore = create<AppState>((set, get) => ({
             });
 
             // Recalculate stats for restored document
-            get().updateStats(data.extractedText || "");
+            get().updateStats(data.extractedText || "", data.metadata?.pageCount || 1);
 
             // Special case for slides - Load slide data from chunks
             if (isPptx && data.chunks && data.chunks.length > 0) {

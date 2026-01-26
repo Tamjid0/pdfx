@@ -37,6 +37,13 @@ const documentSchema = new mongoose.Schema({
     extractedText: { type: String },
     convertedPdfPath: { type: String },
     isArchived: { type: Boolean, default: false },
+    topics: [{
+        id: { type: String },
+        title: { type: String },
+        startPage: { type: Number },
+        endPage: { type: Number },
+        nodes: [{ type: String }] // IDs of nodes in this topic
+    }],
     lastAccessedAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 

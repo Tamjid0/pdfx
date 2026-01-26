@@ -11,6 +11,7 @@ interface SummaryProps {
 }
 
 import LocalizedShimmer from './LocalizedShimmer';
+import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
 
 const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
     const {
@@ -94,6 +95,11 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
                         <p className="text-gemini-gray mb-8 max-w-sm leading-relaxed">
                             Let our AI analyze your document to extract core concepts, main narratives, and actionable insights.
                         </p>
+
+                        <div className="w-full max-w-sm mb-10 bg-black/20 p-6 rounded-[2rem] border border-white/5 shadow-inner">
+                            <GenerationScopeSelector />
+                        </div>
+
                         <button
                             onClick={() => onGenerate('summary')}
                             className="group relative px-8 py-3.5 bg-gemini-green text-black rounded-xl text-sm font-black transition-all hover:bg-gemini-green-300 active:scale-95 shadow-[0_5px_15px_rgba(0,255,136,0.3)] overflow-hidden"

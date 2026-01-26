@@ -9,6 +9,10 @@ export const quizSchema = {
             difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
             quizType: z.enum(['multiple-choice', 'true-false', 'short-answer']).optional(),
         }).optional(),
+        scope: z.object({
+            type: z.enum(['all', 'pages', 'topics']),
+            value: z.any()
+        }).optional()
     }).refine((data) => data.text || data.fileId, {
         message: "Either text or fileId must be provided",
         path: ["text"],

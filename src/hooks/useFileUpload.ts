@@ -18,7 +18,8 @@ export const useFileUpload = () => {
         setRenderingProgress,
         setFileType,
         resetWorkspace,
-        updateStats
+        updateStats,
+        setTopics
     } = useStore();
 
     const pollJobStatus = async (jobId: string, documentId: string): Promise<any> => {
@@ -72,7 +73,8 @@ export const useFileUpload = () => {
 
             setHtmlPreview(response.extractedText || "");
             setFileId(documentId);
-            updateStats(response.extractedText || "");
+            setTopics(response.topics || []);
+            updateStats(response.extractedText || "", response.metadata?.pageCount || 1);
 
             // DEFAULT: Check if we are in import view, if so, switch to default editor mode
             // Otherwise, keep the current mode (e.g., if user is in Chat, stay in Chat)

@@ -218,22 +218,24 @@ router.post('/:documentId/sync', validate(getDocumentSchema), async (req, res) =
                 // We create a revision from the PREVIOUS active content before updating
                 if (oldData) {
                     const revisions = doc[key]?.revisions || [];
+                    const prevScope = doc[key]?.activeScope || { type: 'all' };
+
                     const newRevision = {
                         id: crypto.randomUUID(),
                         timestamp: new Date(),
-                        scope: doc[key]?.activeScope || { type: 'all' },
+                        scope: prevScope,
                         data: oldData
                     };
 
                     // Add to revisions, keep only latest 10
                     const updatedRevisions = [newRevision, ...revisions].slice(0, 10);
-
                     updateData[`${key}.revisions`] = updatedRevisions;
                 }
 
                 // 3. Update Active Content
+                const currentScope = scope || { type: 'all' };
                 updateData[`${key}.content`] = newData;
-                updateData[`${key}.activeScope`] = scope || { type: 'all' };
+                updateData[`${key}.activeScope`] = currentScope;
 
             } else {
                 // Non-versioned fields (chatHistory, metadata, etc.)

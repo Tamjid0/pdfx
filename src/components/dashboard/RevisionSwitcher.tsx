@@ -9,10 +9,26 @@ export const RevisionSwitcher: React.FC<RevisionSwitcherProps> = ({ module }) =>
     const {
         summaryRevisions, notesRevisions, insightsRevisions, flashcardsRevisions, quizRevisions,
         summaryData, notesData, insightsData, flashcardsData, quizData,
-        switchRevision
+        switchRevision, topics
     } = useStore();
 
     const [showHistory, setShowHistory] = useState(false);
+
+    // Helper to get descriptive scope labels
+    const getScopeLabel = (scope: any) => {
+        if (!scope || scope.type === 'all') return 'Full Document';
+        if (scope.type === 'pages') return `Pages ${scope.value[0]}-${scope.value[1]}`;
+        if (scope.type === 'topics') {
+            const topicIds = Array.isArray(scope.value) ? scope.value : [];
+            if (topicIds.length === 0) return 'Selected Topics';
+            if (topicIds.length === 1) {
+                const topic = topics.find(t => t.id === topicIds[0]);
+                return topic ? `Topic: ${topic.title}` : 'Selected Topic';
+            }
+            return `${topicIds.length} Topics Selected`;
+        }
+        return 'Custom Scope';
+    };
 
     // Get current module specific data
     const getModuleData = () => {
@@ -63,12 +79,12 @@ export const RevisionSwitcher: React.FC<RevisionSwitcherProps> = ({ module }) =>
                                 >
                                     <div className="flex justify-between items-start mb-1">
                                         <span className="text-[10px] font-bold text-white group-hover:text-gemini-green transition-colors">
-                                            {rev.timestamp ? new Date(rev.timestamp).toLocaleString() : 'Previous Version'}
+                                            {rev.timestamp ? new Date(rev.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'Previous Version'}
                                         </span>
                                         <span className="text-[8px] font-black text-white/20 uppercase tracking-widest">{rev.scope?.type || 'all'}</span>
                                     </div>
-                                    <p className="text-[9px] text-white/40 line-clamp-1">
-                                        {rev.scope?.type === 'pages' ? `Pages ${rev.scope.value[0]}-${rev.scope.value[1]}` : rev.scope?.type === 'topics' ? `Selected Topics` : 'Full Document'}
+                                    <p className="text-[9px] text-white/40 line-clamp-1 italic uppercase tracking-tighter">
+                                        {label}: {getScopeLabel(rev.scope)}
                                     </p>
                                 </button>
                             ))

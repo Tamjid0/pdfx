@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 
+import { type Revision } from '../../store/useStore';
+
 interface VersionTabsProps {
     module: string;
-    revisions: any[];
+    revisions: Revision<any>[];
     activeRevisionId: string | null;
     onSwitch: (revisionId: string | null) => void;
     onNew: () => void;
@@ -23,7 +25,7 @@ export const VersionTabs: React.FC<VersionTabsProps> = ({
     const [editName, setEditName] = useState('');
     const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
 
-    const handleDoubleClick = (rev: any) => {
+    const handleDoubleClick = (rev: Revision<any>) => {
         if (onRename) {
             setEditingId(rev.id);
             setEditName(rev.name || '');
@@ -45,7 +47,7 @@ export const VersionTabs: React.FC<VersionTabsProps> = ({
         }
     };
 
-    const handleDelete = (rev: any) => {
+    const handleDelete = (rev: Revision<any>) => {
         setDeleteConfirm({ id: rev.id, name: rev.name || 'this version' });
     };
 
@@ -63,8 +65,8 @@ export const VersionTabs: React.FC<VersionTabsProps> = ({
                 <button
                     onClick={() => onSwitch(null)}
                     className={`group relative px-4 py-2 rounded-t-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${activeRevisionId === null
-                            ? 'text-white bg-white/5'
-                            : 'text-white/40 hover:text-white/70 hover:bg-white/5'
+                        ? 'text-white bg-white/5'
+                        : 'text-white/40 hover:text-white/70 hover:bg-white/5'
                         }`}
                 >
                     <span>Current</span>
@@ -80,8 +82,8 @@ export const VersionTabs: React.FC<VersionTabsProps> = ({
                         onClick={() => onSwitch(rev.id)}
                         onDoubleClick={() => handleDoubleClick(rev)}
                         className={`group relative px-4 py-2 pr-8 rounded-t-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${activeRevisionId === rev.id
-                                ? 'text-white bg-white/5'
-                                : 'text-white/40 hover:text-white/70 hover:bg-white/5'
+                            ? 'text-white bg-white/5'
+                            : 'text-white/40 hover:text-white/70 hover:bg-white/5'
                             }`}
                     >
                         {editingId === rev.id ? (

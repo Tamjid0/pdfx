@@ -1,12 +1,7 @@
 
 import React, { useState } from 'react';
-import { useStore } from '../store/useStore';
-import type { Mode } from '../store/useStore';
+import { useStore, type Mode, type Flashcard } from '../store/useStore';
 
-interface Flashcard {
-    question: string;
-    answer: string;
-}
 
 interface FlashcardsProps {
     onGenerate: (mode: Mode) => void;
@@ -21,7 +16,7 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
 
     const [flippedCards, setFlippedCards] = useState<number[]>([]);
 
-    const cardsArray = Array.isArray(flashcardsData) ? flashcardsData : (flashcardsData?.flashcards || []);
+    const cardsArray = flashcardsData?.flashcards || [];
 
     const handleCardClick = (e: React.MouseEvent, index: number) => {
         // Only flip if not clicking on an editable element
@@ -36,33 +31,21 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
         if (flashcardsData) {
             const newCards = [...cardsArray];
             newCards[index] = { ...newCards[index], [field]: e.currentTarget.innerText };
-            if (Array.isArray(flashcardsData)) {
-                setFlashcardsData(newCards);
-            } else {
-                setFlashcardsData({ ...flashcardsData, flashcards: newCards });
-            }
+            setFlashcardsData({ ...flashcardsData, flashcards: newCards });
         }
     };
 
     const addCard = () => {
         if (flashcardsData) {
             const newCards = [...cardsArray, { question: 'New Question', answer: 'New Answer' }];
-            if (Array.isArray(flashcardsData)) {
-                setFlashcardsData(newCards);
-            } else {
-                setFlashcardsData({ ...flashcardsData, flashcards: newCards });
-            }
+            setFlashcardsData({ ...flashcardsData, flashcards: newCards });
         }
     };
 
     const deleteCard = (index: number) => {
         if (flashcardsData) {
             const newCards = cardsArray.filter((_: Flashcard, i: number) => i !== index);
-            if (Array.isArray(flashcardsData)) {
-                setFlashcardsData(newCards);
-            } else {
-                setFlashcardsData({ ...flashcardsData, flashcards: newCards });
-            }
+            setFlashcardsData({ ...flashcardsData, flashcards: newCards });
         }
     };
 
@@ -126,7 +109,7 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
             <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
                 <p className="text-[#666] text-[10px] font-black uppercase tracking-[0.3em] mb-8 text-center">Interactive Sessions • Click to reveal</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-                    {cardsArray.map((card: Flashcard, index: number) => (
+                    {cardsArray.map((card, index: number) => (
                         <div key={index} className="relative group">
                             <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button

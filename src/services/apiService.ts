@@ -1,4 +1,9 @@
 // src/services/apiService.ts
+import {
+    SummaryData, NotesData, FlashcardsData, QuizData, MindmapData, InsightsData,
+    Topic, GenerationScope, DocumentOverview
+} from '../store/useStore';
+
 export async function formatContent(html: string, prompt: string) {
     const response = await fetch('/api/v1/format', {
         method: 'POST',
@@ -16,18 +21,18 @@ export async function formatContent(html: string, prompt: string) {
 type GenerationPayload = {
     text?: string;
     fileId?: string;
-    settings?: any;
-    scope?: { type: 'all' | 'pages' | 'topics', value: any };
+    settings?: Record<string, any>;
+    scope?: GenerationScope;
 } | string;
 
-function getPayload(arg1: GenerationPayload, arg2?: any) {
+function getPayload(arg1: GenerationPayload, arg2?: Record<string, any>): { text?: string; fileId?: string; settings?: Record<string, any>; scope?: GenerationScope } {
     if (typeof arg1 === 'string') {
         return { text: arg1, settings: arg2 || {} };
     }
     return arg1;
 }
 
-export async function generateSummary(arg1: GenerationPayload, settings?: any) {
+export async function generateSummary(arg1: GenerationPayload, settings?: Record<string, any>): Promise<SummaryData> {
     const payload = getPayload(arg1, settings);
     const response = await fetch('/api/v1/summary', {
         method: 'POST',
@@ -83,7 +88,7 @@ export async function embedText(text: string, fileName?: string) {
     return response.json();
 }
 
-export async function fetchNotes(arg1: GenerationPayload, settings?: any) {
+export async function fetchNotes(arg1: GenerationPayload, settings?: Record<string, any>): Promise<NotesData> {
     const payload = getPayload(arg1, settings);
     const response = await fetch('/api/v1/notes', {
         method: 'POST',
@@ -98,7 +103,7 @@ export async function fetchNotes(arg1: GenerationPayload, settings?: any) {
     return response.json();
 }
 
-export async function fetchFlashcards(arg1: GenerationPayload, settings?: any) {
+export async function fetchFlashcards(arg1: GenerationPayload, settings?: Record<string, any>): Promise<FlashcardsData> {
     const payload = getPayload(arg1, settings);
     const response = await fetch('/api/v1/flashcards', {
         method: 'POST',
@@ -113,7 +118,7 @@ export async function fetchFlashcards(arg1: GenerationPayload, settings?: any) {
     return response.json();
 }
 
-export async function fetchQuiz(arg1: GenerationPayload, settings?: any) {
+export async function fetchQuiz(arg1: GenerationPayload, settings?: Record<string, any>): Promise<QuizData> {
     const payload = getPayload(arg1, settings);
     const response = await fetch('/api/v1/quiz', {
         method: 'POST',
@@ -128,7 +133,7 @@ export async function fetchQuiz(arg1: GenerationPayload, settings?: any) {
     return response.json();
 }
 
-export async function fetchMindmap(arg1: GenerationPayload, settings?: any) {
+export async function fetchMindmap(arg1: GenerationPayload, settings?: Record<string, any>): Promise<MindmapData> {
     const payload = getPayload(arg1, settings);
     const response = await fetch('/api/v1/mindmap', {
         method: 'POST',
@@ -143,7 +148,7 @@ export async function fetchMindmap(arg1: GenerationPayload, settings?: any) {
     return response.json();
 }
 
-export async function fetchInsights(arg1: GenerationPayload, settings?: any) {
+export async function fetchInsights(arg1: GenerationPayload, settings?: Record<string, any>): Promise<InsightsData> {
     const payload = getPayload(arg1, settings);
     const response = await fetch('/api/v1/insights', {
         method: 'POST',
@@ -246,7 +251,19 @@ export async function getJobStatus(jobId: string) {
 /**
  * Syncs workspace content (Chat, Summary, etc.) to the backend
  */
-export async function syncProjectContent(documentId: string, content: any, options?: { append?: boolean, scope?: any }) {
+export async function syncProjectContent(
+    documentId: string,
+    content: SummaryData | NotesData | InsightsData | QuizData | FlashcardsData | MindmapData | {
+        chatHistory?: { role: 'user' | 'assistant' | 'ai'; content: string; timestamp?: string }[],
+        summaryData?: SummaryData,
+        notesData?: NotesData,
+        insightsData?: InsightsData,
+        quizData?: QuizData,
+        flashcardsData?: FlashcardsData,
+        mindmapData?: MindmapData
+    },
+    options?: { append?: boolean, scope?: GenerationScope, versionName?: string }
+) {
     const response = await fetch(`/api/v1/documents/${documentId}/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -261,7 +278,7 @@ export async function syncProjectContent(documentId: string, content: any, optio
 /**
  * Fetches all documents (projects) for a specific user
  */
-export async function fetchUserDocuments(userId: string) {
+export async function fetchUserDocuments(userId: string): Promise<DocumentOverview[]> {
     const response = await fetch(`/api/v1/documents?userId=${userId}`);
     if (!response.ok) {
         throw new Error('Failed to fetch documents');

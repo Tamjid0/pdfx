@@ -1,17 +1,24 @@
 import React, { useState } from 'react';
-import { useStore, type PreviewPreset } from '../../store/useStore';
+import {
+    useStore, type PreviewPreset, type SummaryData, type NotesData,
+    type InsightsData, type FlashcardsData, type QuizData, type MindmapData,
+    type Revision
+} from '../../store/useStore';
 import { toast } from 'react-hot-toast';
 
 interface ProjectExportActionProps {
     mode: string;
-    data: any;
+    data: SummaryData | NotesData | InsightsData | FlashcardsData | QuizData | MindmapData | string | null;
     filename: string;
-    revisions?: any[];
+    documentId: string;
+    revisions?: Revision<any>[];
     activeDropdown: string | null;
     setActiveDropdown: (mode: string | null) => void;
 }
 
-const ProjectExportAction: React.FC<ProjectExportActionProps> = ({ mode, data, filename, revisions = [], activeDropdown, setActiveDropdown }) => {
+const ProjectExportAction: React.FC<ProjectExportActionProps> = ({
+    mode, data, filename, documentId, revisions = [], activeDropdown, setActiveDropdown
+}) => {
     const { previewPreset, setPreviewPreset, topics } = useStore();
     const [selectedVersion, setSelectedVersion] = useState<string>('current');
     const [isExporting, setIsExporting] = useState(false);
@@ -28,13 +35,13 @@ const ProjectExportAction: React.FC<ProjectExportActionProps> = ({ mode, data, f
 
     const getScopeLabel = (scope: any) => {
         if (!scope || scope.type === 'all') return 'Full Document';
-        if (scope.type === 'pages') return `Pages ${scope.value[0]}-${scope.value[1]}`;
+        if (scope.type === 'pages') return `Pages ${scope.value[0]} -${scope.value[1]} `;
         if (scope.type === 'topics') {
-            const topicIds = Array.isArray(scope.value) ? scope.value : [];
+            const topicIds: string[] = Array.isArray(scope.value) ? scope.value : [];
             if (topicIds.length === 0) return 'Selected Topics';
             if (topicIds.length === 1) {
                 const topic = topics.find(t => t.id === topicIds[0]);
-                return topic ? `${topic.title}` : 'Selected Topic';
+                return topic ? `${topic.label} ` : 'Selected Topic';
             }
             return `${topicIds.length} Topics`;
         }
@@ -50,87 +57,105 @@ const ProjectExportAction: React.FC<ProjectExportActionProps> = ({ mode, data, f
 
     const currentPreset = presets.find(p => p.value === previewPreset) || presets[0];
 
-    const renderDataToHtml = (mode: string, data: any): string => {
-        if (mode === 'editor') return data || '';
+    const renderDataToHtml = (
+        mode: string,
+        data: SummaryData | NotesData | InsightsData | FlashcardsData | QuizData | MindmapData | string | null
+    ): string => {
+        if (mode === 'editor') return (data as string) || '';
         if (!data) return '<h1>No content available</h1>';
 
         try {
             switch (mode) {
-                case 'summary':
+                case 'summary': {
+                    const d = data as SummaryData;
                     return `
-                        <h1>Executive Summary</h1>
-                        <div>${data.summary || '<i>No summary content available.</i>'}</div>
+    <h1>Executive Summary</h1>
+                        <div>${d.summary || '<i>No summary content available.</i>'}</div>
                         <h2>Key Highlights</h2>
-                        <ul>${(data.keyPoints && data.keyPoints.length > 0)
-                            ? data.keyPoints.map((p: string) => `<li>${p}</li>`).join('')
+                        <ul>${(d.keyPoints && d.keyPoints.length > 0)
+                            ? d.keyPoints.map((p) => `<li>${p}</li>`).join('')
                             : '<li>No key points available.</li>'}</ul>
-                    `;
-                case 'notes':
+`;
+                }
+                case 'notes': {
+                    const d = data as NotesData;
                     return `
-                        <h1>Study Notes</h1>
-                        ${(data.notes && data.notes.length > 0)
-                            ? data.notes.map((s: any) => `
+    <h1>Study Notes</h1>
+        ${(d.notes && d.notes.length > 0)
+                            ? d.notes.map((s) => `
                                 <h2>${s.section || 'Unstructured Section'}</h2>
-                                <ul>${(s.points || []).map((p: string) => `<li>${p}</li>`).join('')}</ul>
-                            `).join('') : '<p>No notes available.</p>'}
-                    `;
-                case 'insights':
+                                <ul>${(s.points || []).map((p) => `<li>${p}</li>`).join('')}</ul>
+                            `).join('') : '<p>No notes available.</p>'
+                        }
+`;
+                }
+                case 'insights': {
+                    const d = data as InsightsData;
                     return `
-                        <h1>Core Insights</h1>
-                        ${(data.insights && data.insights.length > 0)
-                            ? data.insights.map((i: any) => `
+    <h1>Core Insights</h1>
+        ${(d.insights && d.insights.length > 0)
+                            ? d.insights.map((i) => `
                                 <h3>${i.title || 'Untitled Insight'}</h3>
                                 <p>${i.description || ''}</p>
-                            `).join('') : '<p>No insights available.</p>'}
-                    `;
-                case 'flashcards':
+                            `).join('') : '<p>No insights available.</p>'
+                        }
+`;
+                }
+                case 'flashcards': {
+                    const d = data as FlashcardsData;
                     return `
-                        <h1>Flashcards</h1>
-                        <table style="width:100%; border-collapse: collapse; margin-top: 20px;">
-                            ${(data.flashcards && data.flashcards.length > 0)
-                            ? data.flashcards.map((f: any) => `
+    <h1>Flashcards</h1>
+        <table style="width:100%; border-collapse: collapse; margin-top: 20px;">
+            ${(d.flashcards && d.flashcards.length > 0)
+                            ? d.flashcards.map((f) => `
                                     <tr>
-                                        <td style="border: 1px solid #ddd; padding: 12px; font-weight: bold; width: 40%; background: #f9f9f9;">${f.front || ''}</td>
-                                        <td style="border: 1px solid #ddd; padding: 12px;">${f.back || ''}</td>
+                                        <td style="border: 1px solid #ddd; padding: 12px; font-weight: bold; width: 40%; background: #f9f9f9;">${f.question || ''}</td>
+                                        <td style="border: 1px solid #ddd; padding: 12px;">${f.answer || ''}</td>
                                     </tr>
                                 `).join('') : '<tr><td>No flashcards available.</td></tr>'}
-                        </table>
-                    `;
-                case 'quiz':
+        </table>
+`;
+                }
+                case 'quiz': {
+                    const d = data as QuizData;
                     return `
-                        <h1>Quiz Assessment</h1>
-                        ${(data.quiz && data.quiz.length > 0)
-                            ? data.quiz.map((q: any, idx: number) => `
+    <h1>Quiz Assessment</h1>
+        ${(d.quiz && d.quiz.length > 0)
+                            ? d.quiz.map((q, idx: number) => `
                                 <div style="margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
                                     <p style="font-size: 1.1em;"><strong>Question ${idx + 1}: ${q.question || '...'}</strong></p>
                                     ${q.type === 'mc' ? `
                                         <ul style="list-style-type: none; padding-left: 20px;">
-                                            ${(q.options || []).map((o: any) => `<li style="margin-bottom: 8px;">[ ] ${o.label}: ${o.value}</li>`).join('')}
+                                            ${(q.options || []).map((o) => `<li style="margin-bottom: 8px;">[ ] ${o.label}: ${o.value}</li>`).join('')}
                                         </ul>
                                     ` : ''}
                                     <p style="color: #666; font-size: 0.9em; margin-top: 10px;"><i>Correct Answer: ${q.correctAnswer || 'Not provided'}</i></p>
                                 </div>
-                            `).join('') : '<p>No quiz questions available.</p>'}
-                    `;
-                case 'mindmap':
+                            `).join('') : '<p>No quiz questions available.</p>'
+                        }
+`;
+                }
+                case 'mindmap': {
+                    const d = data as MindmapData;
                     return `
-                        <h1>Mind Map Structure</h1>
-                        <ul>${(data.nodes && data.nodes.length > 0)
-                            ? data.nodes.map((n: any) => `<li>${n.data?.label || n.id}</li>`).join('')
+    <h1>Mind Map Structure</h1>
+        <ul>${(d.nodes && d.nodes.length > 0)
+                            ? d.nodes.map((n) => `<li>${n.data?.label || n.id}</li>`).join('')
                             : '<li>No mind map nodes available.</li>'}</ul>
-                    `;
+`;
+                }
                 default:
                     return typeof data === 'string' ? data : JSON.stringify(data);
             }
         } catch (err) {
             console.error('Error rendering data to HTML:', err);
-            return `<h1>Error rendering content</h1><p>${JSON.stringify(data)}</p>`;
+            return `<h1>Error rendering content</h1> <p>${JSON.stringify(data)}</p>`;
         }
     };
 
     const wrapInStyle = (html: string) => {
         return `
-            <html>
+    <html>
                 <head>
                     <style>
                         body { font-family: sans-serif; padding: 40px; line-height: 1.6; color: #333; }
@@ -145,7 +170,7 @@ const ProjectExportAction: React.FC<ProjectExportActionProps> = ({ mode, data, f
                 </head>
                 <body>${html}</body>
             </html>
-        `;
+    `;
     };
 
     const handleExportAction = async (format: 'pdf' | 'docx') => {
@@ -157,7 +182,7 @@ const ProjectExportAction: React.FC<ProjectExportActionProps> = ({ mode, data, f
             if (selectedVersion !== 'current' && revisions.length > 0) {
                 const revision = revisions.find(r => r.id === selectedVersion);
                 if (revision) {
-                    exportData = revision.data;
+                    exportData = revision.content;
                 }
             }
 
@@ -187,7 +212,7 @@ const ProjectExportAction: React.FC<ProjectExportActionProps> = ({ mode, data, f
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${body.filename}.${format}`;
+            a.download = `${body.filename}.${format} `;
             document.body.appendChild(a);
             a.click();
             a.remove();
@@ -233,7 +258,7 @@ const ProjectExportAction: React.FC<ProjectExportActionProps> = ({ mode, data, f
                                 >
                                     <div className="flex flex-col items-start">
                                         <span>Current Version</span>
-                                        <span className="text-[8px] text-white/30 uppercase tracking-tighter">{getScopeLabel(data.activeScope || { type: 'all' })}</span>
+                                        <span className="text-[8px] text-white/30 uppercase tracking-tighter">Latest Extraction</span>
                                     </div>
                                     {selectedVersion === 'current' && <div className="w-1.5 h-1.5 rounded-full bg-gemini-green shadow-[0_0_8px_rgba(0,255,136,0.6)]"></div>}
                                 </button>
@@ -245,7 +270,6 @@ const ProjectExportAction: React.FC<ProjectExportActionProps> = ({ mode, data, f
                                     >
                                         <div className="flex flex-col items-start">
                                             <span>{new Date(rev.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
-                                            <span className="text-[8px] text-white/30 uppercase tracking-tighter">{getScopeLabel(rev.scope)}</span>
                                         </div>
                                         {selectedVersion === rev.id && <div className="w-1.5 h-1.5 rounded-full bg-gemini-green shadow-[0_0_8px_rgba(0,255,136,0.6)]"></div>}
                                     </button>

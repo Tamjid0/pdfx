@@ -1,15 +1,10 @@
-import React from 'react';
-import { useStore } from '../store/useStore';
-import type { Mode } from '../store/useStore';
+import React, { useState } from 'react';
+import { useStore, type Mode, type Insight } from '../store/useStore';
 import LocalizedShimmer from './LocalizedShimmer';
 import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
 import { VersionTabs } from './dashboard/VersionTabs';
 import { toast } from 'react-hot-toast';
 
-interface Insight {
-    title: string;
-    description: string;
-}
 
 interface InsightsProps {
     onGenerate: (mode: Mode) => void;
@@ -20,43 +15,30 @@ const Insights: React.FC<InsightsProps> = ({ onGenerate }) => {
         insightsData, setInsightsData, openExportModal, isGeneratingInsights,
         generationScope, insightsRevisions, switchRevision, deleteRevision, renameRevision
     } = useStore();
-    const [activeRevisionId, setActiveRevisionId] = React.useState<string | null>(null);
+    const [activeRevisionId, setActiveRevisionId] = useState<string | null>(null);
+    const [showRegenerateScope, setShowRegenerateScope] = useState(false);
 
-    const [showRegenerateScope, setShowRegenerateScope] = React.useState(false);
-
-    const insightsArray = Array.isArray(insightsData) ? insightsData : (insightsData?.insights || []);
+    const insightsArray = insightsData?.insights || [];
 
     const handleContentChange = (e: React.FocusEvent<HTMLHeadingElement | HTMLParagraphElement>, index: number, field: 'title' | 'description') => {
         if (insightsData) {
             const newInsights = [...insightsArray];
             newInsights[index] = { ...newInsights[index], [field]: e.currentTarget.innerText };
-            if (Array.isArray(insightsData)) {
-                setInsightsData(newInsights);
-            } else {
-                setInsightsData({ ...insightsData, insights: newInsights });
-            }
+            setInsightsData({ ...insightsData, insights: newInsights });
         }
     };
 
     const addInsight = () => {
         if (insightsData) {
             const newInsights = [...insightsArray, { title: 'New Insight Title', description: 'New insight description...' }];
-            if (Array.isArray(insightsData)) {
-                setInsightsData(newInsights);
-            } else {
-                setInsightsData({ ...insightsData, insights: newInsights });
-            }
+            setInsightsData({ ...insightsData, insights: newInsights });
         }
     };
 
     const deleteInsight = (index: number) => {
         if (insightsData) {
             const newInsights = insightsArray.filter((_: Insight, i: number) => i !== index);
-            if (Array.isArray(insightsData)) {
-                setInsightsData(newInsights);
-            } else {
-                setInsightsData({ ...insightsData, insights: newInsights });
-            }
+            setInsightsData({ ...insightsData, insights: newInsights });
         }
     };
 

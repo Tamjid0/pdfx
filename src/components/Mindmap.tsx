@@ -1,27 +1,11 @@
-
 import React, { useEffect } from 'react';
-import { useStore } from '../store/useStore';
+import { useStore, type MindmapData, type MindmapNode, type MindmapEdge } from '../store/useStore';
 import ReactFlow, { useNodesState, useEdgesState, MiniMap, Controls, Background, MarkerType } from 'reactflow';
 import 'reactflow/dist/style.css';
 import ELK from 'elkjs/lib/elk.bundled.js';
 
-interface MindmapNode {
-    id: string;
-    data: { label: string };
-    position: { x: number, y: number }; // Elkjs needs position
-}
-
-interface MindmapEdge {
-    id: string;
-    source: string;
-    target: string;
-}
-
 interface MindmapProps {
-    data: {
-        nodes: MindmapNode[];
-        edges: MindmapEdge[];
-    } | null;
+    data: MindmapData | null;
     onGenerate: (mode: 'mindmap') => void;
 }
 

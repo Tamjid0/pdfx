@@ -46,12 +46,15 @@ const GenerationScopeSelector: React.FC<GenerationScopeSelectorProps> = ({ class
     };
 
     const toggleTopic = (topicId: string) => {
-        const currentValue = Array.isArray(generationScope.value) ? generationScope.value : [];
+        const currentValue = (generationScope.type === 'topics' && Array.isArray(generationScope.value))
+            ? (generationScope.value as string[])
+            : [];
+
         const newValue = currentValue.includes(topicId)
             ? currentValue.filter(id => id !== topicId)
             : [...currentValue, topicId];
 
-        setGenerationScope({ ...generationScope, value: newValue });
+        setGenerationScope({ type: 'topics', value: newValue });
     };
 
     return (
@@ -121,16 +124,16 @@ const GenerationScopeSelector: React.FC<GenerationScopeSelectorProps> = ({ class
                                 <button
                                     key={topic.id}
                                     onClick={() => toggleTopic(topic.id)}
-                                    className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${generationScope.value?.includes(topic.id)
-                                        ? 'bg-gemini-green/10 border-gemini-green/30 text-white'
-                                        : 'bg-white/5 border-white/5 text-white/60 hover:bg-white/10'
+                                    className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${(generationScope.type === 'topics' && Array.isArray(generationScope.value) && (generationScope.value as string[]).includes(topic.id))
+                                            ? 'bg-gemini-green/10 border-gemini-green/30 text-white'
+                                            : 'bg-white/5 border-white/5 text-white/60 hover:bg-white/10'
                                         }`}
                                 >
                                     <div className="flex flex-col items-start gap-0.5">
                                         <span className="text-[11px] font-bold line-clamp-1 text-left">{topic.title}</span>
                                         <span className="text-[9px] text-white/30 uppercase tracking-widest font-black">Page {topic.startPage + 1}</span>
                                     </div>
-                                    {generationScope.value?.includes(topic.id) && (
+                                    {(generationScope.type === 'topics' && Array.isArray(generationScope.value) && (generationScope.value as string[]).includes(topic.id)) && (
                                         <div className="w-2 h-2 rounded-full bg-gemini-green shadow-[0_0_8px_rgba(0,255,136,1)]"></div>
                                     )}
                                 </button>

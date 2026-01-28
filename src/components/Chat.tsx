@@ -7,16 +7,13 @@ import { triggerBrowserSearch } from '../utils/citationParser';
 
 import { useStore } from '../store/useStore';
 
-interface ChatMessage {
-    sender: 'user' | 'ai';
-    text: string;
-    timestamp: string;
-}
+// Local interface removed, using store types implicitly via Props
 
 interface ChatProps {
-    history: ChatMessage[];
+    history: { role: 'user' | 'assistant' | 'ai'; content: string; timestamp?: string }[];
     onSendMessage: (message: string) => void;
     isTyping?: boolean;
+    onCitationClick?: (pageIndex: number, searchText?: string) => void;
 }
 
 const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
@@ -108,13 +105,13 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                         ) : (
                             <div className="flex flex-col space-y-8">
                                 {history.map((msg, index) => (
-                                    <div key={index} className={`message flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 duration-300`}>
-                                        <div className={`max-w-[85%] ${msg.sender === 'user' ? 'user' : 'assistant-message w-full'}`}>
-                                            <div className={`message-content leading-relaxed ${msg.sender === 'user'
+                                    <div key={index} className={`message flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 duration-300`}>
+                                        <div className={`max-w-[85%] ${msg.role === 'user' ? 'user' : 'assistant-message w-full'}`}>
+                                            <div className={`message-content leading-relaxed ${msg.role === 'user'
                                                 ? 'bg-[#2f2f2f] px-5 py-3 rounded-2xl text-white'
                                                 : 'text-[#d1d1d1]'
                                                 }`}>
-                                                {msg.sender === 'ai' ? (
+                                                {(msg.role === 'ai' || msg.role === 'assistant') ? (
                                                     <div className="prose prose-invert prose-sm max-w-none">
                                                         <ReactMarkdown
                                                             remarkPlugins={[remarkGfm]}
@@ -145,18 +142,18 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                                                                 }
                                                             }}
                                                         >
-                                                            {msg.text}
+                                                            {msg.content}
                                                         </ReactMarkdown>
                                                     </div>
                                                 ) : (
-                                                    <span className="whitespace-pre-wrap">{msg.text}</span>
+                                                    <span className="whitespace-pre-wrap">{msg.content}</span>
                                                 )}
                                             </div>
 
-                                            {msg.sender === 'ai' && (
+                                            {(msg.role === 'ai' || msg.role === 'assistant') && (
                                                 <div className="message-actions flex items-center gap-2 mt-3 opacity-60 hover:opacity-100 transition-opacity">
                                                     <button
-                                                        onClick={() => handleCopy(msg.text, `copy-${index}`)}
+                                                        onClick={() => handleCopy(msg.content, `copy-${index}`)}
                                                         className={`action-btn flex items-center gap-1.5 px-3 py-1.5 bg-transparent border border-[#3f3f3f] rounded-lg text-xs text-[#9ca3af] hover:bg-[#2f2f2f] hover:text-white transition-all ${copiedId === `copy-${index}` ? 'text-gemini-green border-gemini-green' : ''}`}
                                                     >
                                                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>

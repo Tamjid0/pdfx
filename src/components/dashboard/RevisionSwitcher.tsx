@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useStore } from '../../store/useStore';
+import { useStore, type GenerationScope, type Topic } from '../../store/useStore';
 
 interface RevisionSwitcherProps {
     module: 'summary' | 'notes' | 'insights' | 'flashcards' | 'quiz';
@@ -15,11 +15,11 @@ export const RevisionSwitcher: React.FC<RevisionSwitcherProps> = ({ module }) =>
     const [showHistory, setShowHistory] = useState(false);
 
     // Helper to get descriptive scope labels
-    const getScopeLabel = (scope: any) => {
+    const getScopeLabel = (scope: GenerationScope | null) => {
         if (!scope || scope.type === 'all') return 'Full Document';
         if (scope.type === 'pages') return `Pages ${scope.value[0]}-${scope.value[1]}`;
         if (scope.type === 'topics') {
-            const topicIds = Array.isArray(scope.value) ? scope.value : [];
+            const topicIds = (Array.isArray(scope.value) ? scope.value : []) as string[];
             if (topicIds.length === 0) return 'Selected Topics';
             if (topicIds.length === 1) {
                 const topic = topics.find(t => t.id === topicIds[0]);
@@ -68,7 +68,7 @@ export const RevisionSwitcher: React.FC<RevisionSwitcherProps> = ({ module }) =>
                     </div>
                     <div className="space-y-2 max-h-60 overflow-y-auto no-scrollbar">
                         {revisions.length > 0 ? (
-                            revisions.map((rev: any) => (
+                            revisions.map((rev) => (
                                 <button
                                     key={rev.id}
                                     onClick={() => {

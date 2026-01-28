@@ -1,23 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { useStore } from '../store/useStore';
-import type { Mode } from '../store/useStore';
+import { useStore, type Mode, type QuizItem } from '../store/useStore';
 import LocalizedShimmer from './LocalizedShimmer';
 
-type QuizQuestion = {
-    type: 'mc';
-    question: string;
-    options: { label: string; value: string; }[];
-    correctAnswer: string;
-} | {
-    type: 'tf';
-    question: string;
-    correctAnswer: boolean;
-} | {
-    type: 'fib';
-    question: string;
-    correctAnswer: string;
-};
+// Local types removed, using QuizItem from store
 
 interface QuizProps {
     onGenerate: (mode: Mode) => void;
@@ -25,7 +11,8 @@ interface QuizProps {
 
 const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
     const {
-        quizData, setQuizData, openExportModal, isGeneratingQuiz
+        quizData, setQuizData, openExportModal, isGeneratingQuiz,
+        switchRevision, deleteRevision, renameRevision, quizRevisions
     } = useStore();
 
     const [selectedAnswers, setSelectedAnswers] = useState<Record<string, any>>({});
@@ -45,7 +32,7 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
             // But TS might complain if it infers specific union members.
             // Using a cast or just direct assignment if TS is smart enough.
             // Simplified update:
-            const updatedQuestion = { ...newQuiz[index], question: e.currentTarget.innerText } as QuizQuestion;
+            const updatedQuestion = { ...newQuiz[index], question: e.currentTarget.innerText } as QuizItem;
             newQuiz[index] = updatedQuestion;
             setQuizData({ ...quizData, quiz: newQuiz });
         }
@@ -61,7 +48,7 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
     const checkQuiz = () => {
         if (!quizData) return;
         let currentScore = 0;
-        quizData.quiz.forEach((q: QuizQuestion, index: number) => {
+        quizData.quiz.forEach((q: QuizItem, index: number) => {
             const userAnswer = selectedAnswers[`q${index}`];
             if (q.type === 'tf' || q.type === 'mc') {
                 if (userAnswer === q.correctAnswer) {
@@ -136,7 +123,7 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
                 <div className="max-w-3xl mx-auto space-y-8">
-                    {quizData.quiz.map((q: QuizQuestion, qIndex: number) => (
+                    {quizData.quiz.map((q: QuizItem, qIndex: number) => (
                         <div key={qIndex} className={`group relative bg-[#111] border border-[#222] rounded-2xl p-6 transition-all ${showResults ? 'opacity-80' : 'hover:border-[#333]'}`}>
                             <div className="flex items-start gap-4 mb-6">
                                 <span className="text-xs font-black text-[#444] mt-1 font-mono">{(qIndex + 1).toString().padStart(2, '0')}</span>
@@ -177,8 +164,8 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
                                         onClick={() => handleAnswerChange(qIndex, opt)}
                                         className={`w-full text-left p-4 rounded-xl border transition-all flex items-center justify-between 
                                             ${selectedAnswers[`q${qIndex}`] === opt ? 'bg-[#00ff88]/10 border-[#00ff88] text-white' : 'bg-[#1a1a1a] border-[#222] text-[#888] hover:border-[#333] hover:text-[#ccc]'}
-                                            ${showResults && opt === q.correctAnswer ? '!bg-[#00ff88]/20 !border-[#00ff88] !text-[#00ff88]' : ''}
-                                            ${showResults && selectedAnswers[`q${qIndex}`] === opt && opt !== q.correctAnswer ? '!bg-[#ff4444]/10 !border-[#ff4444] !text-[#ff4444]' : ''}
+                                            ${showResults && String(opt) === String(q.correctAnswer) ? '!bg-[#00ff88]/20 !border-[#00ff88] !text-[#00ff88]' : ''}
+                                            ${showResults && selectedAnswers[`q${qIndex}`] === opt && String(opt) !== String(q.correctAnswer) ? '!bg-[#ff4444]/10 !border-[#ff4444] !text-[#ff4444]' : ''}
                                         `}
                                     >
                                         <span className="text-sm font-semibold">{opt ? 'True' : 'False'}</span>

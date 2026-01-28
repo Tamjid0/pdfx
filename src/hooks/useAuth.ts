@@ -11,9 +11,24 @@ import {
 } from "firebase/auth";
 import { auth } from "../lib/firebase";
 
+export interface MongoUser {
+    _id: string;
+    firebaseUid: string;
+    email: string;
+    displayName?: string;
+    photoURL?: string;
+    plan: 'free' | 'pro';
+    tier?: 'free' | 'pro' | 'premium';
+    credits?: number;
+    usage: {
+        documentsCount: number;
+        aiTokensUsed: number;
+    };
+}
+
 export const useAuth = () => {
     const [user, setUser] = useState<User | null>(null);
-    const [mongoUser, setMongoUser] = useState<any>(null);
+    const [mongoUser, setMongoUser] = useState<MongoUser | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 

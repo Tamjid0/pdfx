@@ -1,15 +1,10 @@
-import React from 'react';
-import { useStore } from '../store/useStore';
-import type { Mode } from '../store/useStore';
+import React, { useState } from 'react';
+import { useStore, type Mode, type NoteSection } from '../store/useStore';
 import LocalizedShimmer from './LocalizedShimmer';
 import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
 import { VersionTabs } from './dashboard/VersionTabs';
 import { toast } from 'react-hot-toast';
 
-interface NoteSection {
-    section: string;
-    points: string[];
-}
 
 interface NotesProps {
     onGenerate: (mode: Mode) => void;
@@ -21,21 +16,17 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
         generationScope, notesRevisions, switchRevision, deleteRevision, renameRevision
     } = useStore();
 
-    const [showRegenerateScope, setShowRegenerateScope] = React.useState(false);
-    const [activeRevisionId, setActiveRevisionId] = React.useState<string | null>(null);
-    const [showHistory, setShowHistory] = React.useState(false);
+    const [showRegenerateScope, setShowRegenerateScope] = useState(false);
+    const [activeRevisionId, setActiveRevisionId] = useState<string | null>(null);
+    const [showHistory, setShowHistory] = useState(false);
 
-    const notesArray = Array.isArray(notesData) ? notesData : (notesData?.notes || []);
+    const notesArray = notesData?.notes || [];
 
     const handleSectionTitleChange = (e: React.FocusEvent<HTMLHeadingElement>, sectionIndex: number) => {
         if (notesData) {
             const newNotes = [...notesArray];
             newNotes[sectionIndex] = { ...newNotes[sectionIndex], section: e.currentTarget.innerText };
-            if (Array.isArray(notesData)) {
-                setNotesData(newNotes);
-            } else {
-                setNotesData({ ...notesData, notes: newNotes });
-            }
+            setNotesData({ ...notesData, notes: newNotes });
         }
     };
 
@@ -45,22 +36,14 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
             const newPoints = [...newNotes[sectionIndex].points];
             newPoints[pointIndex] = e.currentTarget.innerText;
             newNotes[sectionIndex] = { ...newNotes[sectionIndex], points: newPoints };
-            if (Array.isArray(notesData)) {
-                setNotesData(newNotes);
-            } else {
-                setNotesData({ ...notesData, notes: newNotes });
-            }
+            setNotesData({ ...notesData, notes: newNotes });
         }
     };
 
     const addSection = () => {
         if (notesData) {
             const newNotes = [...notesArray, { section: 'New Section', points: ['New insights here...'] }];
-            if (Array.isArray(notesData)) {
-                setNotesData(newNotes);
-            } else {
-                setNotesData({ ...notesData, notes: newNotes });
-            }
+            setNotesData({ ...notesData, notes: newNotes });
         }
     };
 
@@ -69,22 +52,14 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
             const newNotes = [...notesArray];
             const newPoints = [...newNotes[sectionIndex].points, 'New point...'];
             newNotes[sectionIndex] = { ...newNotes[sectionIndex], points: newPoints };
-            if (Array.isArray(notesData)) {
-                setNotesData(newNotes);
-            } else {
-                setNotesData({ ...notesData, notes: newNotes });
-            }
+            setNotesData({ ...notesData, notes: newNotes });
         }
     };
 
     const deleteSection = (sectionIndex: number) => {
         if (notesData) {
             const newNotes = notesArray.filter((_: NoteSection, i: number) => i !== sectionIndex);
-            if (Array.isArray(notesData)) {
-                setNotesData(newNotes);
-            } else {
-                setNotesData({ ...notesData, notes: newNotes });
-            }
+            setNotesData({ ...notesData, notes: newNotes });
         }
     };
 
@@ -93,11 +68,7 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
             const newNotes = [...notesArray];
             const newPoints = newNotes[sectionIndex].points.filter((_: string, i: number) => i !== pointIndex);
             newNotes[sectionIndex] = { ...newNotes[sectionIndex], points: newPoints };
-            if (Array.isArray(notesData)) {
-                setNotesData(newNotes);
-            } else {
-                setNotesData({ ...notesData, notes: newNotes });
-            }
+            setNotesData({ ...notesData, notes: newNotes });
         }
     };
 

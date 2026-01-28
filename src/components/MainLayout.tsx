@@ -35,9 +35,9 @@ interface MainLayoutProps {
     htmlPreview: string | null;
     activeNotesToggles: any;
     activeInsightsToggles: any;
-    chatHistory: any[];
+    chatHistory: { role: 'user' | 'assistant' | 'ai'; content: string; timestamp?: string }[];
     isTyping: boolean;
-    mindmapData: any;
+    mindmapData: any; // Keeping any for complex mindmap structure for now
     isSummaryGenerated: boolean;
     isInsightsGenerated: boolean;
     isNotesGenerated: boolean;

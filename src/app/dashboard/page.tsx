@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../hooks/useAuth';
-import { useStore } from '../../store/useStore';
+import { useStore, type DocumentOverview } from '../../store/useStore';
 import * as apiService from '../../services/apiService';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
@@ -16,9 +16,9 @@ const ProjectsPage = () => {
     // Use granular page loading
     const { loadProject, isPageLoading, setIsPageLoading, openExportModal } = useStore();
     const router = useRouter();
-    const [projects, setProjects] = useState<any[]>([]);
+    const [projects, setProjects] = useState<DocumentOverview[]>([]);
     const [fetching, setFetching] = useState(true);
-    const [selectedProject, setSelectedProject] = useState<any>(null);
+    const [selectedProject, setSelectedProject] = useState<DocumentOverview | null>(null);
     const [previewTarget, setPreviewTarget] = useState<{ mode: string; data: any } | null>(null);
     const [activeExportDropdown, setActiveExportDropdown] = useState<string | null>(null);
 
@@ -252,6 +252,7 @@ const ProjectsPage = () => {
                                             <ProjectExportAction
                                                 key={mode}
                                                 mode={mode}
+                                                documentId={selectedProject.documentId}
                                                 data={moduleData}
                                                 revisions={revisions}
                                                 filename={selectedProject.originalFile?.name?.split('.')[0] || 'project'}
@@ -288,9 +289,15 @@ const ProjectsPage = () => {
                                         </div>
 
                                         <div className="bg-white/[0.02] rounded-2xl p-6 border border-white/5 leading-relaxed text-white/70 overflow-hidden">
-                                            {selectedProject.summaryData ? (
+                                            {selectedProject.summaryData && selectedProject.summaryData.revisions?.[0]?.content ? (
                                                 <div className="prose prose-invert prose-sm max-w-none line-clamp-[6]"
-                                                    dangerouslySetInnerHTML={{ __html: typeof selectedProject.summaryData === 'string' ? selectedProject.summaryData : (selectedProject.summaryData.summary || selectedProject.summaryData.html) }}>
+                                                    dangerouslySetInnerHTML={{
+                                                        __html: typeof selectedProject.summaryData.revisions[0].content.summary === 'string'
+                                                            ? selectedProject.summaryData.revisions[0].content.summary
+                                                            : (Array.isArray(selectedProject.summaryData.revisions[0].content.summary)
+                                                                ? selectedProject.summaryData.revisions[0].content.summary.join('\n')
+                                                                : '')
+                                                    }}>
                                                 </div>
                                             ) : (
                                                 <p className="text-gemini-gray italic text-center py-6 text-[11px]">Summary session pending.</p>
@@ -317,15 +324,15 @@ const ProjectsPage = () => {
                                         </div>
 
                                         <div className="bg-white/[0.02] rounded-2xl p-6 border border-white/5 max-h-[250px] overflow-y-auto no-scrollbar">
-                                            {selectedProject.insightsData ? (
+                                            {selectedProject.insightsData && selectedProject.insightsData.revisions?.[0]?.content ? (
                                                 <div className="space-y-4">
-                                                    {(Array.isArray(selectedProject.insightsData) ? selectedProject.insightsData : (selectedProject.insightsData.insights || [])).slice(0, 3).map((i: any, idx: number) => (
+                                                    {(selectedProject.insightsData.revisions[0].content.insights || []).slice(0, 3).map((i, idx: number) => (
                                                         <div key={idx} className="border-l border-gemini-green/20 pl-4 py-1">
                                                             <h5 className="text-white text-xs font-bold mb-1">{i.title}</h5>
                                                             <p className="text-[10px] text-gemini-gray line-clamp-2">{i.description}</p>
                                                         </div>
                                                     ))}
-                                                    {(Array.isArray(selectedProject.insightsData) ? selectedProject.insightsData : (selectedProject.insightsData.insights || [])).length > 3 && (
+                                                    {selectedProject.insightsData.revisions[0].content.insights.length > 3 && (
                                                         <p className="text-gemini-green text-[9px] font-bold uppercase tracking-widest pt-2">+ More in Workspace</p>
                                                     )}
                                                 </div>

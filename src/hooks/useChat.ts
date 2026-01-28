@@ -10,8 +10,8 @@ export const useChat = () => {
 
     const handleSendMessage = async (message: string) => {
         const newUserMessage = {
-            sender: 'user' as const,
-            text: message,
+            role: 'user' as const,
+            content: message,
             timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
         };
 
@@ -20,8 +20,8 @@ export const useChat = () => {
         if (!fileId) {
             setTimeout(() => {
                 const aiErrorMessage = {
-                    sender: 'ai' as const,
-                    text: "I'm sorry, I can only answer questions based on documents. Please upload or paste a document first so I can assist you!",
+                    role: 'ai' as const,
+                    content: "I'm sorry, I can only answer questions based on documents. Please upload or paste a document first so I can assist you!",
                     timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
                 };
                 setChatHistory(prev => [...prev, aiErrorMessage]);
@@ -36,8 +36,8 @@ export const useChat = () => {
 
             // Add a placeholder AI message for streaming
             setChatHistory(prev => [...prev, {
-                sender: 'ai',
-                text: '',
+                role: 'ai',
+                content: '',
                 timestamp: 'streaming...'
             }]);
 
@@ -52,7 +52,7 @@ export const useChat = () => {
                         if (newHistory.length > 0) {
                             newHistory[newHistory.length - 1] = {
                                 ...newHistory[newHistory.length - 1],
-                                text: streamedText
+                                content: streamedText
                             };
                         }
                         return newHistory;
@@ -65,7 +65,7 @@ export const useChat = () => {
                         if (newHistory.length > 0) {
                             newHistory[newHistory.length - 1] = {
                                 ...newHistory[newHistory.length - 1],
-                                text: finalText,
+                                content: finalText,
                                 timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
                             };
                         }
@@ -83,8 +83,8 @@ export const useChat = () => {
             console.error("Error sending message:", error);
             setIsTyping(false);
             const errorResponse = {
-                sender: 'ai' as const,
-                text: 'Sorry, I encountered an error. Please try again.',
+                role: 'ai' as const,
+                content: 'Sorry, I encountered an error. Please try again.',
                 timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
             };
             setChatHistory(prev => [...prev.slice(0, -1), errorResponse]);

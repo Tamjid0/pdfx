@@ -4,6 +4,130 @@ import { toast } from 'react-hot-toast';
 export type PreviewPreset = 'professional' | 'academic' | 'minimal' | 'creative';
 export type Mode = 'summary' | 'insights' | 'notes' | 'quiz' | 'flashcards' | 'mindmap' | 'editor' | 'chat' | 'slides';
 
+// --- Data Interfaces ---
+export interface SummaryData {
+    summary: string | string[];
+    keyPoints: string[];
+}
+
+export interface NoteSection {
+    section: string;
+    points: string[];
+}
+
+export interface NotesData {
+    notes: NoteSection[];
+}
+
+export interface Insight {
+    title: string;
+    description: string;
+}
+
+export interface InsightsData {
+    insights: Insight[];
+}
+
+export interface Flashcard {
+    question: string;
+    answer: string;
+}
+
+export interface FlashcardsData {
+    flashcards: Flashcard[];
+}
+
+export type QuizItem = {
+    type: 'mc';
+    question: string;
+    options: { label: string; value: string; }[];
+    correctAnswer: string;
+} | {
+    type: 'tf';
+    question: string;
+    correctAnswer: string; // Stored as string 'true'/'false' for consistency if needed, or boolean. Local Quiz.tsx used boolean. Let's use string 'true'/'false' to match API usually.
+} | {
+    type: 'fib';
+    question: string;
+    correctAnswer: string;
+} | {
+    type: 'sa';
+    question: string;
+    correctAnswer: string;
+};
+
+export interface QuizData {
+    quiz: QuizItem[];
+}
+
+export interface MindmapNode {
+    id: string;
+    data: { label: string };
+    position: { x: number; y: number };
+}
+
+export interface MindmapEdge {
+    id: string;
+    source: string;
+    target: string;
+}
+
+export interface MindmapData {
+    nodes: MindmapNode[];
+    edges: MindmapEdge[];
+}
+
+export interface DocumentOverview {
+    _id: string;
+    documentId: string;
+    fileName: string;
+    fileId: string;
+    type: string;
+    createdAt: string;
+    updatedAt: string;
+    userId: string;
+    originalFile?: {
+        name: string;
+        mime: string;
+        size: number;
+        processedAt: string;
+    };
+    metadata?: {
+        title: string;
+        pageCount: number;
+        language: string;
+        author: string;
+    };
+    summaryData?: { revisions: Revision<SummaryData>[] };
+    notesData?: { revisions: Revision<NotesData>[] };
+    insightsData?: { revisions: Revision<InsightsData>[] };
+    flashcardsData?: { revisions: Revision<FlashcardsData>[] };
+    quizData?: { revisions: Revision<QuizData>[] };
+    mindmapData?: { revisions: Revision<MindmapData>[] };
+    chatHistory?: any[];
+}
+
+export interface Revision<T> {
+    id: string;
+    name: string;
+    content: T;
+    timestamp: string;
+}
+
+export interface Topic {
+    id: string;
+    title: string;
+    label: string;
+    startPage: number;
+    endPage: number;
+    pageRange?: [number, number];
+}
+
+export interface GenerationScope {
+    type: 'all' | 'pages' | 'topics';
+    value: null | [number, number] | string[];
+}
+
 interface AppState {
     htmlPreview: string | null;
     isLoading: boolean;
@@ -19,20 +143,20 @@ interface AppState {
     isGeneratingMindmap: boolean;
 
     view: 'import' | 'editor' | 'viewer';
-    mode: 'summary' | 'insights' | 'notes' | 'quiz' | 'flashcards' | 'mindmap' | 'editor' | 'chat' | 'slides';
+    mode: Mode;
     leftPanelView: 'editor' | 'artboard' | 'slides';
-    mindmapData: any | null;
-    insightsData: any | null;
-    notesData: any | null;
-    quizData: any | null;
-    flashcardsData: any | null;
-    summaryData: any | null;
-    insightsRevisions: any[];
-    notesRevisions: any[];
-    summaryRevisions: any[];
-    flashcardsRevisions: any[];
-    quizRevisions: any[];
-    chatHistory: any[];
+    mindmapData: MindmapData | null;
+    insightsData: InsightsData | null;
+    notesData: NotesData | null;
+    quizData: QuizData | null;
+    flashcardsData: FlashcardsData | null;
+    summaryData: SummaryData | null;
+    insightsRevisions: Revision<InsightsData>[];
+    notesRevisions: Revision<NotesData>[];
+    summaryRevisions: Revision<SummaryData>[];
+    flashcardsRevisions: Revision<FlashcardsData>[];
+    quizRevisions: Revision<QuizData>[];
+    chatHistory: { role: 'user' | 'assistant' | 'ai'; content: string; timestamp?: string }[];
     fileId: string | null;
     fileType: 'pdf' | 'pptx' | 'text' | null;
     stats: {
@@ -71,18 +195,18 @@ interface AppState {
     isMindmapGenerated: boolean;
 
     // Toggles
-    activeNotesToggles: any;
-    activeInsightsToggles: any;
+    activeNotesToggles: Record<string, boolean>;
+    activeInsightsToggles: Record<string, boolean>;
 
     // Preview Settings
     previewPreset: PreviewPreset;
     prompt: string;
 
     // Smart Chunking & Scope
-    topics: any[];
-    setTopics: (topics: any[]) => void;
-    generationScope: { type: 'all' | 'pages' | 'topics', value: any };
-    setGenerationScope: (scope: { type: 'all' | 'pages' | 'topics', value: any }) => void;
+    topics: Topic[];
+    setTopics: (topics: Topic[]) => void;
+    generationScope: GenerationScope;
+    setGenerationScope: (scope: GenerationScope) => void;
     isAppendMode: boolean;
     setIsAppendMode: (val: boolean) => void;
 
@@ -98,15 +222,15 @@ interface AppState {
     setIsGeneratingQuiz: (val: boolean) => void;
     setIsGeneratingMindmap: (val: boolean) => void;
     setView: (view: 'import' | 'editor' | 'viewer') => void;
-    setMode: (mode: any) => void;
+    setMode: (mode: Mode) => void;
     setLeftPanelView: (view: 'editor' | 'artboard' | 'slides') => void;
-    setMindmapData: (data: any) => void;
-    setInsightsData: (data: any) => void;
-    setNotesData: (data: any) => void;
-    setQuizData: (data: any) => void;
-    setFlashcardsData: (data: any) => void;
-    setSummaryData: (data: any) => void;
-    setChatHistory: (history: any[] | ((prev: any[]) => any[])) => void;
+    setMindmapData: (data: MindmapData | null) => void;
+    setInsightsData: (data: InsightsData | null) => void;
+    setNotesData: (data: NotesData | null) => void;
+    setQuizData: (data: QuizData | null) => void;
+    setFlashcardsData: (data: FlashcardsData | null) => void;
+    setSummaryData: (data: SummaryData | null) => void;
+    setChatHistory: (history: ({ role: 'user' | 'assistant' | 'ai'; content: string; timestamp?: string }[]) | ((prev: { role: 'user' | 'assistant' | 'ai'; content: string; timestamp?: string }[]) => { role: 'user' | 'assistant' | 'ai'; content: string; timestamp?: string }[])) => void;
     setFileType: (type: 'pdf' | 'pptx' | 'text' | null) => void;
     setPreviewMode: (preview: boolean) => void;
     setIsTyping: (typing: boolean) => void;
@@ -126,7 +250,7 @@ interface AppState {
     setIsSlideMode: (isSlideMode: boolean) => void;
     setIsProcessingSlides: (isProcessing: boolean) => void;
     setRenderingProgress: (progress: number) => void;
-    setSlides: (slides: any[]) => void;
+    setSlides: (slides: { title: string; content: string }[]) => void;
     setCurrentSlideIndex: (index: number) => void;
     nextSlide: () => void;
     prevSlide: () => void;
@@ -318,15 +442,17 @@ export const useStore = create<AppState>((set, get) => ({
     setTemplates: (templates) => set({ templates }),
 
     switchRevision: (module, revisionId) => set((state) => {
-        const revKey = `${module}Revisions`;
-        const dataKey = `${module}Data`;
-        const revision = (state as any)[revKey].find((r: any) => r.id === revisionId);
+        const revKey = `${module}Revisions` as keyof AppState;
+        const dataKey = `${module}Data` as keyof AppState;
+        const revisions = state[revKey] as Revision<any>[];
+        const revision = revisions.find((r) => r.id === revisionId);
+
         if (!revision) {
             console.warn(`[Store] Revision ${revisionId} not found in ${module}`);
             return state;
         }
 
-        return { [dataKey]: revision.data };
+        return { [dataKey]: revision.content } as Partial<AppState>;
     }),
 
     deleteRevision: async (module, revisionId) => {
@@ -342,9 +468,10 @@ export const useStore = create<AppState>((set, get) => ({
             if (!response.ok) throw new Error('Failed to delete revision');
 
             set((state) => {
-                const revKey = `${module}Revisions`;
-                const filtered = (state as any)[revKey].filter((r: any) => r.id !== revisionId);
-                return { [revKey]: filtered };
+                const revKey = `${module}Revisions` as keyof AppState;
+                const revisions = state[revKey] as Revision<any>[];
+                const filtered = revisions.filter((r) => r.id !== revisionId);
+                return { [revKey]: filtered } as Partial<AppState>;
             });
         } catch (error) {
             toast.error('Failed to delete revision');
@@ -367,11 +494,12 @@ export const useStore = create<AppState>((set, get) => ({
             if (!response.ok) throw new Error('Failed to rename revision');
 
             set((state) => {
-                const revKey = `${module}Revisions`;
-                const updated = (state as any)[revKey].map((r: any) =>
+                const revKey = `${module}Revisions` as keyof AppState;
+                const revisions = state[revKey] as Revision<any>[];
+                const updated = revisions.map((r) =>
                     r.id === revisionId ? { ...r, name } : r
                 );
-                return { [revKey]: updated };
+                return { [revKey]: updated } as Partial<AppState>;
             });
         } catch (error) {
             toast.error('Failed to rename revision');
@@ -379,11 +507,11 @@ export const useStore = create<AppState>((set, get) => ({
         }
     },
 
-    updateRevisionsFromSync: (updatedFields) => set((state) => {
-        const newState: any = {};
+    updateRevisionsFromSync: (updatedFields: Record<string, any>) => set((state) => {
+        const newState: Partial<AppState> = {};
 
         // Map backend keys (e.g. summaryData.revisions) to frontend store keys (e.g. summaryRevisions)
-        const mappings: any = {
+        const mappings: Record<string, keyof AppState> = {
             'summaryData.revisions': 'summaryRevisions',
             'notesData.revisions': 'notesRevisions',
             'insightsData.revisions': 'insightsRevisions',
@@ -393,7 +521,7 @@ export const useStore = create<AppState>((set, get) => ({
 
         for (const [backendKey, storeKey] of Object.entries(mappings)) {
             if (updatedFields[backendKey]) {
-                newState[storeKey as string] = updatedFields[backendKey];
+                (newState as any)[storeKey] = updatedFields[backendKey];
             }
         }
 
@@ -473,8 +601,13 @@ export const useStore = create<AppState>((set, get) => ({
             const getActiveContent = (dataObj: any, key: string) => {
                 const val = dataObj[key];
                 if (!val) return null;
-                if (val.content !== undefined) return val.content;
-                // If it's the legacy format (has no revisions field and is an object or array)
+                // 1. Check for standard content field
+                if (val.content !== undefined && val.content !== null) return val.content;
+                // 2. Fallback to latest revision content if available
+                if (Array.isArray(val.revisions) && val.revisions.length > 0 && val.revisions[0].content) {
+                    return val.revisions[0].content;
+                }
+                // 3. Fallback to legacy format (no revisions field, just the data)
                 if (typeof val === 'object' && !val.revisions) return val;
                 return null;
             };

@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
-import { useStore } from '../store/useStore';
+import { useStore, type Mode } from '../store/useStore';
 import TiptapEditor from './TiptapEditor';
 import { marked } from 'marked';
-
-// Define Mode locally for now to avoid dependency on useStore conversion
-export type Mode = 'summary' | 'insights' | 'notes' | 'quiz' | 'flashcards' | 'mindmap' | 'editor' | 'chat';
 
 interface SummaryProps {
     onGenerate: (mode: Mode) => void;
@@ -27,8 +24,9 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
 
     const handleCopy = () => {
         if (!summaryData?.summary) return;
+        const summaryText = Array.isArray(summaryData.summary) ? summaryData.summary.join('\n') : summaryData.summary;
         // Strip HTML tags for clean clipboard copy
-        const plainText = summaryData.summary.replace(/<[^>]*>/g, '');
+        const plainText = summaryText.replace(/<[^>]*>/g, '');
         navigator.clipboard.writeText(plainText).then(() => {
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
@@ -38,12 +36,13 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
     // Helper to get HTML content
     const getSummaryHtml = () => {
         if (!summaryData?.summary) return '';
+        const summaryText = Array.isArray(summaryData.summary) ? summaryData.summary.join('\n') : summaryData.summary;
         // If it looks like HTML (has tags), return as is
-        if (/<[a-z][\s\S]*>/i.test(summaryData.summary)) {
-            return summaryData.summary;
+        if (/<[a-z][\s\S]*>/i.test(summaryText)) {
+            return summaryText;
         }
         // Otherwise treat as markdown and convert
-        return marked.parse(summaryData.summary);
+        return marked.parse(summaryText);
     };
 
     const handleSummaryChange = (html: string) => {

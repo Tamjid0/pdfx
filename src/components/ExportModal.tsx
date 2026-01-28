@@ -1,6 +1,8 @@
-
 import React, { useState } from 'react';
-import { useStore } from '../store/useStore';
+import {
+    useStore, type SummaryData, type NotesData, type InsightsData,
+    type FlashcardsData, type QuizData, type MindmapData
+} from '../store/useStore';
 
 interface ExportModalProps { }
 
@@ -19,75 +21,90 @@ export const ExportModal: React.FC<ExportModalProps> = () => {
     const mode = exportMode;
     const data = exportContent;
 
-    const renderDataToHtml = (mode: string, data: any): string => {
-        if (mode === 'editor') return data || '';
+    const renderDataToHtml = (
+        mode: string,
+        data: SummaryData | NotesData | InsightsData | FlashcardsData | QuizData | MindmapData | string | null
+    ): string => {
+        if (mode === 'editor') return (data as string) || '';
         if (!data) return '<h1>No content available</h1>';
 
         try {
             switch (mode) {
-                case 'summary':
+                case 'summary': {
+                    const d = data as SummaryData;
                     return `
                         <h1>Executive Summary</h1>
-                        <div>${data.summary || '<i>No summary content available.</i>'}</div>
+                        <div>${d.summary || '<i>No summary content available.</i>'}</div>
                         <h2>Key Highlights</h2>
-                        <ul>${(data.keyPoints && data.keyPoints.length > 0)
-                            ? data.keyPoints.map((p: string) => `<li>${p}</li>`).join('')
+                        <ul>${(d.keyPoints && d.keyPoints.length > 0)
+                            ? d.keyPoints.map((p) => `<li>${p}</li>`).join('')
                             : '<li>No key points available.</li>'}</ul>
                     `;
-                case 'notes':
+                }
+                case 'notes': {
+                    const d = data as NotesData;
                     return `
                         <h1>Study Notes</h1>
-                        ${(data.notes && data.notes.length > 0)
-                            ? data.notes.map((s: any) => `
+                        ${(d.notes && d.notes.length > 0)
+                            ? d.notes.map((s) => `
                                 <h2>${s.section || 'Unstructured Section'}</h2>
-                                <ul>${(s.points || []).map((p: string) => `<li>${p}</li>`).join('')}</ul>
+                                <ul>${(s.points || []).map((p) => `<li>${p}</li>`).join('')}</ul>
                             `).join('') : '<p>No notes available.</p>'}
                     `;
-                case 'insights':
+                }
+                case 'insights': {
+                    const d = data as InsightsData;
                     return `
                         <h1>Core Insights</h1>
-                        ${(data.insights && data.insights.length > 0)
-                            ? data.insights.map((i: any) => `
+                        ${(d.insights && d.insights.length > 0)
+                            ? d.insights.map((i) => `
                                 <h3>${i.title || 'Untitled Insight'}</h3>
                                 <p>${i.description || ''}</p>
                             `).join('') : '<p>No insights available.</p>'}
                     `;
-                case 'flashcards':
+                }
+                case 'flashcards': {
+                    const d = data as FlashcardsData;
                     return `
                         <h1>Flashcards</h1>
                         <table style="width:100%; border-collapse: collapse; margin-top: 20px;">
-                            ${(data.flashcards && data.flashcards.length > 0)
-                            ? data.flashcards.map((f: any) => `
+                            ${(d.flashcards && d.flashcards.length > 0)
+                            ? d.flashcards.map((f) => `
                                     <tr>
-                                        <td style="border: 1px solid #ddd; padding: 12px; font-weight: bold; width: 40%; background: #f9f9f9;">${f.front || ''}</td>
-                                        <td style="border: 1px solid #ddd; padding: 12px;">${f.back || ''}</td>
+                                        <td style="border: 1px solid #ddd; padding: 12px; font-weight: bold; width: 40%; background: #f9f9f9;">${f.question || ''}</td>
+                                        <td style="border: 1px solid #ddd; padding: 12px;">${f.answer || ''}</td>
                                     </tr>
                                 `).join('') : '<tr><td>No flashcards available.</td></tr>'}
                         </table>
                     `;
-                case 'quiz':
+                }
+                case 'quiz': {
+                    const d = data as QuizData;
                     return `
                         <h1>Quiz Assessment</h1>
-                        ${(data.quiz && data.quiz.length > 0)
-                            ? data.quiz.map((q: any, idx: number) => `
+                        ${(d.quiz && d.quiz.length > 0)
+                            ? d.quiz.map((q, idx: number) => `
                                 <div style="margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
                                     <p style="font-size: 1.1em;"><strong>Question ${idx + 1}: ${q.question || '...'}</strong></p>
                                     ${q.type === 'mc' ? `
                                         <ul style="list-style-type: none; padding-left: 20px;">
-                                            ${(q.options || []).map((o: any) => `<li style="margin-bottom: 8px;">[ ] ${o.label}: ${o.value}</li>`).join('')}
+                                            ${(q.options || []).map((o) => `<li style="margin-bottom: 8px;">[ ] ${o.label}: ${o.value}</li>`).join('')}
                                         </ul>
                                     ` : ''}
                                     <p style="color: #666; font-size: 0.9em; margin-top: 10px;"><i>Correct Answer: ${q.correctAnswer || 'Not provided'}</i></p>
                                 </div>
                             `).join('') : '<p>No quiz questions available.</p>'}
                     `;
-                case 'mindmap':
+                }
+                case 'mindmap': {
+                    const d = data as MindmapData;
                     return `
                         <h1>Mind Map Structure</h1>
-                        <ul>${(data.nodes && data.nodes.length > 0)
-                            ? data.nodes.map((n: any) => `<li>${n.data?.label || n.id}</li>`).join('')
+                        <ul>${(d.nodes && d.nodes.length > 0)
+                            ? d.nodes.map((n) => `<li>${n.data?.label || n.id}</li>`).join('')
                             : '<li>No mind map nodes available.</li>'}</ul>
                     `;
+                }
                 default:
                     return typeof data === 'string' ? data : JSON.stringify(data);
             }

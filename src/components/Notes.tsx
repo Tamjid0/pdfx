@@ -3,6 +3,7 @@ import { useStore } from '../store/useStore';
 import type { Mode } from '../store/useStore';
 import LocalizedShimmer from './LocalizedShimmer';
 import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
+import { VersionTabs } from './dashboard/VersionTabs';
 
 interface NoteSection {
     section: string;
@@ -20,6 +21,7 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
     } = useStore();
 
     const [showRegenerateScope, setShowRegenerateScope] = React.useState(false);
+    const [activeRevisionId, setActiveRevisionId] = React.useState<string | null>(null);
     const [showHistory, setShowHistory] = React.useState(false);
 
     const notesArray = Array.isArray(notesData) ? notesData : (notesData?.notes || []);
@@ -188,6 +190,22 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
                     </div>
                 </div>
             </div>
+
+            {/* Version Tabs */}
+            <VersionTabs
+                module="notes"
+                revisions={notesRevisions}
+                activeRevisionId={activeRevisionId}
+                onSwitch={(revId) => {
+                    if (revId) {
+                        switchRevision('notes', revId);
+                        setActiveRevisionId(revId);
+                    } else {
+                        setActiveRevisionId(null);
+                    }
+                }}
+                onNew={() => setShowRegenerateScope(true)}
+            />
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
                 <div className="max-w-4xl mx-auto space-y-12 text-left">

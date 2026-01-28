@@ -12,6 +12,7 @@ interface SummaryProps {
 
 import LocalizedShimmer from './LocalizedShimmer';
 import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
+import { VersionTabs } from './dashboard/VersionTabs';
 
 const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
     const {
@@ -20,6 +21,7 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
     } = useStore();
     const [copied, setCopied] = useState(false);
     const [showRegenerateScope, setShowRegenerateScope] = useState(false);
+    const [activeRevisionId, setActiveRevisionId] = useState<string | null>(null);
     const [showHistory, setShowHistory] = useState(false);
 
     const handleCopy = () => {
@@ -166,6 +168,22 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
                     )}
                 </div>
             </div>
+
+            {/* Version Tabs */}
+            <VersionTabs
+                module="summary"
+                revisions={summaryRevisions}
+                activeRevisionId={activeRevisionId}
+                onSwitch={(revId) => {
+                    if (revId) {
+                        switchRevision('summary', revId);
+                        setActiveRevisionId(revId);
+                    } else {
+                        setActiveRevisionId(null);
+                    }
+                }}
+                onNew={() => setShowRegenerateScope(true)}
+            />
 
             <div className="flex-1 overflow-y-auto custom-scrollbar">
                 <div className="p-8 space-y-12 max-w-4xl mx-auto">

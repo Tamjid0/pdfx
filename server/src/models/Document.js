@@ -28,6 +28,7 @@ const documentSchema = new mongoose.Schema({
         content: { type: mongoose.Schema.Types.Mixed, default: null },
         revisions: [{
             id: { type: String },
+            name: { type: String },
             timestamp: { type: Date, default: Date.now },
             scope: { type: mongoose.Schema.Types.Mixed },
             data: { type: mongoose.Schema.Types.Mixed }
@@ -37,6 +38,7 @@ const documentSchema = new mongoose.Schema({
         content: { type: mongoose.Schema.Types.Mixed, default: null },
         revisions: [{
             id: { type: String },
+            name: { type: String },
             timestamp: { type: Date, default: Date.now },
             scope: { type: mongoose.Schema.Types.Mixed },
             data: { type: mongoose.Schema.Types.Mixed }
@@ -46,6 +48,7 @@ const documentSchema = new mongoose.Schema({
         content: { type: mongoose.Schema.Types.Mixed, default: null },
         revisions: [{
             id: { type: String },
+            name: { type: String },
             timestamp: { type: Date, default: Date.now },
             scope: { type: mongoose.Schema.Types.Mixed },
             data: { type: mongoose.Schema.Types.Mixed }
@@ -55,6 +58,7 @@ const documentSchema = new mongoose.Schema({
         content: { type: mongoose.Schema.Types.Mixed, default: null },
         revisions: [{
             id: { type: String },
+            name: { type: String },
             timestamp: { type: Date, default: Date.now },
             scope: { type: mongoose.Schema.Types.Mixed },
             data: { type: mongoose.Schema.Types.Mixed }
@@ -65,6 +69,7 @@ const documentSchema = new mongoose.Schema({
         content: { type: mongoose.Schema.Types.Mixed, default: null },
         revisions: [{
             id: { type: String },
+            name: { type: String },
             timestamp: { type: Date, default: Date.now },
             scope: { type: mongoose.Schema.Types.Mixed },
             data: { type: mongoose.Schema.Types.Mixed }

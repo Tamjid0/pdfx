@@ -184,7 +184,7 @@ import { mergeContent } from '../../utils/merging.js';
  */
 router.post('/:documentId/sync', validate(getDocumentSchema), async (req, res) => {
     const { documentId } = req.params;
-    const { append, scope, ...fields } = req.body;
+    const { append, scope, versionName, ...fields } = req.body;
 
     try {
         const doc = await Document.findOne({ documentId });
@@ -220,8 +220,16 @@ router.post('/:documentId/sync', validate(getDocumentSchema), async (req, res) =
                     const revisions = doc[key]?.revisions || [];
                     const prevScope = doc[key]?.activeScope || { type: 'all' };
 
+                    // Auto-generate name if not provided
+                    let revisionName = versionName;
+                    if (!revisionName) {
+                        const draftCount = revisions.filter(r => r.name?.startsWith('Draft ')).length;
+                        revisionName = `Draft ${draftCount + 1}`;
+                    }
+
                     const newRevision = {
                         id: crypto.randomUUID(),
+                        name: revisionName,
                         timestamp: new Date(),
                         scope: prevScope,
                         data: oldData

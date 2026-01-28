@@ -264,6 +264,66 @@ router.post('/:documentId/sync', validate(getDocumentSchema), async (req, res) =
     }
 });
 
+// 4. Delete a revision
+router.delete('/:documentId/revisions/:revisionId', async (res, req) => {
+    try {
+        const { documentId, revisionId } = req.params;
+        const { module: moduleKey } = req.query; // e.g. 'summaryData'
+
+        if (!moduleKey) {
+            return res.status(400).json({ error: 'Module key is required' });
+        }
+
+        const doc = await Document.findOne({ documentId });
+        if (!doc) return res.status(404).json({ error: 'Document not found' });
+
+        // Remove the revision from the specified module
+        const update = {
+            $pull: {
+                [`${moduleKey}.revisions`]: { id: revisionId }
+            }
+        };
+
+        await Document.updateOne({ documentId }, update);
+
+        res.json({ success: true, message: 'Revision deleted successfully' });
+    } catch (error) {
+        console.error('[DocumentRoutes] Error deleting revision:', error);
+        res.status(500).json({ error: 'Failed to delete revision' });
+    }
+});
+
+// 5. Rename a revision
+router.patch('/:documentId/revisions/:revisionId', async (res, req) => {
+    try {
+        const { documentId, revisionId } = req.params;
+        const { module: moduleKey, name } = req.body;
+
+        if (!moduleKey || !name) {
+            return res.status(400).json({ error: 'Module key and name are required' });
+        }
+
+        const doc = await Document.findOne({ documentId });
+        if (!doc) return res.status(404).json({ error: 'Document not found' });
+
+        // Update the name of the specific revision
+        // We use the $[<identifier>] positional operator for this
+        const result = await Document.updateOne(
+            { documentId, [`${moduleKey}.revisions.id`]: revisionId },
+            { $set: { [`${moduleKey}.revisions.$.name`]: name } }
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ error: 'Revision not found' });
+        }
+
+        res.json({ success: true, message: 'Revision renamed successfully' });
+    } catch (error) {
+        console.error('[DocumentRoutes] Error renaming revision:', error);
+        res.status(500).json({ error: 'Failed to rename revision' });
+    }
+});
+
 import crypto from 'crypto';
 
 export default router;

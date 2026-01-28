@@ -12,7 +12,7 @@ export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [authError, setAuthError] = useState<string | null>(null);
-    const { login, loading } = useAuth();
+    const { login, loading, loginWithGoogle, loginWithGithub } = useAuth();
     const router = useRouter();
 
     const handleLogin = async (e: React.FormEvent) => {
@@ -23,6 +23,17 @@ export default function LoginPage() {
             router.push('/');
         } catch (err: any) {
             setAuthError(err.message || 'Failed to login');
+        }
+    };
+
+    const handleSocialLogin = async (provider: 'google' | 'github') => {
+        setAuthError(null);
+        try {
+            if (provider === 'google') await loginWithGoogle();
+            else await loginWithGithub();
+            router.push('/');
+        } catch (err: any) {
+            setAuthError(err.message || `Failed to login with ${provider}`);
         }
     };
 
@@ -82,8 +93,8 @@ export default function LoginPage() {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <SocialButton provider="google" onClick={() => console.log('Google login')} />
-                    <SocialButton provider="github" onClick={() => console.log('GitHub login')} />
+                    <SocialButton provider="google" onClick={() => handleSocialLogin('google')} />
+                    <SocialButton provider="github" onClick={() => handleSocialLogin('github')} />
                 </div>
             </form>
         </AuthLayout>

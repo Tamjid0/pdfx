@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useStore, type PreviewPreset } from '../../store/useStore';
+import { toast } from 'react-hot-toast';
 
 interface ProjectExportActionProps {
     mode: string;
@@ -189,10 +190,11 @@ const ProjectExportAction: React.FC<ProjectExportActionProps> = ({ mode, data, f
             a.download = `${body.filename}.${format}`;
             document.body.appendChild(a);
             a.click();
+            a.remove();
             window.URL.revokeObjectURL(url);
+            toast.success(`${mode.charAt(0).toUpperCase() + mode.slice(1)} exported successfully`);
         } catch (error) {
-            console.error('Export error:', error);
-            alert('Failed to export document. Please try again.');
+            toast.error('Failed to export document');
         } finally {
             setIsExporting(false);
         }

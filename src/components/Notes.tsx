@@ -4,6 +4,7 @@ import type { Mode } from '../store/useStore';
 import LocalizedShimmer from './LocalizedShimmer';
 import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
 import { VersionTabs } from './dashboard/VersionTabs';
+import { toast } from 'react-hot-toast';
 
 interface NoteSection {
     section: string;
@@ -17,7 +18,7 @@ interface NotesProps {
 const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
     const {
         notesData, setNotesData, openExportModal, isGeneratingNotes,
-        generationScope, notesRevisions, switchRevision
+        generationScope, notesRevisions, switchRevision, deleteRevision, renameRevision
     } = useStore();
 
     const [showRegenerateScope, setShowRegenerateScope] = React.useState(false);
@@ -205,6 +206,25 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
                     }
                 }}
                 onNew={() => setShowRegenerateScope(true)}
+                onRename={async (revId, newName) => {
+                    try {
+                        await renameRevision('notes', revId, newName);
+                        toast.success('Revision renamed');
+                    } catch (err) {
+                        toast.error('Failed to rename revision');
+                    }
+                }}
+                onDelete={async (revisionId) => {
+                    try {
+                        await deleteRevision('notes', revisionId);
+                        toast.success('Revision deleted');
+                        if (activeRevisionId === revisionId) {
+                            setActiveRevisionId(null);
+                        }
+                    } catch (err) {
+                        toast.error('Failed to delete revision');
+                    }
+                }}
             />
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-8">

@@ -13,11 +13,12 @@ interface SummaryProps {
 import LocalizedShimmer from './LocalizedShimmer';
 import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
 import { VersionTabs } from './dashboard/VersionTabs';
+import { toast } from 'react-hot-toast';
 
 const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
     const {
         summaryData, setSummaryData, openExportModal, isGeneratingSummary,
-        generationScope, summaryRevisions, switchRevision
+        generationScope, summaryRevisions, switchRevision, deleteRevision, renameRevision
     } = useStore();
     const [copied, setCopied] = useState(false);
     const [showRegenerateScope, setShowRegenerateScope] = useState(false);
@@ -183,11 +184,24 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
                     }
                 }}
                 onNew={() => setShowRegenerateScope(true)}
+                onRename={async (revId, newName) => {
+                    try {
+                        await renameRevision('summary', revId, newName);
+                        toast.success('Revision renamed');
+                    } catch (err) {
+                        toast.error('Failed to rename revision');
+                    }
+                }}
                 onDelete={async (revisionId) => {
-                    // TODO: Call backend API to delete revision
-                    console.log('Delete revision:', revisionId);
-                    // For now, just refresh to update UI
-                    window.location.reload();
+                    try {
+                        await deleteRevision('summary', revisionId);
+                        toast.success('Revision deleted');
+                        if (activeRevisionId === revisionId) {
+                            setActiveRevisionId(null);
+                        }
+                    } catch (err) {
+                        toast.error('Failed to delete revision');
+                    }
                 }}
             />
 

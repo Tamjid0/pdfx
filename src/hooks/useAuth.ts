@@ -34,7 +34,7 @@ export const useAuth = () => {
                 setMongoUser(result.data);
             }
         } catch (err) {
-            console.error('Failed to sync with backend:', err);
+            // Silently fail auth sync in production or handle via toast if critical
         }
     };
 

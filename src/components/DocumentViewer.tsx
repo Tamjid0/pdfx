@@ -134,11 +134,8 @@ const DocumentViewer: React.FC = () => {
     const highlightTextInPDF = (searchText: string) => {
         if (!searchText) return;
 
-        console.log('🔍 [PDF Search] Attempting to match:', searchText);
-
         const textLayer = document.querySelector('.react-pdf__Page__textContent');
         if (!textLayer) {
-            console.warn('❌ [PDF Search] Text layer not found');
             return;
         }
 
@@ -191,7 +188,6 @@ const DocumentViewer: React.FC = () => {
                 }
                 if (currentNormalizedPos >= matchIndex + normalizedSearch.length) break;
             }
-            console.log('✅ [PDF Search] Match found (Exact)');
             applyHighlights(highlightedElements);
             return;
         }
@@ -212,7 +208,6 @@ const DocumentViewer: React.FC = () => {
                 for (let i = startIndex; i < endIndex && i < charMap.length; i++) {
                     highlightedElements.add(charMap[i].element);
                 }
-                console.log('✅ [PDF Search] Match found (Semantic)');
                 applyHighlights(highlightedElements);
                 return;
             }
@@ -235,7 +230,6 @@ const DocumentViewer: React.FC = () => {
             });
 
             if (foundWords >= Math.min(2, importantWords.length)) {
-                console.log(`✅ [PDF Search] Match found (Cluster - ${foundWords} words)`);
                 applyHighlights(clusterSpans);
                 return;
             }
@@ -261,12 +255,11 @@ const DocumentViewer: React.FC = () => {
                     if (matchedCount === searchCharsOnly.length) break;
                 } else if (startMatching) highlightedElements.add(charMap[i].element);
             }
-            console.log('✅ [PDF Search] Match found (Literal)');
             applyHighlights(highlightedElements);
             return;
         }
 
-        console.error('❌ [PDF Search] Search failed for:', normalizedSearch);
+        // Search failed
     };
 
     const applyHighlights = (elements: Set<HTMLElement>) => {
@@ -278,7 +271,6 @@ const DocumentViewer: React.FC = () => {
                 first = false;
             }
         });
-        console.log(`🎨 [PDF Search] Highlighting applied to ${elements.size} spans`);
     };
 
     function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
@@ -484,14 +476,16 @@ const DocumentViewer: React.FC = () => {
                                 </div>
                             }
                         >
-                            <Page
-                                pageNumber={pageNumber}
-                                scale={scale}
-                                renderTextLayer={true}
-                                renderAnnotationLayer={true}
-                                onRenderSuccess={onPageRenderSuccess}
-                                className="shadow-2xl border border-[#222] transition-transform duration-200"
-                            />
+                            {numPages && pageNumber >= 1 && pageNumber <= numPages && (
+                                <Page
+                                    pageNumber={pageNumber}
+                                    scale={scale}
+                                    renderTextLayer={true}
+                                    renderAnnotationLayer={true}
+                                    onRenderSuccess={onPageRenderSuccess}
+                                    className="shadow-2xl border border-[#222] transition-transform duration-200"
+                                />
+                            )}
                         </Document>
                     )}
                 </div>

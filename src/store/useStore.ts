@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { toast } from 'react-hot-toast';
 
 export type PreviewPreset = 'professional' | 'academic' | 'minimal' | 'creative';
 export type Mode = 'summary' | 'insights' | 'notes' | 'quiz' | 'flashcards' | 'mindmap' | 'editor' | 'chat' | 'slides';
@@ -148,6 +149,8 @@ interface AppState {
     // Revision Actions
     switchRevision: (module: 'summary' | 'notes' | 'insights' | 'flashcards' | 'quiz', revisionId: string) => void;
     updateRevisionsFromSync: (updatedFields: any) => void;
+    deleteRevision: (module: 'summary' | 'notes' | 'insights' | 'flashcards' | 'quiz', revisionId: string) => Promise<void>;
+    renameRevision: (module: 'summary' | 'notes' | 'insights' | 'flashcards' | 'quiz', revisionId: string, name: string) => Promise<void>;
 
     // Workspace Management
     resetWorkspace: () => void;
@@ -318,10 +321,63 @@ export const useStore = create<AppState>((set, get) => ({
         const revKey = `${module}Revisions`;
         const dataKey = `${module}Data`;
         const revision = (state as any)[revKey].find((r: any) => r.id === revisionId);
-        if (!revision) return state;
+        if (!revision) {
+            console.warn(`[Store] Revision ${revisionId} not found in ${module}`);
+            return state;
+        }
 
         return { [dataKey]: revision.data };
     }),
+
+    deleteRevision: async (module, revisionId) => {
+        const { fileId } = get();
+        if (!fileId) return;
+
+        try {
+            const moduleKey = `${module}Data`;
+            const response = await fetch(`/api/v1/documents/${fileId}/revisions/${revisionId}?module=${moduleKey}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) throw new Error('Failed to delete revision');
+
+            set((state) => {
+                const revKey = `${module}Revisions`;
+                const filtered = (state as any)[revKey].filter((r: any) => r.id !== revisionId);
+                return { [revKey]: filtered };
+            });
+        } catch (error) {
+            toast.error('Failed to delete revision');
+            throw error;
+        }
+    },
+
+    renameRevision: async (module, revisionId, name) => {
+        const { fileId } = get();
+        if (!fileId) return;
+
+        try {
+            const moduleKey = `${module}Data`;
+            const response = await fetch(`/api/v1/documents/${fileId}/revisions/${revisionId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ module: moduleKey, name })
+            });
+
+            if (!response.ok) throw new Error('Failed to rename revision');
+
+            set((state) => {
+                const revKey = `${module}Revisions`;
+                const updated = (state as any)[revKey].map((r: any) =>
+                    r.id === revisionId ? { ...r, name } : r
+                );
+                return { [revKey]: updated };
+            });
+        } catch (error) {
+            toast.error('Failed to rename revision');
+            throw error;
+        }
+    },
 
     updateRevisionsFromSync: (updatedFields) => set((state) => {
         const newState: any = {};

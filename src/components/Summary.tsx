@@ -121,7 +121,7 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
 
     return (
         <div className="flex flex-col h-full bg-gemini-dark rounded-xl border border-gemini-dark-400 overflow-hidden shadow-2xl">
-            <div className="flex items-center justify-between p-5 border-b border-gemini-dark-400 bg-gemini-dark-200 backdrop-blur-md">
+            <div className="flex items-center justify-between p-5 border-b border-gemini-dark-400 bg-gemini-dark-200 backdrop-blur-md relative z-20">
                 <div className="flex items-center gap-3">
                     <div className="flex space-x-1">
                         <div className="w-1.5 h-1.5 bg-gemini-green rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
@@ -131,53 +131,6 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
                     <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] font-mono">Analysis Ready</h3>
                 </div>
                 <div className="flex gap-2 relative">
-                    {summaryData && (
-                        <div className="relative">
-                            <button
-                                onClick={() => setShowHistory(!showHistory)}
-                                className={`px-3 py-2 bg-gemini-dark-300 border rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${showHistory ? 'text-gemini-green border-gemini-green' : 'text-white/40 border-white/10 hover:text-white hover:border-white/20'}`}
-                                title="Revision History"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                            </button>
-
-                            {showHistory && (
-                                <div className="absolute top-full left-0 mt-3 w-72 bg-gemini-dark-300 border border-gemini-dark-500 rounded-3xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[110] animate-in fade-in zoom-in-95 duration-200">
-                                    <div className="flex items-center justify-between mb-4 px-2">
-                                        <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Analysis History</h4>
-                                        {summaryRevisions.length === 0 && <span className="text-[8px] font-black text-white/10 uppercase">v1 (Current)</span>}
-                                    </div>
-                                    <div className="space-y-2 max-h-60 overflow-y-auto no-scrollbar">
-                                        {summaryRevisions.length > 0 ? (
-                                            summaryRevisions.map((rev: any) => (
-                                                <button
-                                                    key={rev.id}
-                                                    onClick={() => {
-                                                        switchRevision('summary', rev.id);
-                                                        setShowHistory(false);
-                                                    }}
-                                                    className="w-full text-left p-3 rounded-xl border border-white/5 hover:bg-white/5 hover:border-gemini-green/20 transition-all group"
-                                                >
-                                                    <div className="flex justify-between items-start mb-1">
-                                                        <span className="text-[10px] font-bold text-white group-hover:text-gemini-green transition-colors">{new Date(rev.timestamp).toLocaleString()}</span>
-                                                        <span className="text-[8px] font-black text-white/20 uppercase tracking-widest">{rev.scope?.type || 'all'}</span>
-                                                    </div>
-                                                    <p className="text-[9px] text-white/40 line-clamp-1">
-                                                        {rev.scope?.type === 'pages' ? `Pages ${rev.scope.value[0]}-${rev.scope.value[1]}` : rev.scope?.type === 'topics' ? `Selected Topics` : 'Full Document'}
-                                                    </p>
-                                                </button>
-                                            ))
-                                        ) : (
-                                            <div className="text-center py-8">
-                                                <p className="text-[9px] text-white/20 uppercase font-black tracking-widest leading-relaxed"> No previous versions.<br />Snapshots created on refresh.</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
                     <button
                         onClick={() => setShowRegenerateScope(!showRegenerateScope)}
                         disabled={isGeneratingSummary}

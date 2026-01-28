@@ -23,6 +23,7 @@ import Flashcards from "./Flashcards";
 import Quiz from "./Quiz";
 import Mindmap from "./Mindmap";
 import Chat from "./Chat";
+import { RevisionSwitcher } from "./dashboard/RevisionSwitcher";
 
 interface MainLayoutProps {
     view: string;
@@ -123,6 +124,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                                 <div className="flex-1 flex justify-end items-center gap-2 pr-6">
                                     {['summary', 'insights', 'notes', 'quiz', 'flashcards'].includes(mode) && (
                                         <>
+                                            <RevisionSwitcher module={mode as any} />
                                             <button
                                                 onClick={() => setPreviewMode(!isPreviewMode)}
                                                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 ${isPreviewMode
@@ -216,9 +218,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                             />
                         </div>
                     </div>
-                )}
-            </main>
-        </div>
+                )
+                }
+            </main >
+        </div >
     );
 };
 

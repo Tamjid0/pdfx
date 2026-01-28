@@ -123,7 +123,7 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
 
     return (
         <div className="flex flex-col h-full bg-gemini-dark rounded-xl border border-gemini-dark-400 overflow-hidden shadow-2xl">
-            <div className="flex items-center justify-between p-5 border-b border-gemini-dark-400 bg-gemini-dark-200 backdrop-blur-md relative z-20">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gemini-dark-400 bg-gemini-dark-200 backdrop-blur-md relative z-20">
                 <div className="flex items-center gap-3">
                     <div className="flex space-x-1">
                         <div className="w-1.5 h-1.5 bg-gemini-green rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
@@ -183,6 +183,12 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
                     }
                 }}
                 onNew={() => setShowRegenerateScope(true)}
+                onDelete={async (revisionId) => {
+                    // TODO: Call backend API to delete revision
+                    console.log('Delete revision:', revisionId);
+                    // For now, just refresh to update UI
+                    window.location.reload();
+                }}
             />
 
             <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -267,7 +273,7 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
                 </div>
             </div>
 
-            <div className="p-6 bg-gemini-dark-200 border-t border-gemini-dark-400 flex justify-between items-center">
+            <div className="px-6 py-3 bg-gemini-dark-200 border-t border-gemini-dark-400 flex justify-between items-center">
                 <p className="text-[10px] font-bold text-gemini-dark-500 uppercase tracking-widest">
                     Last updated: {new Date().toLocaleTimeString()}
                 </p>

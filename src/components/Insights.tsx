@@ -101,7 +101,7 @@ const Insights: React.FC<InsightsProps> = ({ onGenerate }) => {
 
     return (
         <div className="flex flex-col h-full bg-[#0a0a0a] rounded-xl border border-[#222] overflow-hidden shadow-2xl">
-            <div className="flex items-center justify-between p-5 border-b border-[#222] bg-[#111] relative z-20">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-[#222] bg-[#111] relative z-20">
                 <div className="flex items-center gap-3">
                     <div className="w-2 h-2 bg-[#00ff88] rounded-full shadow-[0_0_8px_rgba(0,255,136,1)]"></div>
                     <h3 className="text-xs font-black text-white uppercase tracking-[0.3em]">Neural Extraction</h3>

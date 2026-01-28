@@ -150,8 +150,8 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
                     <h3 className="text-xs font-black text-white uppercase tracking-[0.3em]">Module Overview</h3>
                 </div>
 
-                <div className="flex gap-2 relative">
-                    {notesRevisions && notesRevisions.length > 0 && (
+                <div className="flex gap-2 relative text-left">
+                    {notesData && (
                         <div className="relative">
                             <button
                                 onClick={() => setShowHistory(!showHistory)}
@@ -162,27 +162,36 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
                             </button>
 
                             {showHistory && (
-                                <div className="absolute top-full right-0 mt-3 w-72 bg-gemini-dark-300 border border-gemini-dark-500 rounded-3xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[110] animate-in fade-in zoom-in-95 duration-200 text-left">
-                                    <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-4 px-2">Notes History</h4>
+                                <div className="absolute top-full right-0 mt-3 w-72 bg-gemini-dark-300 border border-gemini-dark-500 rounded-3xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[110] animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="flex items-center justify-between mb-4 px-2">
+                                        <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Notes History</h4>
+                                        {notesRevisions.length === 0 && <span className="text-[8px] font-black text-white/10 uppercase">v1 (Current)</span>}
+                                    </div>
                                     <div className="space-y-2 max-h-60 overflow-y-auto no-scrollbar">
-                                        {notesRevisions.map((rev: any) => (
-                                            <button
-                                                key={rev.id}
-                                                onClick={() => {
-                                                    switchRevision('notes', rev.id);
-                                                    setShowHistory(false);
-                                                }}
-                                                className="w-full text-left p-3 rounded-xl border border-white/5 hover:bg-white/5 hover:border-[#00ff88]/20 transition-all group"
-                                            >
-                                                <div className="flex justify-between items-start mb-1">
-                                                    <span className="text-[10px] font-bold text-white group-hover:text-[#00ff88] transition-colors">{new Date(rev.timestamp).toLocaleString()}</span>
-                                                    <span className="text-[8px] font-black text-white/20 uppercase tracking-widest">{rev.scope?.type || 'all'}</span>
-                                                </div>
-                                                <p className="text-[9px] text-white/40 line-clamp-1">
-                                                    {rev.scope?.type === 'pages' ? `Pages ${rev.scope.value[0]}-${rev.scope.value[1]}` : rev.scope?.type === 'topics' ? `Selected Topics` : 'Full Document'}
-                                                </p>
-                                            </button>
-                                        ))}
+                                        {notesRevisions.length > 0 ? (
+                                            notesRevisions.map((rev: any) => (
+                                                <button
+                                                    key={rev.id}
+                                                    onClick={() => {
+                                                        switchRevision('notes', rev.id);
+                                                        setShowHistory(false);
+                                                    }}
+                                                    className="w-full text-left p-3 rounded-xl border border-white/5 hover:bg-white/5 hover:border-gemini-green/20 transition-all group"
+                                                >
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <span className="text-[10px] font-bold text-white group-hover:text-gemini-green transition-colors">{new Date(rev.timestamp).toLocaleString()}</span>
+                                                        <span className="text-[8px] font-black text-white/20 uppercase tracking-widest">{rev.scope?.type || 'all'}</span>
+                                                    </div>
+                                                    <p className="text-[9px] text-white/40 line-clamp-1">
+                                                        {rev.scope?.type === 'pages' ? `Pages ${rev.scope.value[0]}-${rev.scope.value[1]}` : rev.scope?.type === 'topics' ? `Selected Topics` : 'Full Document'}
+                                                    </p>
+                                                </button>
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-8">
+                                                <p className="text-[9px] text-white/20 uppercase font-black tracking-widest leading-relaxed"> No previous versions.<br />Snapshots created on refresh.</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}

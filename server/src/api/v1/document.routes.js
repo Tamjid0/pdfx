@@ -196,7 +196,17 @@ router.post('/:documentId/sync', validate(getDocumentSchema), async (req, res) =
         for (const key of Object.keys(fields)) {
             if (versionedFields.includes(key)) {
                 const moduleType = key.replace('Data', '');
-                const oldData = doc[key]?.content;
+                let oldData = doc[key]?.content;
+
+                // Fallback for Legacy Phase 10 logic (data was stored directly without the .content wrapper)
+                if (!oldData && doc[key]) {
+                    const legacyData = doc[key];
+                    // Check if it's the legacy format (not null, and has module-specific fields or is the data itself)
+                    if (typeof legacyData === 'object' && !legacyData.revisions) {
+                        oldData = legacyData;
+                    }
+                }
+
                 let newData = fields[key];
 
                 // 1. Handle Merging (Append Mode)
@@ -235,7 +245,8 @@ router.post('/:documentId/sync', validate(getDocumentSchema), async (req, res) =
 
         res.json({
             success: true,
-            message: 'Project synced successfully'
+            message: 'Project synced successfully',
+            updatedFields: updateData
         });
     } catch (error) {
         console.error('[DocumentRoutes] Error syncing content:', error);

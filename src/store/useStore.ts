@@ -147,6 +147,7 @@ interface AppState {
 
     // Revision Actions
     switchRevision: (module: 'summary' | 'notes' | 'insights' | 'flashcards' | 'quiz', revisionId: string) => void;
+    updateRevisionsFromSync: (updatedFields: any) => void;
 
     // Workspace Management
     resetWorkspace: () => void;
@@ -322,6 +323,27 @@ export const useStore = create<AppState>((set, get) => ({
         return { [dataKey]: revision.data };
     }),
 
+    updateRevisionsFromSync: (updatedFields) => set((state) => {
+        const newState: any = {};
+
+        // Map backend keys (e.g. summaryData.revisions) to frontend store keys (e.g. summaryRevisions)
+        const mappings: any = {
+            'summaryData.revisions': 'summaryRevisions',
+            'notesData.revisions': 'notesRevisions',
+            'insightsData.revisions': 'insightsRevisions',
+            'flashcardsData.revisions': 'flashcardsRevisions',
+            'quizData.revisions': 'quizRevisions'
+        };
+
+        for (const [backendKey, storeKey] of Object.entries(mappings)) {
+            if (updatedFields[backendKey]) {
+                newState[storeKey as string] = updatedFields[backendKey];
+            }
+        }
+
+        return newState;
+    }),
+
     // PDF Search State
     pdfSearchText: null,
     setPdfSearchText: (text) => set({ pdfSearchText: text }),
@@ -391,18 +413,28 @@ export const useStore = create<AppState>((set, get) => ({
             const isPptx = typeStr.includes('presentation') || typeStr.includes('powerpoint') || typeStr.includes('pptx');
             const isPdf = typeStr.includes('pdf');
 
+            // Helper to handle legacy data format (Phase 10)
+            const getActiveContent = (dataObj: any, key: string) => {
+                const val = dataObj[key];
+                if (!val) return null;
+                if (val.content !== undefined) return val.content;
+                // If it's the legacy format (has no revisions field and is an object or array)
+                if (typeof val === 'object' && !val.revisions) return val;
+                return null;
+            };
+
             // Populate workspace state from stored project data
             set({
                 fileId: data.documentId,
                 fileType: isPdf ? 'pdf' : (isPptx ? 'pptx' : 'text'),
                 htmlPreview: data.extractedText || '',
 
-                // Active Content (Mapping from .content)
-                summaryData: data.summaryData?.content || null,
-                notesData: data.notesData?.content || null,
-                flashcardsData: data.flashcardsData?.content || null,
-                quizData: data.quizData?.content || null,
-                insightsData: data.insightsData?.content || null,
+                // Active Content (Mapping from .content with legacy fallback)
+                summaryData: getActiveContent(data, 'summaryData'),
+                notesData: getActiveContent(data, 'notesData'),
+                flashcardsData: getActiveContent(data, 'flashcardsData'),
+                quizData: getActiveContent(data, 'quizData'),
+                insightsData: getActiveContent(data, 'insightsData'),
                 mindmapData: data.mindmapData, // Not versioned yet
                 chatHistory: data.chatHistory || [],
 
@@ -414,12 +446,12 @@ export const useStore = create<AppState>((set, get) => ({
                 insightsRevisions: data.insightsData?.revisions || [],
 
                 // Flags
-                isSummaryGenerated: !!data.summaryData?.content,
-                isNotesGenerated: !!data.notesData?.content,
-                isFlashcardsGenerated: !!data.flashcardsData?.content,
-                isQuizGenerated: !!data.quizData?.content,
+                isSummaryGenerated: !!getActiveContent(data, 'summaryData'),
+                isNotesGenerated: !!getActiveContent(data, 'notesData'),
+                isFlashcardsGenerated: !!getActiveContent(data, 'flashcardsData'),
+                isQuizGenerated: !!getActiveContent(data, 'quizData'),
                 isMindmapGenerated: !!data.mindmapData,
-                isInsightsGenerated: !!data.insightsData?.content,
+                isInsightsGenerated: !!getActiveContent(data, 'insightsData'),
 
                 topics: data.topics || [],
                 view: 'editor',

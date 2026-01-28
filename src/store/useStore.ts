@@ -26,6 +26,11 @@ interface AppState {
     quizData: any | null;
     flashcardsData: any | null;
     summaryData: any | null;
+    insightsRevisions: any[];
+    notesRevisions: any[];
+    summaryRevisions: any[];
+    flashcardsRevisions: any[];
+    quizRevisions: any[];
     chatHistory: any[];
     fileId: string | null;
     fileType: 'pdf' | 'pptx' | 'text' | null;
@@ -77,6 +82,8 @@ interface AppState {
     setTopics: (topics: any[]) => void;
     generationScope: { type: 'all' | 'pages' | 'topics', value: any };
     setGenerationScope: (scope: { type: 'all' | 'pages' | 'topics', value: any }) => void;
+    isAppendMode: boolean;
+    setIsAppendMode: (val: boolean) => void;
 
     // Actions
     setHtmlPreview: (html: string | null) => void;
@@ -138,6 +145,9 @@ interface AppState {
     setPdfSearchText: (text: string | null) => void;
     updateStats: (text: string, pageCount?: number) => void;
 
+    // Revision Actions
+    switchRevision: (module: 'summary' | 'notes' | 'insights' | 'flashcards' | 'quiz', revisionId: string) => void;
+
     // Workspace Management
     resetWorkspace: () => void;
 
@@ -165,6 +175,11 @@ export const useStore = create<AppState>((set, get) => ({
     quizData: null,
     flashcardsData: null,
     summaryData: null,
+    insightsRevisions: [],
+    notesRevisions: [],
+    summaryRevisions: [],
+    flashcardsRevisions: [],
+    quizRevisions: [],
     chatHistory: [],
     fileId: null,
     fileType: null,
@@ -232,6 +247,8 @@ export const useStore = create<AppState>((set, get) => ({
 
     topics: [],
     generationScope: { type: 'all', value: null },
+    isAppendMode: false,
+    setIsAppendMode: (val) => set({ isAppendMode: val }),
 
     setHtmlPreview: (html) => set({ htmlPreview: html }),
     setIsLoading: (loading) => set({ isLoading: loading }),
@@ -293,9 +310,17 @@ export const useStore = create<AppState>((set, get) => ({
     setTopics: (topics) => set({ topics }),
     setGenerationScope: (scope) => set({ generationScope: scope }),
 
-    // Templates State
     templates: [],
     setTemplates: (templates) => set({ templates }),
+
+    switchRevision: (module, revisionId) => set((state) => {
+        const revKey = `${module}Revisions`;
+        const dataKey = `${module}Data`;
+        const revision = (state as any)[revKey].find((r: any) => r.id === revisionId);
+        if (!revision) return state;
+
+        return { [dataKey]: revision.data };
+    }),
 
     // PDF Search State
     pdfSearchText: null,
@@ -371,32 +396,37 @@ export const useStore = create<AppState>((set, get) => ({
                 fileId: data.documentId,
                 fileType: isPdf ? 'pdf' : (isPptx ? 'pptx' : 'text'),
                 htmlPreview: data.extractedText || '',
-                summaryData: data.summaryData,
-                notesData: data.notesData,
-                flashcardsData: data.flashcardsData,
-                quizData: data.quizData,
-                mindmapData: data.mindmapData,
-                insightsData: data.insightsData,
+
+                // Active Content (Mapping from .content)
+                summaryData: data.summaryData?.content || null,
+                notesData: data.notesData?.content || null,
+                flashcardsData: data.flashcardsData?.content || null,
+                quizData: data.quizData?.content || null,
+                insightsData: data.insightsData?.content || null,
+                mindmapData: data.mindmapData, // Not versioned yet
                 chatHistory: data.chatHistory || [],
 
+                // Revisions
+                summaryRevisions: data.summaryData?.revisions || [],
+                notesRevisions: data.notesData?.revisions || [],
+                flashcardsRevisions: data.flashcardsData?.revisions || [],
+                quizRevisions: data.quizData?.revisions || [],
+                insightsRevisions: data.insightsData?.revisions || [],
+
                 // Flags
-                isSummaryGenerated: !!data.summaryData,
-                isNotesGenerated: !!data.notesData,
-                isFlashcardsGenerated: !!data.flashcardsData,
-                isQuizGenerated: !!data.quizData,
+                isSummaryGenerated: !!data.summaryData?.content,
+                isNotesGenerated: !!data.notesData?.content,
+                isFlashcardsGenerated: !!data.flashcardsData?.content,
+                isQuizGenerated: !!data.quizData?.content,
                 isMindmapGenerated: !!data.mindmapData,
-                isInsightsGenerated: !!data.insightsData,
+                isInsightsGenerated: !!data.insightsData?.content,
 
                 topics: data.topics || [],
-
-                // View settings - Critical for rendering the file immediately
                 view: 'editor',
                 mode: 'editor',
                 leftPanelView: isPptx ? 'slides' : 'editor',
                 isSlideMode: isPptx,
                 isProcessingSlides: false,
-
-                // Reset rendering progress
                 renderingProgress: 100
             });
 

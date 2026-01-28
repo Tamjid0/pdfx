@@ -53,7 +53,7 @@ const Home = () => {
         openExportModal,
         summaryData, insightsData, notesData, quizData, flashcardsData,
         isSlideMode, setIsSlideMode, setSlides, fileType, updateStats,
-        resetWorkspace, setIsPageLoading, setTopics
+        resetWorkspace, setIsPageLoading, setTopics, isAppendMode, generationScope
     } = useStore();
 
     const backToImport = () => {
@@ -154,37 +154,37 @@ const Home = () => {
                     const resultInsights = await apiService.fetchInsights(payload);
                     setInsightsData(resultInsights);
                     setIsInsightsGenerated(true);
-                    if (fileId) apiService.syncProjectContent(fileId, { insightsData: resultInsights }).catch(console.error);
+                    if (fileId) apiService.syncProjectContent(fileId, { insightsData: resultInsights }, { append: isAppendMode, scope: generationScope }).catch(console.error);
                     break;
                 case 'notes':
                     const resultNotes = await apiService.fetchNotes(payload);
                     setNotesData(resultNotes);
                     setIsNotesGenerated(true);
-                    if (fileId) apiService.syncProjectContent(fileId, { notesData: resultNotes }).catch(console.error);
+                    if (fileId) apiService.syncProjectContent(fileId, { notesData: resultNotes }, { append: isAppendMode, scope: generationScope }).catch(console.error);
                     break;
                 case 'quiz':
                     const quiz = await apiService.fetchQuiz(payload);
                     setQuizData(quiz);
                     setIsQuizGenerated(true);
-                    if (fileId) apiService.syncProjectContent(fileId, { quizData: quiz }).catch(console.error);
+                    if (fileId) apiService.syncProjectContent(fileId, { quizData: quiz }, { append: isAppendMode, scope: generationScope }).catch(console.error);
                     break;
                 case 'flashcards':
                     const flashcards = await apiService.fetchFlashcards(payload);
                     setFlashcardsData(flashcards);
                     setIsFlashcardsGenerated(true);
-                    if (fileId) apiService.syncProjectContent(fileId, { flashcardsData: flashcards }).catch(console.error);
+                    if (fileId) apiService.syncProjectContent(fileId, { flashcardsData: flashcards }, { append: isAppendMode, scope: generationScope }).catch(console.error);
                     break;
                 case 'mindmap':
                     const mindmap = await apiService.fetchMindmap(payload);
                     setMindmapData(mindmap);
                     setIsMindmapGenerated(true);
-                    if (fileId) apiService.syncProjectContent(fileId, { mindmapData: mindmap }).catch(console.error);
+                    if (fileId) apiService.syncProjectContent(fileId, { mindmapData: mindmap }, { append: isAppendMode, scope: generationScope }).catch(console.error);
                     break;
                 case 'summary':
                     const summary = await apiService.generateSummary(payload);
                     setSummaryData(summary);
                     setIsSummaryGenerated(true);
-                    if (fileId) apiService.syncProjectContent(fileId, { summaryData: summary }).catch(console.error);
+                    if (fileId) apiService.syncProjectContent(fileId, { summaryData: summary }, { append: isAppendMode, scope: generationScope }).catch(console.error);
                     break;
                 default:
                     break;

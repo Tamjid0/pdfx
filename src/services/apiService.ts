@@ -246,11 +246,11 @@ export async function getJobStatus(jobId: string) {
 /**
  * Syncs workspace content (Chat, Summary, etc.) to the backend
  */
-export async function syncProjectContent(documentId: string, content: any) {
+export async function syncProjectContent(documentId: string, content: any, options?: { append?: boolean, scope?: any }) {
     const response = await fetch(`/api/v1/documents/${documentId}/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(content),
+        body: JSON.stringify({ ...content, ...options }),
     });
     if (!response.ok) {
         throw new Error('Failed to sync project content');

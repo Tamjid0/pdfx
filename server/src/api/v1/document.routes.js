@@ -175,27 +175,63 @@ router.get('/:documentId/page/:pageIndex', validate(getDocumentPageSchema), asyn
     }
 });
 
+import { mergeContent } from '../../utils/merging.js';
+
 /**
  * POST /api/v1/documents/:documentId/sync
  * Syncs AI-generated content (Chat, Summary, etc.) to the project record.
+ * Supports appending and versioning.
  */
 router.post('/:documentId/sync', validate(getDocumentSchema), async (req, res) => {
     const { documentId } = req.params;
-    const content = req.body; // Expects selective fields: summaryData, chatHistory, etc.
+    const { append, scope, ...fields } = req.body;
 
     try {
-        const doc = await Document.findOneAndUpdate(
-            { documentId },
-            {
-                ...content,
-                lastAccessedAt: Date.now()
-            },
-            { new: true }
-        );
+        const doc = await Document.findOne({ documentId });
+        if (!doc) return res.status(404).json({ error: 'Document not found' });
 
-        if (!doc) {
-            return res.status(404).json({ error: 'Document not found' });
+        const versionedFields = ['summaryData', 'notesData', 'insightsData', 'flashcardsData', 'quizData'];
+        const updateData = { lastAccessedAt: Date.now() };
+
+        for (const key of Object.keys(fields)) {
+            if (versionedFields.includes(key)) {
+                const moduleType = key.replace('Data', '');
+                const oldData = doc[key]?.content;
+                let newData = fields[key];
+
+                // 1. Handle Merging (Append Mode)
+                if (append && oldData) {
+                    newData = mergeContent(oldData, newData, moduleType);
+                }
+
+                // 2. Handle Revisions (Snapshot)
+                // We create a revision from the PREVIOUS active content before updating
+                if (oldData) {
+                    const revisions = doc[key]?.revisions || [];
+                    const newRevision = {
+                        id: crypto.randomUUID(),
+                        timestamp: new Date(),
+                        scope: doc[key]?.activeScope || { type: 'all' },
+                        data: oldData
+                    };
+
+                    // Add to revisions, keep only latest 10
+                    const updatedRevisions = [newRevision, ...revisions].slice(0, 10);
+
+                    updateData[`${key}.revisions`] = updatedRevisions;
+                }
+
+                // 3. Update Active Content
+                updateData[`${key}.content`] = newData;
+                updateData[`${key}.activeScope`] = scope || { type: 'all' };
+
+            } else {
+                // Non-versioned fields (chatHistory, metadata, etc.)
+                updateData[key] = fields[key];
+            }
         }
+
+        await Document.updateOne({ documentId }, { $set: updateData });
 
         res.json({
             success: true,
@@ -206,5 +242,7 @@ router.post('/:documentId/sync', validate(getDocumentSchema), async (req, res) =
         res.status(500).json({ error: 'Failed to sync content' });
     }
 });
+
+import crypto from 'crypto';
 
 export default router;

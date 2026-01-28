@@ -23,13 +23,53 @@ const documentSchema = new mongoose.Schema({
         language: { type: String },
         author: { type: String }
     },
-    // AI Generated Content (Persistent Storage)
-    summaryData: { type: mongoose.Schema.Types.Mixed, default: null },
-    notesData: { type: mongoose.Schema.Types.Mixed, default: null },
-    flashcardsData: { type: mongoose.Schema.Types.Mixed, default: null },
-    quizData: { type: mongoose.Schema.Types.Mixed, default: null },
+    // AI Generated Content (Versioned Storage)
+    summaryData: {
+        content: { type: mongoose.Schema.Types.Mixed, default: null },
+        revisions: [{
+            id: { type: String },
+            timestamp: { type: Date, default: Date.now },
+            scope: { type: mongoose.Schema.Types.Mixed },
+            data: { type: mongoose.Schema.Types.Mixed }
+        }]
+    },
+    notesData: {
+        content: { type: mongoose.Schema.Types.Mixed, default: null },
+        revisions: [{
+            id: { type: String },
+            timestamp: { type: Date, default: Date.now },
+            scope: { type: mongoose.Schema.Types.Mixed },
+            data: { type: mongoose.Schema.Types.Mixed }
+        }]
+    },
+    flashcardsData: {
+        content: { type: mongoose.Schema.Types.Mixed, default: null },
+        revisions: [{
+            id: { type: String },
+            timestamp: { type: Date, default: Date.now },
+            scope: { type: mongoose.Schema.Types.Mixed },
+            data: { type: mongoose.Schema.Types.Mixed }
+        }]
+    },
+    quizData: {
+        content: { type: mongoose.Schema.Types.Mixed, default: null },
+        revisions: [{
+            id: { type: String },
+            timestamp: { type: Date, default: Date.now },
+            scope: { type: mongoose.Schema.Types.Mixed },
+            data: { type: mongoose.Schema.Types.Mixed }
+        }]
+    },
     mindmapData: { type: mongoose.Schema.Types.Mixed, default: null },
-    insightsData: { type: mongoose.Schema.Types.Mixed, default: null },
+    insightsData: {
+        content: { type: mongoose.Schema.Types.Mixed, default: null },
+        revisions: [{
+            id: { type: String },
+            timestamp: { type: Date, default: Date.now },
+            scope: { type: mongoose.Schema.Types.Mixed },
+            data: { type: mongoose.Schema.Types.Mixed }
+        }]
+    },
     chatHistory: { type: [mongoose.Schema.Types.Mixed], default: [] },
 
     structure: { type: mongoose.Schema.Types.Mixed }, // Full DocumentGraph (Nodes)

@@ -1,9 +1,9 @@
 /**
  * @typedef {Object} Position
- * @property {number} x - Left position (percentage or points)
- * @property {number} y - Top position (percentage or points)
- * @property {number} [width] - Width of element
- * @property {number} [height] - Height of element
+ * @property {number} x - Left position (percentage)
+ * @property {number} y - Top position (percentage)
+ * @property {number} width - Width percentage
+ * @property {number} height - Height percentage
  */
 
 /**
@@ -33,12 +33,12 @@ class ContentNode {
 }
 
 /**
- * Represents a text block.
+ * Represents a text block with semantic styling.
  */
 class TextNode extends ContentNode {
     /**
      * @param {string} text - The raw text
-     * @param {Object} [style] - Formatting info (fontSize, weight, color)
+     * @param {Object} [style] - { fontName, fontSize, isBold, isItalic, color }
      * @param {Position} position
      * @param {NodeSource} source
      */

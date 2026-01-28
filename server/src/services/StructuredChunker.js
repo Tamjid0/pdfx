@@ -77,12 +77,11 @@ export class StructuredChunker {
         const topics = [];
         let currentTopic = null;
 
-        // Calculate a global baseline for font sizes if possible, 
-        // or just look for local spikes in font size.
+        // Calculate a global baseline for font sizes
         const fontHeights = [];
         docGraph.structure.pages.forEach(page => {
-            page.nodes.filter(n => n.type === 'text').forEach(n => {
-                if (n.content.style?.height) fontHeights.push(n.content.style.height);
+            (page.nodes || []).filter(n => n.type === 'text').forEach(n => {
+                if (n.content.style?.fontSize) fontHeights.push(n.content.style.fontSize);
             });
         });
 
@@ -91,14 +90,20 @@ export class StructuredChunker {
         const baselineSize = sortedHeights[Math.floor(sortedHeights.length * 0.5)] || 12;
 
         for (const page of docGraph.structure.pages) {
-            const textNodes = page.nodes.filter(node => node.type === 'text');
+            const textNodes = (page.nodes || []).filter(node => node.type === 'text');
 
             for (const node of textNodes) {
-                const height = node.content.style?.height || 0;
+                const style = node.content.style || {};
+                const size = style.fontSize || 0;
+                const isBold = style.isBold || false;
 
-                // If font is significantly larger than baseline (> 30% larger)
-                // and it's not too long (likely a heading)
-                if (height > baselineSize * 1.3 && node.content.text.length < 100) {
+                // Production Grade Heading Detection
+                // Trigger if: (Significantly larger) OR (Larger + Bold) OR (Standard size + Bold in specific contexts)
+                const isSignificantlyLarger = size > baselineSize * 1.3;
+                const isHeadingSizeAndBold = size >= baselineSize * 1.1 && isBold;
+                const isSmallHeading = size >= baselineSize && isBold && node.content.text.length < 60;
+
+                if ((isSignificantlyLarger || isHeadingSizeAndBold || isSmallHeading) && node.content.text.length < 120) {
                     // Start a new topic
                     if (currentTopic) {
                         currentTopic.endPage = page.index;

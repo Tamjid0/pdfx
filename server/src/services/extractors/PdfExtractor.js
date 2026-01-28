@@ -21,7 +21,7 @@ export class PdfExtractor {
     constructor() { }
 
     /**
-     * Extracts a PDF file into a DocumentRoot.
+     * Extracts a PDF file into a DocumentRoot with high-fidelity spatial and semantic data.
      * @param {string} filePath - Path to the PDF file.
      * @param {string} originalName - Original filename.
      * @returns {Promise<DocumentRoot>}
@@ -58,20 +58,32 @@ export class PdfExtractor {
                 const pctX = (x / viewport.width) * 100;
                 const pctY = (y / viewport.height) * 100;
 
-                // Basic font style extraction
+                // Calculate bounding box percentages
+                const pctW = (item.width / viewport.width) * 100;
+                const pctH = (item.height / viewport.height) * 100;
+
+                // Professional Style Detection
+                const fontName = (item.fontName || '').toLowerCase();
                 const style = {
                     fontName: item.fontName,
-                    height: item.height // This is often the font size
+                    fontSize: item.height,
+                    isBold: fontName.includes('bold') || fontName.includes('black') || fontName.includes('w7') || fontName.includes('heavy'),
+                    isItalic: fontName.includes('italic') || fontName.includes('oblique') || fontName.includes('slanted'),
+                    color: item.color || null // Placeholder for future color extraction
                 };
 
                 const node = new TextNode(
                     item.str,
                     style,
-                    { x: pctX, y: pctY },
+                    { x: pctX, y: pctY, width: pctW, height: pctH },
                     { page: i }
                 );
 
                 docPage.addNode(node);
+            }
+
+            if (docPage.nodes.length === 0) {
+                console.warn(`[PdfExtractor] Page ${i} appears to be an image or empty (0 text nodes extracted).`);
             }
 
             docGraph.addPage(docPage);

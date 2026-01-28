@@ -5,12 +5,40 @@ interface ProjectExportActionProps {
     mode: string;
     data: any;
     filename: string;
+    revisions?: any[];
+    activeDropdown: string | null;
+    setActiveDropdown: (mode: string | null) => void;
 }
 
-const ProjectExportAction: React.FC<ProjectExportActionProps> = ({ mode, data, filename }) => {
-    const { previewPreset, setPreviewPreset } = useStore();
-    const [isOpen, setIsOpen] = useState(false);
+const ProjectExportAction: React.FC<ProjectExportActionProps> = ({ mode, data, filename, revisions = [], activeDropdown, setActiveDropdown }) => {
+    const { previewPreset, setPreviewPreset, topics } = useStore();
+    const [selectedVersion, setSelectedVersion] = useState<string>('current');
     const [isExporting, setIsExporting] = useState(false);
+
+    const isOpen = activeDropdown === mode;
+
+    const toggleDropdown = () => {
+        if (isOpen) {
+            setActiveDropdown(null);
+        } else {
+            setActiveDropdown(mode);
+        }
+    };
+
+    const getScopeLabel = (scope: any) => {
+        if (!scope || scope.type === 'all') return 'Full Document';
+        if (scope.type === 'pages') return `Pages ${scope.value[0]}-${scope.value[1]}`;
+        if (scope.type === 'topics') {
+            const topicIds = Array.isArray(scope.value) ? scope.value : [];
+            if (topicIds.length === 0) return 'Selected Topics';
+            if (topicIds.length === 1) {
+                const topic = topics.find(t => t.id === topicIds[0]);
+                return topic ? `${topic.title}` : 'Selected Topic';
+            }
+            return `${topicIds.length} Topics`;
+        }
+        return 'Custom Scope';
+    };
 
     const presets: { value: PreviewPreset; label: string; icon: string }[] = [
         { value: 'professional', label: 'Professional', icon: '💼' },
@@ -121,15 +149,24 @@ const ProjectExportAction: React.FC<ProjectExportActionProps> = ({ mode, data, f
 
     const handleExportAction = async (format: 'pdf' | 'docx') => {
         setIsExporting(true);
-        setIsOpen(false);
+        setActiveDropdown(null);
         try {
+            // Get the data to export based on selected version
+            let exportData = data;
+            if (selectedVersion !== 'current' && revisions.length > 0) {
+                const revision = revisions.find(r => r.id === selectedVersion);
+                if (revision) {
+                    exportData = revision.data;
+                }
+            }
+
             const body: any = {
                 format,
                 filename: `${filename}-${mode}-${new Date().getTime()}`,
                 mode,
             };
 
-            body.html = wrapInStyle(renderDataToHtml(mode, data));
+            body.html = wrapInStyle(renderDataToHtml(mode, exportData));
 
             const response = await fetch('/api/v1/export', {
                 method: 'POST',
@@ -164,7 +201,7 @@ const ProjectExportAction: React.FC<ProjectExportActionProps> = ({ mode, data, f
     return (
         <div className="relative inline-block z-10">
             <button
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={toggleDropdown}
                 disabled={!data || isExporting}
                 className={`flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white font-bold px-4 py-3 rounded-xl text-[9px] uppercase tracking-widest transition-all border border-white/5 disabled:opacity-20 active:scale-95 ${isOpen ? 'bg-white/15 border-white/20' : ''}`}
             >
@@ -182,7 +219,40 @@ const ProjectExportAction: React.FC<ProjectExportActionProps> = ({ mode, data, f
             </button>
 
             {isOpen && (
-                <div className="absolute top-full right-0 mt-3 w-56 bg-[#181818] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute top-full right-0 mt-3 w-64 bg-[#181818] border border-white/10 rounded-2xl shadow-2xl z-[200] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    {/* Version Selection */}
+                    {revisions.length > 0 && (
+                        <div className="p-3 border-b border-white/5 bg-white/[0.02]">
+                            <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest px-2">Select Version</span>
+                            <div className="mt-2 space-y-1 max-h-40 overflow-y-auto no-scrollbar">
+                                <button
+                                    onClick={() => setSelectedVersion('current')}
+                                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-[10px] font-bold transition-all ${selectedVersion === 'current' ? 'bg-gemini-green/10 text-gemini-green' : 'text-white/60 hover:bg-white/5 hover:text-white'}`}
+                                >
+                                    <div className="flex flex-col items-start">
+                                        <span>Current Version</span>
+                                        <span className="text-[8px] text-white/30 uppercase tracking-tighter">{getScopeLabel(data.activeScope || { type: 'all' })}</span>
+                                    </div>
+                                    {selectedVersion === 'current' && <div className="w-1.5 h-1.5 rounded-full bg-gemini-green shadow-[0_0_8px_rgba(0,255,136,0.6)]"></div>}
+                                </button>
+                                {revisions.map((rev: any) => (
+                                    <button
+                                        key={rev.id}
+                                        onClick={() => setSelectedVersion(rev.id)}
+                                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-[10px] font-bold transition-all ${selectedVersion === rev.id ? 'bg-gemini-green/10 text-gemini-green' : 'text-white/60 hover:bg-white/5 hover:text-white'}`}
+                                    >
+                                        <div className="flex flex-col items-start">
+                                            <span>{new Date(rev.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
+                                            <span className="text-[8px] text-white/30 uppercase tracking-tighter">{getScopeLabel(rev.scope)}</span>
+                                        </div>
+                                        {selectedVersion === rev.id && <div className="w-1.5 h-1.5 rounded-full bg-gemini-green shadow-[0_0_8px_rgba(0,255,136,0.6)]"></div>}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Style Preset */}
                     <div className="p-3 border-b border-white/5 bg-white/[0.02]">
                         <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest px-2">Style Preset</span>
                         <div className="mt-2 grid grid-cols-1 gap-1">

@@ -20,6 +20,7 @@ const ProjectsPage = () => {
     const [fetching, setFetching] = useState(true);
     const [selectedProject, setSelectedProject] = useState<any>(null);
     const [previewTarget, setPreviewTarget] = useState<{ mode: string; data: any } | null>(null);
+    const [activeExportDropdown, setActiveExportDropdown] = useState<string | null>(null);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -242,16 +243,23 @@ const ProjectsPage = () => {
                                 <div className="flex flex-wrap gap-2 items-center z-30">
 
 
-                                    {['Summary', 'Notes', 'Insights', 'Flashcards', 'Quiz'].map(mode => (
-                                        selectedProject[`${mode.toLowerCase()}Data`] && (
+                                    {['Summary', 'Notes', 'Insights', 'Flashcards', 'Quiz'].map(mode => {
+                                        const moduleKey = `${mode.toLowerCase()}Data`;
+                                        const moduleData = selectedProject[moduleKey];
+                                        const revisions = moduleData?.revisions || [];
+
+                                        return moduleData ? (
                                             <ProjectExportAction
                                                 key={mode}
                                                 mode={mode}
-                                                data={selectedProject[`${mode.toLowerCase()}Data`]}
+                                                data={moduleData}
+                                                revisions={revisions}
                                                 filename={selectedProject.originalFile?.name?.split('.')[0] || 'project'}
+                                                activeDropdown={activeExportDropdown}
+                                                setActiveDropdown={setActiveExportDropdown}
                                             />
-                                        )
-                                    ))}
+                                        ) : null;
+                                    })}
                                 </div>
 
                             </div>

@@ -105,7 +105,7 @@ router.get('/:documentId/pages/:pageIndex', optionalVerifyToken, checkDocumentOw
  * GET /api/v1/documents/:documentId/pdf
  * Serves the converted PDF or original source
  */
-router.get('/:documentId/pdf', verifyToken, checkDocumentOwnership(Document), validate(getDocumentSchema), async (req, res) => {
+router.get('/:documentId/pdf', optionalVerifyToken, checkDocumentOwnership(Document), validate(getDocumentSchema), async (req, res) => {
     const doc = req.currentDocument;
 
     try {

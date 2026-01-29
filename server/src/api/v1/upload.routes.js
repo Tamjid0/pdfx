@@ -3,9 +3,11 @@ import { uploadFile, embedText, multerUpload } from '../../controllers/fileUploa
 import validate from '../../middleware/validate.js';
 import { uploadSchema, embedTextSchema } from '../../validations/upload.validation.js';
 
+import { optionalVerifyToken } from '../../middleware/authMiddleware.js';
+
 const router = express.Router();
 
-router.post('/upload-document', multerUpload.single('file'), validate(uploadSchema), uploadFile);
-router.post('/embed-text', validate(embedTextSchema), embedText);
+router.post('/upload-document', optionalVerifyToken, multerUpload.single('file'), validate(uploadSchema), uploadFile);
+router.post('/embed-text', optionalVerifyToken, validate(embedTextSchema), embedText);
 
 export default router;

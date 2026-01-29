@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useStore } from '../store/useStore';
+import { getAuthHeaders } from '../services/apiService';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -62,6 +63,30 @@ const DocumentViewer: React.FC = () => {
     const [showSearchBox, setShowSearchBox] = useState(false);
     const [isSearchMinimized, setIsSearchMinimized] = useState(false);
     const [highlightedText, setHighlightedText] = useState<string | null>(null);
+    const [authHeaders, setAuthHeaders] = useState<Record<string, string>>({});
+    const [headersLoaded, setHeadersLoaded] = useState(false);
+
+    // Fetch auth headers for PDF retrieval
+    useEffect(() => {
+        const fetchHeaders = async () => {
+            try {
+                const headers = await getAuthHeaders();
+                setAuthHeaders(headers);
+            } finally {
+                setHeadersLoaded(true);
+            }
+        };
+        fetchHeaders();
+    }, [fileId]);
+
+    // Memoize the file object to prevent react-pdf from reloading unnecessarily
+    const pdfFile = useMemo(() => {
+        if (!fileId || !headersLoaded) return null;
+        return {
+            url: `/api/v1/documents/${fileId}/pdf`,
+            httpHeaders: authHeaders
+        };
+    }, [fileId, JSON.stringify(authHeaders), headersLoaded]);
 
     useEffect(() => {
         if (!containerRef) return;
@@ -452,9 +477,9 @@ const DocumentViewer: React.FC = () => {
             {/* Main Content Area - React PDF */}
             <div className="flex-1 w-full h-full relative bg-[#0a0a0a] overflow-auto flex justify-center items-start p-8">
                 <div ref={setContainerRef} className="min-w-full flex items-start justify-center">
-                    {containerRect && (
+                    {containerRect && pdfFile && (
                         <Document
-                            file={`/api/v1/documents/${fileId}/pdf`}
+                            file={pdfFile}
                             onLoadSuccess={onDocumentLoadSuccess}
                             className="flex items-center justify-center"
                             loading={

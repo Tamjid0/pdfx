@@ -38,9 +38,7 @@ export const useFileUpload = () => {
                         setIsProcessingSlides(false);
                         setRenderingProgress(100);
 
-                        const docDataResponse = await fetch(`/api/v1/documents/${documentId}`);
-                        if (!docDataResponse.ok) throw new Error('Failed to fetch processed document');
-                        const docData = await docDataResponse.json();
+                        const docData = await apiService.fetchDocument(documentId);
 
                         resolve({
                             ...docData,

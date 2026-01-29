@@ -5,7 +5,7 @@ import {
 } from '../store/useStore';
 import { auth } from '../lib/firebase';
 
-async function getAuthHeaders(headers: Record<string, string> = {}) {
+export async function getAuthHeaders(headers: Record<string, string> = {}) {
     const user = auth.currentUser;
     const bearerHeaders: Record<string, string> = { ...headers };
 
@@ -305,4 +305,16 @@ export async function fetchUserDocuments(userId: string, limit: number = 20, off
     }
     const result = await response.json();
     return result;
+}
+/**
+ * Fetches a single document by its ID with authentication
+ */
+export async function fetchDocument(documentId: string): Promise<any> {
+    const response = await fetch(`/api/v1/documents/${documentId}`, {
+        headers: await getAuthHeaders()
+    });
+    if (!response.ok) {
+        throw new Error('Failed to fetch document');
+    }
+    return response.json();
 }

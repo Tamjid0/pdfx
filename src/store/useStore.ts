@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { toast } from 'react-hot-toast';
+import * as apiService from '../services/apiService';
 
 export type PreviewPreset = 'professional' | 'academic' | 'minimal' | 'creative';
 export type Mode = 'summary' | 'insights' | 'notes' | 'quiz' | 'flashcards' | 'mindmap' | 'editor' | 'chat' | 'slides';
@@ -589,9 +590,7 @@ export const useStore = create<AppState>((set, get) => ({
     loadProject: async (documentId) => {
         set({ isLoading: true });
         try {
-            const response = await fetch(`/api/v1/documents/${documentId}`);
-            if (!response.ok) throw new Error('Failed to load project');
-            const data = await response.json();
+            const data = await apiService.fetchDocument(documentId);
 
             const typeStr = (data.type || '').toLowerCase();
             const isPptx = typeStr.includes('presentation') || typeStr.includes('powerpoint') || typeStr.includes('pptx');

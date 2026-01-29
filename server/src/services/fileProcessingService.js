@@ -32,18 +32,20 @@ export async function checkFileType(filePath) {
         'application/vnd.ms-powerpoint',
         'application/octet-stream' // Allow generic binary, checking extension below
     ];
+
     if (!type || !allowedMimeTypes.includes(type.mime)) {
         // Double check for PPTX/PPT if it was detected as zip or similar/unknown but has right extension
         // Note: file-type often detects PPTX as 'application/zip' or 'application/x-zip-compressed'
         const isZip = type && (type.mime === 'application/zip' || type.mime === 'application/x-zip-compressed');
         const hasPptExtension = filePath.match(/\.(pptx|ppt)$/i);
 
-        if (isZip && hasPptExtension) {
+        // If it's a known zip/compressed format OR generic octet-stream AND has the right extension
+        if ((isZip || !type || type.mime === 'application/octet-stream') && hasPptExtension) {
             // It's likely a valid office file
             return { mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', ext: 'pptx' };
         }
 
-        throw new Error('Invalid file type. Only PDF, TXT, and Presentation files are allowed.');
+        throw new Error(`Invalid file type: ${type?.mime || 'unknown'}. Only PDF, TXT, and Presentation files are allowed.`);
     }
     return type;
 }

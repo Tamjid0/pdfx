@@ -83,6 +83,8 @@ export const uploadFile = async (req, res, next) => {
         } else if (originalname.match(/\.pdf$/i)) {
             mimetype = 'application/pdf';
         }
+        // CRITICAL: Update the req.file object so downstream consumers see the correct type
+        req.file.mimetype = mimetype;
     }
 
     try {

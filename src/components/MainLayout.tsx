@@ -114,7 +114,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                         <main className="flex-1 flex flex-col overflow-hidden">
                             <div className="flex-shrink-0 p-2 border-b border-[#222] flex justify-between items-center gap-4 bg-[#0f0f0f]">
                                 <div className="flex items-center justify-between px-6 py-3 border-b border-[#222] bg-[#0a0a0a]">
-                                    <button onClick={handleBackClick} className="px-3 py-1.5 text-xs font-semibold bg-[#222] rounded-md hover:bg-[#333]">Back</button>
+                                    {isDocumentMode && (
+                                        <button
+                                            onClick={handleBackClick}
+                                            className="px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-[#00ff88] border border-[#00ff88]/30 bg-[#00ff88]/5 rounded-md hover:bg-[#00ff88]/10 hover:border-[#00ff88]/60 transition-all shadow-[0_0_10px_rgba(0,255,136,0.1)] hover:shadow-[0_0_15px_rgba(0,255,136,0.2)]"
+                                        >
+                                            Back
+                                        </button>
+                                    )}
                                 </div>
                                 <div className="flex-1 flex justify-center items-center gap-4">
                                     <div className={`inline-flex bg-[#1a1a1a] p-1 rounded-md border border-[#333] ${mode === 'editor' ? 'opacity-50 cursor-not-allowed' : ''}`}>

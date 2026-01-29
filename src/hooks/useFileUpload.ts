@@ -155,8 +155,14 @@ export const useFileUpload = () => {
             }
 
             return response;
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error uploading file:", error);
+            // Log detailed server error if available
+            if (error.response) {
+                console.error("Server Error Details:", error.response.status, error.response.data);
+            } else if (error.message) {
+                console.error("Error Message:", error.message);
+            }
             throw error;
         } finally {
             setIsLoading(false);

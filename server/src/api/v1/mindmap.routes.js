@@ -5,6 +5,7 @@ import { aiGenerationLimiter } from '../../middleware/rateLimitMiddleware.js';
 import validate from '../../middleware/validate.js';
 import { mindmapSchema } from '../../validations/mindmap.validation.js';
 import ApiError from '../../utils/ApiError.js';
+import { safeParseAiJson } from '../../utils/aiUtils.js';
 
 const router = express.Router();
 
@@ -34,15 +35,7 @@ router.post('/', aiGenerationLimiter, validate(mindmapSchema), async (req, res, 
 
         const aiResponse = await generateFullDocumentTransformation(fullText, promptInstruction, { outputFormat: 'json' });
 
-        let jsonResponse;
-        try {
-            jsonResponse = JSON.parse(aiResponse);
-        } catch (e) {
-            const match = aiResponse.match(/\{[\s\S]*\}/);
-            if (match) {
-                jsonResponse = JSON.parse(match[0]);
-            }
-        }
+        const jsonResponse = safeParseAiJson(aiResponse, 'Mindmap');
 
         if (!jsonResponse || !Array.isArray(jsonResponse.nodes) || !Array.isArray(jsonResponse.edges)) {
             throw new Error("Invalid JSON structure received from AI.");

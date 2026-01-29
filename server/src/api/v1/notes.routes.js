@@ -7,6 +7,7 @@ import { notesSchema } from '../../validations/notes.validation.js';
 import ApiError from '../../utils/ApiError.js';
 
 import { resolveScopedText } from '../../utils/scoping.js';
+import { safeParseAiJson } from '../../utils/aiUtils.js';
 
 const router = express.Router();
 
@@ -29,13 +30,7 @@ router.post('/', aiGenerationLimiter, validate(notesSchema), async (req, res, ne
 
         const aiResponse = await generateFullDocumentTransformation(fullText, promptInstruction, { outputFormat: 'json' });
 
-        let jsonResponse;
-        try {
-            jsonResponse = JSON.parse(aiResponse);
-        } catch (e) {
-            const match = aiResponse.match(/\{[\s\S]*\}/);
-            if (match) jsonResponse = JSON.parse(match[0]);
-        }
+        const jsonResponse = safeParseAiJson(aiResponse, 'Notes');
 
         if (!jsonResponse || !Array.isArray(jsonResponse.notes)) {
             throw new Error("Invalid JSON structure received from AI.");

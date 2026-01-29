@@ -7,6 +7,7 @@ import { summarySchema } from '../../validations/summary.validation.js';
 import Document from '../../models/Document.js';
 import ApiError from '../../utils/ApiError.js';
 import { resolveScopedText } from '../../utils/scoping.js';
+import { safeParseAiJson } from '../../utils/aiUtils.js';
 
 const router = express.Router();
 
@@ -54,13 +55,7 @@ router.post('/', aiGenerationLimiter, validate(summarySchema), async (req, res, 
 
         const aiResponse = await generateFullDocumentTransformation(fullText, promptInstruction, { outputFormat: 'json' });
 
-        let json;
-        try {
-            json = JSON.parse(aiResponse);
-        } catch (e) {
-            const match = aiResponse.match(/\{[\s\S]*\}/);
-            if (match) json = JSON.parse(match[0]);
-        }
+        const json = safeParseAiJson(aiResponse, 'Summary');
 
         if (!json || !json.summary) {
             throw new Error("Invalid JSON structure from AI.");

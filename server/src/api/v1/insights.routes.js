@@ -7,6 +7,7 @@ import { insightsSchema } from '../../validations/insights.validation.js';
 import ApiError from '../../utils/ApiError.js';
 
 import { resolveScopedText } from '../../utils/scoping.js';
+import { safeParseAiJson } from '../../utils/aiUtils.js';
 
 const router = express.Router();
 
@@ -33,16 +34,7 @@ router.post('/', aiGenerationLimiter, validate(insightsSchema), async (req, res,
 
         console.log("Raw AI Response for Insights:", aiResponse); // Debugging Log
 
-        let jsonResponse;
-        try {
-            jsonResponse = JSON.parse(aiResponse);
-        } catch (e) {
-            console.warn("JSON Parse Failed, attempting regex extraction...");
-            const match = aiResponse.match(/\{[\s\S]*\}/);
-            if (match) {
-                jsonResponse = JSON.parse(match[0]);
-            }
-        }
+        const jsonResponse = safeParseAiJson(aiResponse, 'Insights');
 
         if (!jsonResponse || !Array.isArray(jsonResponse.insights)) {
             console.error("Invalid JSON Structure:", jsonResponse);

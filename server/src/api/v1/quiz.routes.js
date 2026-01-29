@@ -7,6 +7,7 @@ import { quizSchema } from '../../validations/quiz.validation.js';
 import ApiError from '../../utils/ApiError.js';
 
 import { resolveScopedText } from '../../utils/scoping.js';
+import { safeParseAiJson } from '../../utils/aiUtils.js';
 
 const router = express.Router();
 
@@ -50,13 +51,7 @@ router.post('/', aiGenerationLimiter, validate(quizSchema), async (req, res, nex
 
         const aiResponse = await generateFullDocumentTransformation(fullText, promptInstruction, { outputFormat: 'json' });
 
-        let json;
-        try {
-            json = JSON.parse(aiResponse);
-        } catch (e) {
-            const match = aiResponse.match(/\{[\s\S]*\}/);
-            if (match) json = JSON.parse(match[0]);
-        }
+        const json = safeParseAiJson(aiResponse, 'Quiz');
 
         if (!json || !json.quiz) {
             throw new Error("Invalid JSON structure received from AI");

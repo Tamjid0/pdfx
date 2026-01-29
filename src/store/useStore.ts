@@ -573,7 +573,7 @@ export const useStore = create<AppState>((set, get) => ({
             slides: [],
             currentSlideIndex: 0,
             isSlideMode: false,
-            view: 'import',
+            view: 'editor', // Changed from 'import' to 'editor' to keep workspace visible
             mode: 'editor',
             isPageLoading: false,
             isDocumentLoading: false,

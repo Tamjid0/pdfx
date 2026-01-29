@@ -113,7 +113,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 
                         <main className="flex-1 flex flex-col overflow-hidden">
                             <div className="flex-shrink-0 p-2 border-b border-[#222] flex justify-between items-center gap-4 bg-[#0f0f0f]">
-                                <div className="flex items-center justify-between px-6 py-3 border-b border-[#222] bg-[#0a0a0a]">
+                                <div className="flex items-center justify-between px-6 py-3">
                                     {isDocumentMode && (
                                         <button
                                             onClick={handleBackClick}

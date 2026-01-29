@@ -18,6 +18,7 @@ import v1MindmapRoutes from './v1/mindmap.routes.js';
 import v1FormatRoutes from './v1/format.routes.js';
 import v1TemplateRoutes from './v1/template.routes.js';
 import v1ExportRoutes from './v1/export.routes.js';
+import healthRoutes from './health.routes.js';
 import v1ScrapeRoutes from './v1/scrape.routes.js';
 
 const router = Router();

@@ -3,13 +3,26 @@ import {
     SummaryData, NotesData, FlashcardsData, QuizData, MindmapData, InsightsData,
     Topic, GenerationScope, DocumentOverview
 } from '../store/useStore';
+import { auth } from '../lib/firebase';
+
+async function getAuthHeaders(headers: Record<string, string> = {}) {
+    const user = auth.currentUser;
+    const bearerHeaders: Record<string, string> = { ...headers };
+
+    if (user) {
+        const token = await user.getIdToken();
+        bearerHeaders['Authorization'] = `Bearer ${token}`;
+    }
+
+    return bearerHeaders;
+}
 
 export async function formatContent(html: string, prompt: string) {
     const response = await fetch('/api/v1/format', {
         method: 'POST',
-        headers: {
+        headers: await getAuthHeaders({
             'Content-Type': 'application/json',
-        },
+        }),
         body: JSON.stringify({ html, prompt }),
     });
     if (!response.ok) {
@@ -36,9 +49,9 @@ export async function generateSummary(arg1: GenerationPayload, settings?: Record
     const payload = getPayload(arg1, settings);
     const response = await fetch('/api/v1/summary', {
         method: 'POST',
-        headers: {
+        headers: await getAuthHeaders({
             'Content-Type': 'application/json',
-        },
+        }),
         body: JSON.stringify(payload),
     });
     if (!response.ok) {
@@ -48,7 +61,9 @@ export async function generateSummary(arg1: GenerationPayload, settings?: Record
 }
 
 export async function fetchTemplates() {
-    const response = await fetch('/api/v1/templates');
+    const response = await fetch('/api/v1/templates', {
+        headers: await getAuthHeaders()
+    });
     if (!response.ok) {
         throw new Error('Failed to fetch templates');
     }
@@ -64,6 +79,7 @@ export async function uploadFile(file: File, userId?: string) {
 
     const response = await fetch('/api/v1/upload/upload-document', {
         method: 'POST',
+        headers: await getAuthHeaders(),
         body: formData,
     });
 
@@ -76,9 +92,9 @@ export async function uploadFile(file: File, userId?: string) {
 export async function embedText(text: string, fileName?: string) {
     const response = await fetch('/api/v1/upload/embed-text', {
         method: 'POST',
-        headers: {
+        headers: await getAuthHeaders({
             'Content-Type': 'application/json',
-        },
+        }),
         body: JSON.stringify({ text, fileName }),
     });
 
@@ -92,9 +108,9 @@ export async function fetchNotes(arg1: GenerationPayload, settings?: Record<stri
     const payload = getPayload(arg1, settings);
     const response = await fetch('/api/v1/notes', {
         method: 'POST',
-        headers: {
+        headers: await getAuthHeaders({
             'Content-Type': 'application/json',
-        },
+        }),
         body: JSON.stringify(payload),
     });
     if (!response.ok) {
@@ -107,9 +123,9 @@ export async function fetchFlashcards(arg1: GenerationPayload, settings?: Record
     const payload = getPayload(arg1, settings);
     const response = await fetch('/api/v1/flashcards', {
         method: 'POST',
-        headers: {
+        headers: await getAuthHeaders({
             'Content-Type': 'application/json',
-        },
+        }),
         body: JSON.stringify(payload),
     });
     if (!response.ok) {
@@ -122,9 +138,9 @@ export async function fetchQuiz(arg1: GenerationPayload, settings?: Record<strin
     const payload = getPayload(arg1, settings);
     const response = await fetch('/api/v1/quiz', {
         method: 'POST',
-        headers: {
+        headers: await getAuthHeaders({
             'Content-Type': 'application/json',
-        },
+        }),
         body: JSON.stringify(payload),
     });
     if (!response.ok) {
@@ -137,9 +153,9 @@ export async function fetchMindmap(arg1: GenerationPayload, settings?: Record<st
     const payload = getPayload(arg1, settings);
     const response = await fetch('/api/v1/mindmap', {
         method: 'POST',
-        headers: {
+        headers: await getAuthHeaders({
             'Content-Type': 'application/json',
-        },
+        }),
         body: JSON.stringify(payload),
     });
     if (!response.ok) {
@@ -152,9 +168,9 @@ export async function fetchInsights(arg1: GenerationPayload, settings?: Record<s
     const payload = getPayload(arg1, settings);
     const response = await fetch('/api/v1/insights', {
         method: 'POST',
-        headers: {
+        headers: await getAuthHeaders({
             'Content-Type': 'application/json',
-        },
+        }),
         body: JSON.stringify(payload),
     });
     if (!response.ok) {
@@ -166,9 +182,9 @@ export async function fetchInsights(arg1: GenerationPayload, settings?: Record<s
 export async function exportContent(content: string, format: string, mode: string) {
     const response = await fetch('/api/v1/export', {
         method: 'POST',
-        headers: {
+        headers: await getAuthHeaders({
             'Content-Type': 'application/json',
-        },
+        }),
         body: JSON.stringify({ content, format, mode }),
     });
     if (!response.ok) {
@@ -181,9 +197,9 @@ export async function exportContent(content: string, format: string, mode: strin
 export async function chatWithDocument(message: string, fileId: string) {
     const response = await fetch('/api/v1/chat', {
         method: 'POST',
-        headers: {
+        headers: await getAuthHeaders({
             'Content-Type': 'application/json',
-        },
+        }),
         body: JSON.stringify({ message, fileId }),
     });
     if (!response.ok) {
@@ -195,9 +211,9 @@ export async function chatWithDocument(message: string, fileId: string) {
 export async function chatWithDocumentStream(message: string, fileId: string, onChunk: (text: string) => void, onComplete: (fullText: string) => void) {
     const response = await fetch('/api/v1/chat/stream', {
         method: 'POST',
-        headers: {
+        headers: await getAuthHeaders({
             'Content-Type': 'application/json',
-        },
+        }),
         body: JSON.stringify({ message, fileId }),
     });
 
@@ -241,7 +257,9 @@ export async function chatWithDocumentStream(message: string, fileId: string, on
 }
 
 export async function getJobStatus(jobId: string) {
-    const response = await fetch(`/api/v1/jobs/${jobId}`);
+    const response = await fetch(`/api/v1/jobs/${jobId}`, {
+        headers: await getAuthHeaders()
+    });
     if (!response.ok) {
         throw new Error('Failed to fetch job status');
     }
@@ -266,7 +284,7 @@ export async function syncProjectContent(
 ) {
     const response = await fetch(`/api/v1/documents/${documentId}/sync`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ ...content, ...options }),
     });
     if (!response.ok) {
@@ -278,11 +296,13 @@ export async function syncProjectContent(
 /**
  * Fetches all documents (projects) for a specific user
  */
-export async function fetchUserDocuments(userId: string): Promise<DocumentOverview[]> {
-    const response = await fetch(`/api/v1/documents?userId=${userId}`);
+export async function fetchUserDocuments(userId: string, limit: number = 20, offset: number = 0): Promise<{ data: DocumentOverview[], pagination: any }> {
+    const response = await fetch(`/api/v1/documents?userId=${userId}&limit=${limit}&offset=${offset}`, {
+        headers: await getAuthHeaders()
+    });
     if (!response.ok) {
         throw new Error('Failed to fetch documents');
     }
     const result = await response.json();
-    return result.data;
+    return result;
 }

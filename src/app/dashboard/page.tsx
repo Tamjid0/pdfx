@@ -18,6 +18,9 @@ const ProjectsPage = () => {
     const router = useRouter();
     const [projects, setProjects] = useState<DocumentOverview[]>([]);
     const [fetching, setFetching] = useState(true);
+    const [hasMore, setHasMore] = useState(false);
+    const [offset, setOffset] = useState(0);
+    const LIMIT = 12; // Use a reasonable limit for the grid
     const [selectedProject, setSelectedProject] = useState<DocumentOverview | null>(null);
     const [previewTarget, setPreviewTarget] = useState<{ mode: string; data: any } | null>(null);
     const [activeExportDropdown, setActiveExportDropdown] = useState<string | null>(null);
@@ -33,17 +36,28 @@ const ProjectsPage = () => {
         }
     }, [user, authLoading]);
 
-    const loadProjects = async () => {
+    const loadProjects = async (isLoadMore = false) => {
         try {
             setFetching(true);
-            setIsPageLoading(true);
-            const data = await apiService.fetchUserDocuments(user?.uid || 'guest');
-            setProjects(data);
+            if (!isLoadMore) setIsPageLoading(true);
+
+            const currentOffset = isLoadMore ? offset : 0;
+            const result = await apiService.fetchUserDocuments(user?.uid || 'guest', LIMIT, currentOffset);
+
+            if (isLoadMore) {
+                setProjects(prev => [...prev, ...result.data]);
+                setOffset(prev => prev + result.data.length);
+            } else {
+                setProjects(result.data);
+                setOffset(result.data.length);
+            }
+
+            setHasMore(result.pagination.hasMore);
         } catch (error) {
             console.error('Failed to load projects:', error);
         } finally {
             setFetching(false);
-            setIsPageLoading(false);
+            if (!isLoadMore) setIsPageLoading(false);
         }
     };
 

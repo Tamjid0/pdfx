@@ -28,6 +28,7 @@ if (!fs.existsSync(indexesDir)) {
 import { DocumentProcessor } from '../services/DocumentProcessor.js';
 import { addDocumentJob, isRedisConnected } from '../services/queueService.js';
 import User from '../models/User.js';
+import { deleteCachePattern } from './cacheService.js';
 
 const documentProcessor = new DocumentProcessor();
 
@@ -114,6 +115,11 @@ export const uploadFile = async (req, res, next) => {
             });
             jobId = job.id;
         }
+
+        // Invalidate Cache for this user's document list
+        deleteCachePattern(`docs_list:${userId}:*`).catch(err =>
+            logger.error(`[Cache] Invalidation failed for user ${userId}: ${err.message}`)
+        );
 
         // Return immediately with extraction data - UI transitions to workspace NOW
         return res.json({

@@ -1,5 +1,6 @@
 import './utils/polyfill.js';
 import 'dotenv/config';
+import { z } from 'zod';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -10,6 +11,44 @@ import { scrapeHtml } from './services/scraper.js';
 import apiRoutes from './api/index.js';
 import { initDocumentWorker } from './workers/documentWorker.js';
 import connectDB from './config/database.js';
+import admin from 'firebase-admin';
+import sanitizeRequest from './middleware/sanitize.js';
+import { initBackupSchedule } from './services/backupService.js';
+
+// --- Environment Validation (Production Readiness) ---
+const envSchema = z.object({
+    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+    PORT: z.string().transform(Number).default('4000'),
+    MONGODB_URI: z.string().optional(), // NeDB doesn't need this, but MongoDB does
+    FIREBASE_PROJECT_ID: z.string().min(1, 'FIREBASE_PROJECT_ID is required'),
+    CORS_ORIGIN: z.string().default('http://localhost:3000'),
+    GEMINI_API_KEY: z.string().min(1, 'GEMINI_API_KEY is required for AI features'),
+});
+
+const envResult = envSchema.safeParse(process.env);
+if (!envResult.success) {
+    console.error('❌ Invalid environment variables:', envResult.error.format());
+    process.exit(1);
+}
+const env = envResult.data;
+
+// --- Initialize Firebase Admin ---
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    try {
+        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount)
+        });
+        logger.info('Firebase Admin initialized from environment variable');
+    } catch (err) {
+        logger.error('Failed to parse FIREBASE_SERVICE_ACCOUNT env var:', err.message);
+    }
+} else {
+    admin.initializeApp({
+        projectId: env.FIREBASE_PROJECT_ID
+    });
+    logger.info(`Firebase Admin initialized with Project ID: ${env.FIREBASE_PROJECT_ID}`);
+}
 
 // Connect to Database
 connectDB();
@@ -21,11 +60,33 @@ initDocumentWorker().catch(err => {
 
 const app = express();
 
-// Security & Basic Middleware
+// --- Security & Basic Middleware ---
 app.use(helmet()); // Add security headers
-app.use(cors());
-app.use(express.json({ limit: '50mb' })); // Limit payload size
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+const whitelist = [env.CORS_ORIGIN];
+if (env.NODE_ENV === 'development') {
+    whitelist.push('http://localhost:3001', 'http://localhost:3002');
+}
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin) return callback(null, true);
+        if (whitelist.indexOf(origin) !== -1 || env.NODE_ENV === 'development') {
+            callback(null, true);
+        } else {
+            logger.warn(`CORS blocked for origin: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.use(express.json({ limit: '20mb' })); // Production hardening: lower limit from 50mb
+app.use(express.urlencoded({ limit: '20mb', extended: true }));
+app.use(sanitizeRequest); // Sanitize all inputs
 
 // Structured Request Logging
 app.use((req, res, next) => {
@@ -53,7 +114,9 @@ app.use('/api', apiRoutes);
 app.use(errorConverter);
 app.use(errorHandler);
 
-const port = process.env.PORT || 4000;
-app.listen(port, () => {
-    logger.info(`Server running on port ${port}`);
+// Initialize Backup Schedule
+initBackupSchedule();
+
+const server = app.listen(env.PORT, () => {
+    logger.info(`Server running on port ${env.PORT}`);
 });

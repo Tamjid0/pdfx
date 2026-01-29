@@ -3,6 +3,9 @@ import fs from 'fs';
 import path from 'path';
 import validate from '../../middleware/validate.js';
 import { getDocumentSchema, getDocumentPageSchema, getDocumentImageSchema } from '../../validations/document.validation.js';
+import { verifyToken, checkDocumentOwnership, optionalVerifyToken } from '../../middleware/authMiddleware.js';
+import cacheMiddleware from '../../middleware/cacheMiddleware.js';
+import { deleteCachePattern } from '../../services/cacheService.js';
 
 import Document from '../../models/Document.js';
 
@@ -12,23 +15,33 @@ const BASE_UPLOADS_DIR = path.resolve(process.cwd(), 'uploads');
 
 /**
  * GET /api/v1/documents
- * List documents for a user
+ * List documents for a user (securely identified via token or guest mode)
  */
-router.get('/', async (req, res) => {
-    const { userId } = req.query;
-
-    if (!userId) {
-        return res.status(400).json({ error: 'userId is required to list documents' });
-    }
+router.get('/', optionalVerifyToken, cacheMiddleware(600, 'docs_list'), async (req, res) => {
+    const userId = req.user.uid;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = parseInt(req.query.offset) || 0;
 
     try {
         const documents = await Document.find({ userId, isArchived: false })
             .select('documentId type originalFile metadata createdAt summaryData notesData insightsData flashcardsData quizData mindmapData chatHistory')
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .skip(offset)
+            .limit(limit);
+
+        // Check if there are more documents
+        const totalCount = await Document.countDocuments({ userId, isArchived: false });
+        const hasMore = offset + documents.length < totalCount;
 
         res.json({
             success: true,
-            data: documents
+            data: documents,
+            pagination: {
+                total: totalCount,
+                limit,
+                offset,
+                hasMore
+            }
         });
     } catch (error) {
         console.error('[DocumentRoutes] Error listing documents:', error);
@@ -40,7 +53,7 @@ router.get('/', async (req, res) => {
  * GET /api/v1/documents/:documentId/images/:filename
  * Serves extracted images from disk via document lookup
  */
-router.get('/:documentId/images/:filename', validate(getDocumentImageSchema), async (req, res) => {
+router.get('/:documentId/images/:filename', optionalVerifyToken, checkDocumentOwnership(Document), validate(getDocumentImageSchema), async (req, res) => {
     const { documentId, filename } = req.params;
 
     try {
@@ -65,7 +78,7 @@ router.get('/:documentId/images/:filename', validate(getDocumentImageSchema), as
  * GET /api/v1/documents/:documentId/pages/:pageIndex
  * Serves the pre-rendered static PNG of a specific page
  */
-router.get('/:documentId/pages/:pageIndex', validate(getDocumentPageSchema), async (req, res) => {
+router.get('/:documentId/pages/:pageIndex', optionalVerifyToken, checkDocumentOwnership(Document), validate(getDocumentPageSchema), async (req, res) => {
     const { documentId, pageIndex } = req.params;
 
     try {
@@ -92,13 +105,10 @@ router.get('/:documentId/pages/:pageIndex', validate(getDocumentPageSchema), asy
  * GET /api/v1/documents/:documentId/pdf
  * Serves the converted PDF or original source
  */
-router.get('/:documentId/pdf', validate(getDocumentSchema), async (req, res) => {
-    const { documentId } = req.params;
+router.get('/:documentId/pdf', verifyToken, checkDocumentOwnership(Document), validate(getDocumentSchema), async (req, res) => {
+    const doc = req.currentDocument;
 
     try {
-        const doc = await Document.findOne({ documentId });
-        if (!doc) return res.status(404).json({ error: 'Document not found' });
-
         // Prioritize converted PDF (for PPTX) or fallback to original (for natively uploaded PDFs)
         let pdfPath;
         if (doc.convertedPdfPath) {
@@ -125,28 +135,15 @@ router.get('/:documentId/pdf', validate(getDocumentSchema), async (req, res) => 
  * GET /api/v1/documents/:documentId
  * Retrieves the full Document JSON from MongoDB
  */
-router.get('/:documentId', validate(getDocumentSchema), async (req, res) => {
-    const { documentId } = req.params;
-
-    try {
-        const doc = await Document.findOne({ documentId });
-
-        if (!doc) {
-            return res.status(404).json({ error: 'Document not found' });
-        }
-
-        res.json(doc);
-    } catch (error) {
-        console.error('[DocumentRoutes] Error reading document:', error);
-        res.status(500).json({ error: 'Failed to read document' });
-    }
+router.get('/:documentId', optionalVerifyToken, checkDocumentOwnership(Document), validate(getDocumentSchema), async (req, res) => {
+    res.json(req.currentDocument);
 });
 
 /**
  * GET /api/v1/documents/:documentId/page/:pageIndex
  * Retrieves a specific page metadata from the document structure
  */
-router.get('/:documentId/page/:pageIndex', validate(getDocumentPageSchema), async (req, res) => {
+router.get('/:documentId/page/:pageIndex', optionalVerifyToken, checkDocumentOwnership(Document), validate(getDocumentPageSchema), async (req, res) => {
     const { documentId, pageIndex } = req.params;
 
     try {
@@ -182,14 +179,13 @@ import { mergeContent } from '../../utils/merging.js';
  * Syncs AI-generated content (Chat, Summary, etc.) to the project record.
  * Supports appending and versioning.
  */
-router.post('/:documentId/sync', validate(getDocumentSchema), async (req, res) => {
+router.post('/:documentId/sync', optionalVerifyToken, checkDocumentOwnership(Document), validate(getDocumentSchema), async (req, res) => {
+    const doc = req.currentDocument;
     const { documentId } = req.params;
     const { append, scope, versionName, ...fields } = req.body;
+    const userId = req.user.uid;
 
     try {
-        const doc = await Document.findOne({ documentId });
-        if (!doc) return res.status(404).json({ error: 'Document not found' });
-
         const versionedFields = ['summaryData', 'notesData', 'insightsData', 'flashcardsData', 'quizData'];
         const updateData = { lastAccessedAt: Date.now() };
 
@@ -253,6 +249,11 @@ router.post('/:documentId/sync', validate(getDocumentSchema), async (req, res) =
 
         await Document.updateOne({ documentId }, { $set: updateData });
 
+        // Invalidate Cache for this user's document list
+        deleteCachePattern(`docs_list:${userId}:*`).catch(err =>
+            logger.error(`[Cache] Invalidation failed for user ${userId}: ${err.message}`)
+        );
+
         res.json({
             success: true,
             message: 'Project synced successfully',
@@ -265,7 +266,7 @@ router.post('/:documentId/sync', validate(getDocumentSchema), async (req, res) =
 });
 
 // 4. Delete a revision
-router.delete('/:documentId/revisions/:revisionId', async (res, req) => {
+router.delete('/:documentId/revisions/:revisionId', verifyToken, checkDocumentOwnership(Document), async (req, res) => {
     try {
         const { documentId, revisionId } = req.params;
         const { module: moduleKey } = req.query; // e.g. 'summaryData'
@@ -273,9 +274,6 @@ router.delete('/:documentId/revisions/:revisionId', async (res, req) => {
         if (!moduleKey) {
             return res.status(400).json({ error: 'Module key is required' });
         }
-
-        const doc = await Document.findOne({ documentId });
-        if (!doc) return res.status(404).json({ error: 'Document not found' });
 
         // Remove the revision from the specified module
         const update = {
@@ -286,6 +284,12 @@ router.delete('/:documentId/revisions/:revisionId', async (res, req) => {
 
         await Document.updateOne({ documentId }, update);
 
+        // Invalidate Cache
+        const userId = req.user.uid;
+        deleteCachePattern(`docs_list:${userId}:*`).catch(err =>
+            logger.error(`[Cache] Invalidation failed for user ${userId}: ${err.message}`)
+        );
+
         res.json({ success: true, message: 'Revision deleted successfully' });
     } catch (error) {
         console.error('[DocumentRoutes] Error deleting revision:', error);
@@ -294,7 +298,7 @@ router.delete('/:documentId/revisions/:revisionId', async (res, req) => {
 });
 
 // 5. Rename a revision
-router.patch('/:documentId/revisions/:revisionId', async (res, req) => {
+router.patch('/:documentId/revisions/:revisionId', verifyToken, checkDocumentOwnership(Document), async (req, res) => {
     try {
         const { documentId, revisionId } = req.params;
         const { module: moduleKey, name } = req.body;
@@ -302,9 +306,6 @@ router.patch('/:documentId/revisions/:revisionId', async (res, req) => {
         if (!moduleKey || !name) {
             return res.status(400).json({ error: 'Module key and name are required' });
         }
-
-        const doc = await Document.findOne({ documentId });
-        if (!doc) return res.status(404).json({ error: 'Document not found' });
 
         // Update the name of the specific revision
         // We use the $[<identifier>] positional operator for this
@@ -316,6 +317,12 @@ router.patch('/:documentId/revisions/:revisionId', async (res, req) => {
         if (result.matchedCount === 0) {
             return res.status(404).json({ error: 'Revision not found' });
         }
+
+        // Invalidate Cache
+        const userId = req.user.uid;
+        deleteCachePattern(`docs_list:${userId}:*`).catch(err =>
+            logger.error(`[Cache] Invalidation failed for user ${userId}: ${err.message}`)
+        );
 
         res.json({ success: true, message: 'Revision renamed successfully' });
     } catch (error) {

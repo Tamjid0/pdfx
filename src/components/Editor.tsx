@@ -32,10 +32,11 @@ const Editor: React.FC<EditorProps> = ({ htmlContent, onEditorChange, onFileUplo
         setIsMounted(true);
     }, []);
 
-    // Conditional Rendering: If it's a PDF and we have a fileId, show DocumentViewer
-    // The user said: "by the deafult the layout should be the same but only when user uploads a file on the editor or upload page editormode should be switched to docmuent viewer"
-    if (fileType === 'pdf' && fileId) {
-        return <DocumentViewer />;
+    // If a document is active, we don't show the text editor in the first pane
+    if (fileId) {
+        if (fileType === 'pdf') return <DocumentViewer />;
+        // For slides, MainLayout handles showing SlidePipelineContainer based on leftPanelView
+        return null;
     }
 
     const isEmpty = !htmlContent || htmlContent === '<p></p>' || htmlContent === '';

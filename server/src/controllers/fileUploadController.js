@@ -66,11 +66,24 @@ export const uploadFile = async (req, res, next) => {
         return res.status(400).send({ error: 'No file uploaded.' });
     }
 
-    const { filename, path: filePath, originalname, mimetype } = req.file;
+    const { filename, path: filePath, originalname } = req.file;
+    let { mimetype } = req.file;
     const userId = req.body.userId || 'guest';
     const documentId = crypto.randomUUID();
     const stats = fs.statSync(filePath);
     const MB_THRESHOLD = 5 * 1024 * 1024; // 5MB
+
+    // Fallback for generic binary types (often happens with PPTX uploads)
+    // We check the extension to properly classify it before processing
+    if (mimetype === 'application/octet-stream' || !mimetype) {
+        if (originalname.match(/\.pptx$/i)) {
+            mimetype = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+        } else if (originalname.match(/\.ppt$/i)) {
+            mimetype = 'application/vnd.ms-powerpoint';
+        } else if (originalname.match(/\.pdf$/i)) {
+            mimetype = 'application/pdf';
+        }
+    }
 
     try {
         const redisAvailable = await isRedisConnected();

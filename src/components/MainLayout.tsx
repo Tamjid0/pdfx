@@ -70,12 +70,27 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     handleScrapeUrl, handleGenerate, handleExport, handleSendMessage, getHasGenerated,
     fileType, fileId
 }) => {
-    // Check if we are in PDF viewing mode
-    const isPdfMode = fileType === 'pdf' && !!fileId;
+    const [showExitConfirm, setShowExitConfirm] = React.useState(false);
 
-    // Hide the second pane (Artboard) if we are in PDF mode and the mode is 'editor' (default)
-    // This allows the PDF viewer to take full width ("Middle")
-    const showSecondPane = !isPdfMode || mode !== 'editor';
+    // Check if we are in document viewing mode (PDF or Slides)
+    const isDocumentMode = !!fileId;
+
+    // Hide the second pane (Artboard) if we are in a document project and the mode is 'editor'
+    // This allows the document renderer (PDF or Slides) to take full width
+    const showSecondPane = !isDocumentMode || mode !== 'editor';
+
+    const handleBackClick = () => {
+        if (isDocumentMode) {
+            setShowExitConfirm(true);
+        } else {
+            backToImport();
+        }
+    };
+
+    const confirmExit = () => {
+        useStore.getState().resetWorkspace();
+        setShowExitConfirm(false);
+    };
 
     return (
         <div className="flex flex-1 overflow-hidden">
@@ -99,20 +114,23 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                         <main className="flex-1 flex flex-col overflow-hidden">
                             <div className="flex-shrink-0 p-2 border-b border-[#222] flex justify-between items-center gap-4 bg-[#0f0f0f]">
                                 <div className="flex items-center justify-between px-6 py-3 border-b border-[#222] bg-[#0a0a0a]">
-                                    <button onClick={backToImport} className="px-3 py-1.5 text-xs font-semibold bg-[#222] rounded-md hover:bg-[#333]">Back</button>
+                                    <button onClick={handleBackClick} className="px-3 py-1.5 text-xs font-semibold bg-[#222] rounded-md hover:bg-[#333]">Back</button>
                                 </div>
                                 <div className="flex-1 flex justify-center items-center gap-4">
                                     <div className={`inline-flex bg-[#1a1a1a] p-1 rounded-md border border-[#333] ${mode === 'editor' ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                                        {!isSlideMode && !isPdfMode && (
+                                        {!isDocumentMode && (
                                             <>
                                                 <button onClick={() => { if (mode !== 'editor') setLeftPanelView('editor') }} className={`px-4 py-2 text-sm font-medium rounded ${leftPanelView === 'editor' && mode !== 'editor' ? 'bg-[#00ff88] text-black' : 'text-white'}`} disabled={mode === 'editor'}>Editor</button>
                                                 <button onClick={() => { if (mode !== 'editor') setLeftPanelView('artboard') }} className={`px-4 py-2 text-sm font-medium rounded ${leftPanelView === 'artboard' && mode !== 'editor' ? 'bg-[#00ff88] text-black' : 'text-white'}`} disabled={mode === 'editor'}>Artboard</button>
                                             </>
                                         )}
-                                        {isSlideMode && (
-                                            <button onClick={() => { if (mode !== 'editor') setLeftPanelView('slides') }} className={`px-4 py-2 text-sm font-medium rounded ${leftPanelView === 'slides' && mode !== 'editor' ? 'bg-[#00ff88] text-black' : 'text-white'}`} disabled={mode === 'editor'}>Slides</button>
+                                        {fileType === 'pptx' && isDocumentMode && (
+                                            <div className="px-4 py-2 text-sm font-bold text-[#00ff88] flex items-center gap-2">
+                                                <span className="w-2 h-2 rounded-full bg-[#00ff88]"></span>
+                                                Slide Viewer
+                                            </div>
                                         )}
-                                        {isPdfMode && (
+                                        {fileType === 'pdf' && isDocumentMode && (
                                             <div className="px-4 py-2 text-sm font-bold text-[#00ff88] flex items-center gap-2">
                                                 <span className="w-2 h-2 rounded-full bg-[#00ff88]"></span>
                                                 PDF Viewer
@@ -221,6 +239,40 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                 )
                 }
             </main >
+            {/* Confirmation Modal */}
+            {showExitConfirm && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+                    <div className="bg-[#1a1a1a] border border-[#333] p-6 rounded-2xl shadow-2xl max-w-sm w-full animate-in zoom-in-95 slide-in-from-bottom-2 duration-200 ring-1 ring-white/10">
+                        <div className="flex items-center gap-3 mb-4 text-white">
+                            <div className="w-10 h-10 rounded-full bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20 text-yellow-500">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <h3 className="text-lg font-bold">End Session?</h3>
+                        </div>
+
+                        <p className="text-[#888] text-sm mb-6 leading-relaxed">
+                            Are you sure you want to close this file? Your current interaction session will be ended.
+                        </p>
+
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={() => setShowExitConfirm(false)}
+                                className="px-4 py-2 text-sm font-medium text-[#888] hover:text-white hover:bg-[#333] rounded-xl transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmExit}
+                                className="px-4 py-2 text-sm font-bold bg-[#222] text-[#ff4444] border border-[#333] hover:bg-[#ff4444] hover:text-white hover:border-transparent rounded-xl transition-all shadow-lg"
+                            >
+                                End Session
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };

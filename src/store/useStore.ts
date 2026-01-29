@@ -573,7 +573,7 @@ export const useStore = create<AppState>((set, get) => ({
             slides: [],
             currentSlideIndex: 0,
             isSlideMode: false,
-            view: 'editor',
+            view: 'import',
             mode: 'editor',
             isPageLoading: false,
             isDocumentLoading: false,
@@ -615,7 +615,8 @@ export const useStore = create<AppState>((set, get) => ({
             set({
                 fileId: data.documentId,
                 fileType: isPdf ? 'pdf' : (isPptx ? 'pptx' : 'text'),
-                htmlPreview: data.extractedText || '',
+                // Only show extracted text in editor for plain text projects
+                htmlPreview: (isPdf || isPptx) ? null : (data.extractedText || ''),
 
                 // Active Content (Mapping from .content with legacy fallback)
                 summaryData: getActiveContent(data, 'summaryData'),
@@ -642,7 +643,7 @@ export const useStore = create<AppState>((set, get) => ({
                 isInsightsGenerated: !!getActiveContent(data, 'insightsData'),
 
                 topics: data.topics || [],
-                view: 'editor',
+                view: 'viewer', // Switch to viewer view for projects
                 mode: 'editor',
                 leftPanelView: isPptx ? 'slides' : 'editor',
                 isSlideMode: isPptx,

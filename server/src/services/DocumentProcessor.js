@@ -53,7 +53,9 @@ export class DocumentProcessor {
             documentGraph = await this.pdfExtractor.extract(filePath, originalName);
         } else if (
             mime.includes('presentation') ||
-            mime.includes('powerpoint')
+            mime.includes('powerpoint') ||
+            // Fallback: If it's a generic stream but has pptx/ppt extension, try PptxExtractor
+            (mime === 'application/octet-stream' && (originalName.match(/\.pptx$/i) || originalName.match(/\.ppt$/i)))
         ) {
             const buffer = fs.readFileSync(filePath);
             documentGraph = await this.pptxExtractor.extract(buffer, originalName);

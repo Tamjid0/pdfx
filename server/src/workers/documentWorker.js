@@ -23,12 +23,31 @@ export const initDocumentWorker = async () => {
 
     try {
         _worker = new Worker('document-processing', async (job) => {
-            const { filePath, mimeType, fileName, documentId, userId = 'guest' } = job.data;
+            const { filePath, mimeType, fileName, documentId, userId = 'guest', triggerFullProcess = false } = job.data;
             logger.info(`Processing job ${job.id}: ${fileName}`);
 
             try {
-                // Determine if we need to run the conversion/rendering phase.
-                // Now we want STATIC IMAGES for ALL formats, so we always run convert().
+                // Determine if we need to run extraction + embedding (Audit 3.2)
+                if (triggerFullProcess) {
+                    logger.info(`[Worker] Running FULL processing for ${documentId}`);
+                    await job.updateProgress(10);
+
+                    // 1. Extraction
+                    const extractionResult = await documentProcessor.extract(filePath, mimeType, fileName, documentId, userId);
+                    await job.updateProgress(40);
+
+                    // 2. Embedding
+                    if (extractionResult.chunks && extractionResult.chunks.length > 0) {
+                        const docsWithMetadata = extractionResult.chunks.map(chunk => ({
+                            pageContent: chunk.content,
+                            metadata: { ...chunk.metadata, source: documentId, fileName: fileName }
+                        }));
+                        await embedStructuredChunks(documentId, docsWithMetadata);
+                    }
+                    await job.updateProgress(60);
+                }
+
+                // 3. Conversion/Rendering (Always run for PPTX or for full process)
                 console.log(`[Worker] Starting conversion/rendering for ${documentId} (${mimeType})`);
 
                 await documentProcessor.convert(
@@ -36,7 +55,10 @@ export const initDocumentWorker = async () => {
                     filePath,
                     userId,
                     async (progress) => {
-                        await job.updateProgress(progress);
+                        // Progress here is 0-100 of the conversion step
+                        const baseProgress = triggerFullProcess ? 60 : 10;
+                        const factor = triggerFullProcess ? 0.4 : 0.9;
+                        await job.updateProgress(Math.floor(baseProgress + (progress * factor)));
                     }
                 );
 

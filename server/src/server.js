@@ -14,6 +14,7 @@ import connectDB from './config/database.js';
 import admin from 'firebase-admin';
 import sanitizeRequest from './middleware/sanitize.js';
 import { initBackupSchedule } from './services/backupService.js';
+import { initSentry, registerSentryErrorHandler } from './config/sentry.js';
 
 // --- Environment Validation (Production Readiness) ---
 const envSchema = z.object({
@@ -22,7 +23,8 @@ const envSchema = z.object({
     MONGODB_URI: z.string().optional(), // NeDB doesn't need this, but MongoDB does
     FIREBASE_PROJECT_ID: z.string().min(1, 'FIREBASE_PROJECT_ID is required'),
     CORS_ORIGIN: z.string().default('http://localhost:3000'),
-    GEMINI_API_KEY: z.string().min(1, 'GEMINI_API_KEY is required for AI features'),
+    GEMINI_API_KEY: z.string().min(1, 'GEMINI_API_KEY is required'),
+    SENTRY_DSN: z.string().optional(),
 });
 
 const envResult = envSchema.safeParse(process.env);
@@ -59,6 +61,9 @@ initDocumentWorker().catch(err => {
 });
 
 const app = express();
+
+// Initialize Sentry (MUST be first)
+initSentry(app);
 
 // --- Security & Basic Middleware ---
 app.use(helmet()); // Add security headers
@@ -111,6 +116,9 @@ app.use('/api', apiRoutes);
 
 
 // Error handling initialization
+// Register Sentry Error Handler (MUST be before other error handlers)
+registerSentryErrorHandler(app);
+
 app.use(errorConverter);
 app.use(errorHandler);
 

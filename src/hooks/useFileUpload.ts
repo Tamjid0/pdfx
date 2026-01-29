@@ -69,12 +69,14 @@ export const useFileUpload = () => {
             const isPdfFile = file.name.endsWith('.pdf');
 
             const response = await apiService.uploadFile(file, user?.uid || 'guest');
-            const { jobId, documentId } = response;
+            const { jobId, documentId, extractedText, topics, metadata } = response;
 
-            setHtmlPreview(response.extractedText || "");
             setFileId(documentId);
-            setTopics(response.topics || []);
-            updateStats(response.extractedText || "", response.metadata?.pageCount || 1);
+            setHtmlPreview(extractedText || "");
+            setTopics(topics || []);
+            if (extractedText || metadata) {
+                updateStats(extractedText || "", metadata?.pageCount || 1);
+            }
 
             // DEFAULT: Check if we are in import view, if so, switch to default editor mode
             // Otherwise, keep the current mode (e.g., if user is in Chat, stay in Chat)
@@ -104,7 +106,12 @@ export const useFileUpload = () => {
                     setIsProcessingSlides(true);
                     setRenderingProgress(5);
                     pollJobStatus(jobId, documentId).then(data => {
-                        if (data.chunks) {
+                        // After polling completes, sync the full state
+                        setHtmlPreview(data.extractedText || "");
+                        setTopics(data.topics || []);
+                        updateStats(data.extractedText || "", data.metadata?.pageCount || 1);
+
+                        if (isSlideFile && data.chunks) {
                             const slides = data.chunks.map((chunk: any) => ({
                                 title: chunk.metadata.slideTitle || `Slide ${chunk.metadata.pageIndex}`,
                                 content: chunk.content
@@ -112,7 +119,7 @@ export const useFileUpload = () => {
                             setSlides(slides);
                         }
                     }).catch(err => {
-                        console.error("Delayed slide processing failed:", err);
+                        console.error("Background processing failed:", err);
                     });
                 } else if (response.chunks) {
                     // Synchronous case (if someone tweaked backend or direct PDF)
@@ -127,9 +134,20 @@ export const useFileUpload = () => {
                 setIsSlideMode(false);
                 setLeftPanelView('editor'); // Left panel will show DocumentViewer
 
-                // We DON'T poll for images anymore because we use direct PDF rendering
-                setIsProcessingSlides(false);
-                setRenderingProgress(100);
+                if (jobId) {
+                    setIsProcessingSlides(true);
+                    setRenderingProgress(5);
+                    pollJobStatus(jobId, documentId).then(data => {
+                        setHtmlPreview(data.extractedText || "");
+                        setTopics(data.topics || []);
+                        updateStats(data.extractedText || "", data.metadata?.pageCount || 1);
+                    }).catch(err => {
+                        console.error("Background PDF processing failed:", err);
+                    });
+                } else {
+                    setIsProcessingSlides(false);
+                    setRenderingProgress(100);
+                }
 
             } else {
                 // Text/Other Path

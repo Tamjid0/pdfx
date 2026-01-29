@@ -69,11 +69,38 @@ export const uploadFile = async (req, res, next) => {
     const { filename, path: filePath, originalname, mimetype } = req.file;
     const userId = req.body.userId || 'guest';
     const documentId = crypto.randomUUID();
+    const stats = fs.statSync(filePath);
+    const MB_THRESHOLD = 5 * 1024 * 1024; // 5MB
 
     try {
-        // --- PHASE 1: Fast JSON Extraction (Synchronous) ---
-        // This extracts the DocumentGraph (Nodes) immediately so Chat and UI work instantly.
-        const extractionResult = await documentProcessor.extract(filePath, mimetype, originalname, documentId, userId);
+        const redisAvailable = await isRedisConnected();
+        let jobId = null;
+        let extractionResult = null;
+
+        // --- OPTIMIZATION (Audit 3.2): Background Processing for Large Files ---
+        if (redisAvailable && stats.size > MB_THRESHOLD) {
+            logger.info(`[FileUpload] File size (${(stats.size / 1024 / 1024).toFixed(2)}MB) exceeds threshold. Backgrounding...`);
+            const job = await addDocumentJob({
+                documentId,
+                filePath,
+                fileName: originalname,
+                originalName: originalname,
+                mimeType: mimetype,
+                userId: userId,
+                triggerFullProcess: true // Flag to tell worker to do extraction + embedding + images
+            });
+            jobId = job.id;
+
+            // Return early with jobId for the frontend to poll
+            return res.json({
+                documentId: documentId,
+                jobId: jobId,
+                message: 'Processing large document in background. Please wait...'
+            });
+        }
+
+        // --- PHASE 1: Fast JSON Extraction (Synchronous for small files) ---
+        extractionResult = await documentProcessor.extract(filePath, mimetype, originalname, documentId, userId);
 
         // --- MONGODB USER STATS UPDATE (Fire and Forget) ---
         if (userId !== 'guest') {
@@ -89,7 +116,6 @@ export const uploadFile = async (req, res, next) => {
         }
 
         // --- PHASE 2: Immediate Embedding (Synchronous) ---
-        // We use the chunks generated from the JSON graph for the vector store.
         if (extractionResult.chunks && extractionResult.chunks.length > 0) {
             const docsWithMetadata = extractionResult.chunks.map(chunk => ({
                 pageContent: chunk.content,
@@ -98,13 +124,8 @@ export const uploadFile = async (req, res, next) => {
             await embedStructuredChunks(documentId, docsWithMetadata);
         }
 
-        const redisAvailable = await isRedisConnected();
-        let jobId = null;
-
-        // --- PHASE 3: Background PDF Conversion (Only for Slides) ---
-        // --- PHASE 3: Background PDF Conversion (Only for Slides) ---
+        // --- PHASE 3: Background PDF Conversion (Always backgrounded for PPTX) ---
         if (redisAvailable && (mimetype.includes('presentation') || mimetype.includes('powerpoint'))) {
-            // Standard Path: Offload slow PDF conversion to background queue
             const job = await addDocumentJob({
                 documentId,
                 filePath,
@@ -133,10 +154,6 @@ export const uploadFile = async (req, res, next) => {
                 ? 'JSON extraction complete. High-fidelity rendering processing in background.'
                 : 'Processed successfully.'
         });
-
-        // --- FALLBACK PATH: Redis is Down (Old logic preserved for reference) ---
-        // Note: With Phase 1 & 2 now synchronous, the "fallback" is mostly redundant 
-        // for extraction, but we keep it safe.
 
     } catch (error) {
         logger.error(`[FileUpload] Upload/Processing failed: ${error.message}`);

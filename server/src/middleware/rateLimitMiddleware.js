@@ -13,19 +13,22 @@ const redisClient = new Redis({
  * Prioritizes UID (if logged in) or falls back to IP
  */
 const keyGenerator = (req) => {
-    return req.user?.uid || req.ip;
+    // Priority 1: Authenticated User ID
+    if (req.user?.uid) return req.user.uid;
+    // Priority 2: Request IP (Standard fallback)
+    return req.ip;
 };
 
 /**
  * Global API Limiter (Infrastructure protection)
- * Prevents basic DDoS/brute-force attacks
  */
 export const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
+    windowMs: 15 * 60 * 1000,
     max: 500,
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator,
+    validate: false, // Disable all built-in validations to prevent IPv6 crash
     store: new RedisStore({
         sendCommand: (...args) => redisClient.call(...args),
         prefix: 'rl:api:',
@@ -41,16 +44,15 @@ export const apiLimiter = rateLimit({
 });
 
 /**
- * AI Generation Limiter (Abuse prevention)
- * Prevents intentional or accidental high-volume AI calls
- * NOTE: This is for infrastructure safety, not business logic limits.
+ * AI Generation Limiter
  */
 export const aiGenerationLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 100, // Hard cap per hour per user/IP
+    windowMs: 60 * 60 * 1000,
+    max: 100,
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator,
+    validate: false, // Disable all built-in validations to prevent IPv6 crash
     store: new RedisStore({
         sendCommand: (...args) => redisClient.call(...args),
         prefix: 'rl:ai:',

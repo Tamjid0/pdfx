@@ -68,3 +68,30 @@ export const checkDocumentOwnership = (DocumentModel) => async (req, res, next) 
         });
     }
 };
+
+/**
+ * Middleware to optionally verify Firebase ID tokens
+ * Allows both authenticated and guest users
+ * If token is present and valid, sets req.user
+ * If token is missing or invalid, sets req.user = { uid: 'guest' }
+ */
+export const optionalVerifyToken = async (req, res, next) => {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        req.user = { uid: 'guest' };
+        return next();
+    }
+
+    const token = authHeader.split('Bearer ')[1];
+
+    try {
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        req.user = decodedToken;
+        next();
+    } catch (error) {
+        logger.warn('Optional token verification failed, treating as guest:', error.message);
+        req.user = { uid: 'guest' };
+        next();
+    }
+};

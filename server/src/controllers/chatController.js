@@ -19,3 +19,12 @@ export const chatWithDocument = async (req, res) => {
         res.status(500).json({ error: error.message || 'Failed to get a response from the document.' });
     }
 };
+
+/**
+ * Stream-based chat (placeholder for now, uses same logic as regular chat)
+ * TODO: Implement actual streaming when needed
+ */
+export const chatWithDocumentStream = async (req, res) => {
+    // For now, just use the same logic as regular chat
+    return chatWithDocument(req, res);
+};

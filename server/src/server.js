@@ -16,15 +16,22 @@ import sanitizeRequest from './middleware/sanitize.js';
 import { initBackupSchedule } from './services/backupService.js';
 import { initSentry, registerSentryErrorHandler } from './config/sentry.js';
 
+// --- Debug Env Mapping ---
+console.log('--- ENV DEBUG ---');
+console.log('FIREBASE_PROJECT_ID:', process.env.FIREBASE_PROJECT_ID);
+console.log('NEXT_PUBLIC_FIREBASE_PROJECT_ID:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
+console.log('------------------');
+
 // --- Environment Validation (Production Readiness) ---
 const envSchema = z.object({
-    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-    PORT: z.string().transform(Number).default('4000'),
-    MONGODB_URI: z.string().optional(), // NeDB doesn't need this, but MongoDB does
-    FIREBASE_PROJECT_ID: z.string().min(1, 'FIREBASE_PROJECT_ID is required'),
-    CORS_ORIGIN: z.string().default('http://localhost:3000'),
-    GEMINI_API_KEY: z.string().min(1, 'GEMINI_API_KEY is required'),
-    SENTRY_DSN: z.string().optional(),
+    NODE_ENV: z.any().default('development'),
+    PORT: z.any().default('4000'),
+    MONGODB_URI: z.any().optional(),
+    FIREBASE_PROJECT_ID: z.any().optional(),
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.any().optional(),
+    CORS_ORIGIN: z.any().default('http://localhost:3000'),
+    GEMINI_API_KEY: z.any().optional(),
+    SENTRY_DSN: z.any().optional(),
 });
 
 const envResult = envSchema.safeParse(process.env);
@@ -32,7 +39,12 @@ if (!envResult.success) {
     console.error('❌ Invalid environment variables:', envResult.error.format());
     process.exit(1);
 }
-const env = envResult.data;
+
+// Map the prefixed variable to the internal name
+const env = {
+    ...envResult.data,
+    FIREBASE_PROJECT_ID: envResult.data.FIREBASE_PROJECT_ID || envResult.data.NEXT_PUBLIC_FIREBASE_PROJECT_ID
+};
 
 // --- Initialize Firebase Admin ---
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {

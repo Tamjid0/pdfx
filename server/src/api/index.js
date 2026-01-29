@@ -18,7 +18,7 @@ import v1MindmapRoutes from './v1/mindmap.routes.js';
 import v1FormatRoutes from './v1/format.routes.js';
 import v1TemplateRoutes from './v1/template.routes.js';
 import v1ExportRoutes from './v1/export.routes.js';
-import healthRoutes from './health.routes.js';
+import v1HealthRoutes from './v1/health.routes.js';
 import v1ScrapeRoutes from './v1/scrape.routes.js';
 
 const router = Router();
@@ -40,6 +40,7 @@ router.use(v1MindmapRoutes);
 router.use(v1FormatRoutes);
 router.use(v1TemplateRoutes);
 router.use('/export', v1ExportRoutes);
+router.use('/health', v1HealthRoutes);
 router.use(v1ScrapeRoutes);
 
 export default router;

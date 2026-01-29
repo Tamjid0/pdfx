@@ -28,7 +28,7 @@ if (!fs.existsSync(indexesDir)) {
 import { DocumentProcessor } from '../services/DocumentProcessor.js';
 import { addDocumentJob, isRedisConnected } from '../services/queueService.js';
 import User from '../models/User.js';
-import { deleteCachePattern } from './cacheService.js';
+import { deleteCachePattern } from '../services/cacheService.js';
 
 const documentProcessor = new DocumentProcessor();
 

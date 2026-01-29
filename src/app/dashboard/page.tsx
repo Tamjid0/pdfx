@@ -10,6 +10,7 @@ import Sidebar from '../../components/Sidebar';
 import LoadingOverlay from '../../components/LoadingOverlay';
 import ProjectExportAction from '../../components/dashboard/ProjectExportAction';
 import ProjectStylePreviewPopup from '../../components/dashboard/ProjectStylePreviewPopup';
+import { ProjectSkeletonGrid } from '../../components/dashboard/ProjectSkeleton';
 
 const ProjectsPage = () => {
     const { user, loading: authLoading } = useAuth();
@@ -110,14 +111,18 @@ const ProjectsPage = () => {
                             ))}
                         </div>
 
+
+
                         {/* Truly Transparent Transition Overlay */}
-                        {showLoader && (
+                        {showLoader && !fetching && (
                             <div className="absolute inset-0 z-50 rounded-2xl overflow-hidden pointer-events-none">
                                 <LoadingOverlay />
                             </div>
                         )}
 
-                        {!showLoader && projects.length === 0 ? (
+                        {fetching && projects.length === 0 ? (
+                            <ProjectSkeletonGrid />
+                        ) : !showLoader && projects.length === 0 ? (
                             <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-20 text-center flex flex-col items-center gap-8 backdrop-blur-sm animate-in zoom-in-95 duration-700">
                                 <div className="relative">
                                     <div className="w-24 h-24 bg-gemini-green/5 rounded-3xl flex items-center justify-center text-gemini-green border border-gemini-green/10">

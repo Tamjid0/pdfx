@@ -8,6 +8,9 @@ const router = Router();
  * @desc Sync Firebase user with MongoDB
  * @access Public (Firebase Token verification can be added later as middleware)
  */
-router.post('/sync', authController.syncUser);
+import validate from '../../middleware/validate.js';
+import * as authValidation from '../../validations/auth.validation.js';
+
+router.post('/sync', validate(authValidation.sync), authController.syncUser);
 
 export default router;

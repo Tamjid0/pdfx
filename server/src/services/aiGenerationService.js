@@ -8,6 +8,27 @@ const aiModel = genAI.getGenerativeModel({
     model: "gemini-2.5-flash",
 });
 
+
+/**
+ * Helper to retry operations with exponential backoff
+ */
+async function retryOperation(operation, maxRetries = 3, delayMs = 1000) {
+    let lastError;
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            return await operation();
+        } catch (error) {
+            lastError = error;
+            // Check for specific error types if needed (e.g. Rate Limit)
+            console.warn(`[AI-Service] Attempt ${i + 1} failed. Retrying in ${delayMs * Math.pow(2, i)}ms... Error: ${error.message}`);
+            if (i < maxRetries - 1) {
+                await new Promise(resolve => setTimeout(resolve, delayMs * Math.pow(2, i)));
+            }
+        }
+    }
+    throw lastError;
+}
+
 /**
  * Performs full-document transformation for raw text (e.g., summaries, notes).
  * @param {string} fullText - The raw text content to process.
@@ -35,7 +56,7 @@ User's specific instruction: "${promptInstruction}"
 `;
 
     try {
-        const result = await aiModel.generateContent(systemPrompt);
+        const result = await retryOperation(() => aiModel.generateContent(systemPrompt));
         return result?.response?.text()?.trim() || "No content generated.";
     } catch (error) {
         console.error('Error in full document transformation:', error);
@@ -111,7 +132,7 @@ User Query: "${query}"
 `;
 
     try {
-        const result = await aiModel.generateContent(systemPrompt);
+        const result = await retryOperation(() => aiModel.generateContent(systemPrompt));
         return result?.response?.text()?.trim() || "No content generated.";
     } catch (error) {
         console.error('Error in transformation:', error);
@@ -191,7 +212,7 @@ User Query: "${query}"
 
 
     try {
-        const result = await aiModel.generateContentStream(systemPrompt);
+        const result = await retryOperation(() => aiModel.generateContentStream(systemPrompt));
 
         for await (const chunk of result.stream) {
             const chunkText = chunk.text();

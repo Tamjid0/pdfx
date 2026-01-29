@@ -15,16 +15,23 @@ export const errorHandler = (err, req, res, next) => {
     let { statusCode, message } = err;
     if (!statusCode) statusCode = 500;
 
+    // Production: Hide sensitive error details for 500s unless it's a known Operational Error
+    let responseMessage = message;
+    if (process.env.NODE_ENV === 'production' && statusCode === 500 && !err.isOperational) {
+        responseMessage = 'Internal Server Error';
+    }
+
     res.locals.errorMessage = err.message;
 
     const response = {
         code: statusCode,
-        message,
+        message: responseMessage,
         ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
     };
 
+    // Log everything to standard output (CloudWatch/Console)
     if (process.env.NODE_ENV !== 'test') {
-        logger.error(`[${req.method}] ${req.originalUrl} - ${statusCode} - ${message}`);
+        logger.error(`[${req.method}] ${req.originalUrl} - ${statusCode} - ${err.message}`);
         if (statusCode === 500) {
             logger.error(err.stack);
         }

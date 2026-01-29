@@ -7,27 +7,58 @@ interface StaticSlideRendererProps {
     priority?: boolean; // If true, sets loading="eager"
 }
 
+import { getAuthHeaders } from '../../services/apiService';
+
 const StaticSlideRenderer: React.FC<StaticSlideRendererProps> = ({
     documentId,
     pageNumber,
     className,
     priority = false
 }) => {
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
 
-    // Construct URL for the static image API
-    const imageUrl = `/api/v1/documents/${documentId}/pages/${pageNumber}`;
+    // Fetch the image with Authentication
+    React.useEffect(() => {
+        let isMounted = true;
+        let blobUrl: string | null = null;
 
-    const handleLoad = () => {
-        setIsLoading(false);
-        setHasError(false);
-    };
+        const fetchImage = async () => {
+            setIsLoading(true);
+            setHasError(false);
+            try {
+                const headers = await getAuthHeaders();
+                const response = await fetch(`/api/v1/documents/${documentId}/pages/${pageNumber}`, {
+                    headers
+                });
 
-    const handleError = () => {
-        setIsLoading(false);
-        setHasError(true);
-    };
+                if (!response.ok) throw new Error('Failed to load image');
+
+                const blob = await response.blob();
+                blobUrl = URL.createObjectURL(blob);
+
+                if (isMounted) {
+                    setImageUrl(blobUrl);
+                    setIsLoading(false);
+                }
+            } catch (err) {
+                console.error("Error fetching slide image:", err);
+                if (isMounted) {
+                    setHasError(true);
+                    setIsLoading(false);
+                }
+            }
+        };
+
+        fetchImage();
+
+        return () => {
+            isMounted = false;
+            // Clean up blob to avoid memory leaks
+            if (blobUrl) URL.revokeObjectURL(blobUrl);
+        };
+    }, [documentId, pageNumber]);
 
     return (
         <div className={`relative w-full h-full flex items-center justify-center ${className}`}>
@@ -49,15 +80,14 @@ const StaticSlideRenderer: React.FC<StaticSlideRendererProps> = ({
             )}
 
             {/* Static Image */}
-            <img
-                src={imageUrl}
-                alt={`Slide ${pageNumber}`}
-                className={`max-w-full max-h-full object-contain transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
-                loading={priority ? "eager" : "lazy"}
-                onLoad={handleLoad}
-                onError={handleError}
-                draggable={false}
-            />
+            {imageUrl && (
+                <img
+                    src={imageUrl}
+                    alt={`Slide ${pageNumber}`}
+                    className={`max-w-full max-h-full object-contain transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+                    draggable={false}
+                />
+            )}
         </div>
     );
 };

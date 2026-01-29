@@ -55,6 +55,7 @@ export async function generateChunkBasedTransformation(fileId, query, topN = 10)
     }
 
     const vectorStore = await FaissStore.load(indexPath, hfEmbeddings);
+    console.log(`[AI-Service] Index loaded from disk for fileId: ${fileId}. Encoding user query...`);
     const searchResults = await vectorStore.similaritySearch(query, topN);
 
     if (searchResults.length === 0) {
@@ -130,6 +131,7 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
     }
 
     const vectorStore = await FaissStore.load(indexPath, hfEmbeddings);
+    console.log(`[AI-Streaming-Service] Index loaded from disk for fileId: ${fileId}. Encoding user query...`);
     const searchResults = await vectorStore.similaritySearch(query, topN);
 
     if (searchResults.length === 0) {

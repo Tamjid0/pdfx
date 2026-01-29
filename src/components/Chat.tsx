@@ -150,7 +150,7 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                                                 )}
                                             </div>
 
-                                            {(msg.role === 'ai' || msg.role === 'assistant') && (
+                                            {(msg.role === 'ai' || msg.role === 'assistant') && msg.timestamp !== 'streaming...' && (
                                                 <div className="message-actions flex items-center gap-2 mt-3 opacity-60 hover:opacity-100 transition-opacity">
                                                     <button
                                                         onClick={() => handleCopy(msg.content, `copy-${index}`)}

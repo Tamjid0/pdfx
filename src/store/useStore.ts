@@ -284,30 +284,8 @@ interface AppState {
     loadProject: (documentId: string) => Promise<void>;
     // Helper for legacy/versioned content extraction
     refreshCurrentProject: (documentId?: string) => Promise<void>;
-    // Update active content
-    summaryData: getContent(doc.summaryData),
-    notesData: getContent(doc.notesData),
-    insightsData: getContent(doc.insightsData),
-    flashcardsData: getContent(doc.flashcardsData),
-    quizData: getContent(doc.quizData),
-    mindmapData: doc.mindmapData, // Mindmap not fully versioned yet same as loadProject
-
-    // Update revisions
-    summaryRevisions: doc.summaryData?.revisions || [],
-        notesRevisions: doc.notesData?.revisions || [],
-            insightsRevisions: doc.insightsData?.revisions || [],
-                flashcardsRevisions: doc.flashcardsData?.revisions || [],
-                    quizRevisions: doc.quizData?.revisions || [],
-
-                        chatHistory: doc.chatHistory || []
-    });
-console.log('[Store] Project refreshed successfully');
-} catch (error) {
-    console.error('[Store] Failed to refresh project:', error);
-}
-    },
-loadProjectModule: (moduleKey: string) => Promise<void>;
-deleteDocument: (documentId: string) => Promise<void>;
+    loadProjectModule: (moduleKey: string) => Promise<void>;
+    deleteDocument: (documentId: string) => Promise<void>;
 }
 
 export const useStore = create<AppState>((set, get) => ({

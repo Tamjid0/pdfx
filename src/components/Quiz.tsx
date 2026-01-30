@@ -28,12 +28,8 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
     }, [quizData]);
 
     const handleQuestionChange = (e: React.FocusEvent<HTMLHeadingElement>, index: number) => {
-        if (quizData) {
+        if (quizData?.quiz) {
             const newQuiz = [...quizData.quiz];
-            // We need to assert question property exists, which it does on all QuizQuestion variants
-            // But TS might complain if it infers specific union members.
-            // Using a cast or just direct assignment if TS is smart enough.
-            // Simplified update:
             const updatedQuestion = { ...newQuiz[index], question: e.currentTarget.innerText } as QuizItem;
             newQuiz[index] = updatedQuestion;
             setQuizData({ ...quizData, quiz: newQuiz });
@@ -48,7 +44,7 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
     };
 
     const checkQuiz = () => {
-        if (!quizData) return;
+        if (!quizData?.quiz) return;
         let currentScore = 0;
         quizData.quiz.forEach((q: QuizItem, index: number) => {
             const userAnswer = selectedAnswers[`q${index}`];

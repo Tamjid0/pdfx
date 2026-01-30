@@ -53,7 +53,7 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
 
     // Changed to HTMLDivElement as it is a div
     const handleKeyPointChange = (e: React.FocusEvent<HTMLDivElement>, index: number) => {
-        if (summaryData) {
+        if (summaryData?.keyPoints) {
             const newKeyPoints = [...summaryData.keyPoints];
             newKeyPoints[index] = e.currentTarget.innerText;
             setSummaryData({ ...summaryData, keyPoints: newKeyPoints });
@@ -64,13 +64,13 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
         if (summaryData) {
             setSummaryData({
                 ...summaryData,
-                keyPoints: [...summaryData.keyPoints, 'New key point...']
+                keyPoints: [...(summaryData.keyPoints || []), 'New key point...']
             });
         }
     };
 
     const deleteKeyPoint = (index: number) => {
-        if (summaryData) {
+        if (summaryData?.keyPoints) {
             const newKeyPoints = summaryData.keyPoints.filter((_: string, i: number) => i !== index);
             setSummaryData({ ...summaryData, keyPoints: newKeyPoints });
         }
@@ -255,7 +255,7 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
                             <div className="h-px w-full bg-gemini-dark-400"></div>
                         </div>
                         <div className="space-y-4">
-                            {summaryData.keyPoints.map((point: string, index: number) => (
+                            {(summaryData?.keyPoints || []).map((point: string, index: number) => (
                                 <div key={index} className="group relative bg-gemini-dark-200/30 border border-gemini-dark-400 rounded-xl p-5 transition-all hover:bg-gemini-dark-200 hover:border-gemini-green/30 hover:translate-x-1 flex items-start gap-4">
                                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-gemini-green rounded-l-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                     <span className="text-xs font-mono text-gemini-green opacity-50 font-bold mt-1">{(index + 1).toString().padStart(2, '0')}</span>

@@ -55,6 +55,12 @@ const ProjectsPage = () => {
             const total = Math.ceil(result.pagination.total / LIMIT);
             setTotalPages(total);
 
+            // Sync selectedProject with new data if open
+            if (selectedProject) {
+                const updated = result.data.find(p => p.documentId === selectedProject.documentId);
+                if (updated) setSelectedProject(updated);
+            }
+
             // Handle empty page scenario (e.g. after deletion)
             if (result.data.length === 0 && page > 1) {
                 setCurrentPage(page - 1);
@@ -393,12 +399,12 @@ const ProjectsPage = () => {
                                 <div className="flex flex-wrap gap-2 items-center z-30">
 
 
-                                    {['Summary', 'Notes', 'Insights', 'Flashcards', 'Quiz'].map(mode => {
+                                    {['Summary', 'Notes', 'Insights', 'Flashcards', 'Quiz', 'Mindmap'].map(mode => {
                                         const moduleKey = `${mode.toLowerCase()}Data`;
                                         const moduleData = selectedProject[moduleKey];
                                         const revisions = moduleData?.revisions || [];
 
-                                        return moduleData ? (
+                                        return (
                                             <ProjectExportAction
                                                 key={mode}
                                                 mode={mode}
@@ -409,7 +415,7 @@ const ProjectsPage = () => {
                                                 activeDropdown={activeExportDropdown}
                                                 setActiveDropdown={setActiveExportDropdown}
                                             />
-                                        ) : null;
+                                        );
                                     })}
                                 </div>
 
@@ -443,9 +449,9 @@ const ProjectsPage = () => {
                                                     dangerouslySetInnerHTML={{
                                                         __html: typeof selectedProject.summaryData === 'string'
                                                             ? selectedProject.summaryData
-                                                            : (Array.isArray(selectedProject.summaryData.summary)
-                                                                ? selectedProject.summaryData.summary.join('\n')
-                                                                : (selectedProject.summaryData.summary || ''))
+                                                            : (Array.isArray((selectedProject.summaryData as any).summary)
+                                                                ? (selectedProject.summaryData as any).summary.join('\n')
+                                                                : ((selectedProject.summaryData as any).summary || ''))
                                                     }}>
                                                 </div>
                                             ) : (
@@ -466,7 +472,7 @@ const ProjectsPage = () => {
                                             </h4>
                                             {selectedProject.quizData ? (
                                                 <div className="flex items-end justify-between">
-                                                    <span className="text-xl font-bold text-white">{selectedProject.quizData.quiz?.length || 0}</span>
+                                                    <span className="text-xl font-bold text-white">{(selectedProject.quizData as any).quiz?.length || 0}</span>
                                                     <span className="text-[10px] text-white/40 font-medium">Questions</span>
                                                 </div>
                                             ) : (
@@ -481,7 +487,7 @@ const ProjectsPage = () => {
                                             </h4>
                                             {selectedProject.flashcardsData ? (
                                                 <div className="flex items-end justify-between">
-                                                    <span className="text-xl font-bold text-white">{selectedProject.flashcardsData.flashcards?.length || 0}</span>
+                                                    <span className="text-xl font-bold text-white">{(selectedProject.flashcardsData as any).flashcards?.length || 0}</span>
                                                     <span className="text-[10px] text-white/40 font-medium">Flashcards</span>
                                                 </div>
                                             ) : (
@@ -496,10 +502,10 @@ const ProjectsPage = () => {
                                             </h4>
                                             {selectedProject.insightsData ? (
                                                 <div className="flex flex-wrap gap-2">
-                                                    {(selectedProject.insightsData.topics || []).slice(0, 5).map((t: string, i: number) => (
+                                                    {((selectedProject.insightsData as any).topics || []).slice(0, 5).map((t: string, i: number) => (
                                                         <span key={i} className="px-2 py-1 bg-white/5 rounded-md text-[9px] text-white/60 font-bold uppercase tracking-tight">{t}</span>
                                                     ))}
-                                                    {(selectedProject.insightsData.topics || []).length > 5 && <span className="text-[9px] text-gemini-green/50 font-bold">+ More</span>}
+                                                    {((selectedProject.insightsData as any).topics || []).length > 5 && <span className="text-[9px] text-gemini-green/50 font-bold">+ More</span>}
                                                 </div>
                                             ) : (
                                                 <div className="text-[10px] text-white/20 italic">Insight session pending</div>

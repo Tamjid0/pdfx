@@ -155,22 +155,32 @@ const ProjectExportAction: React.FC<ProjectExportActionProps> = ({
 
     const wrapInStyle = (html: string) => {
         return `
-    <html>
+            <!DOCTYPE html>
+            <html>
                 <head>
+                    <meta charset="utf-8">
                     <style>
-                        body { font-family: sans-serif; padding: 40px; line-height: 1.6; color: #333; }
-                        h1, h2, h3 { color: #111; }
-                        .preview-list { list-style: none; padding: 0; }
-                        .preview-list-item { margin-bottom: 12px; }
-                        img { max-width: 100%; height: auto; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                        th { background-color: #f5f5f5; }
+                        body { 
+                            font-family: 'Helvetica', 'Arial', sans-serif; 
+                            padding: 40px; 
+                            line-height: 1.6; 
+                            color: #333; 
+                            background-color: #ffffff; /* Explicit white background for PDF */
+                        }
+                        h1, h2, h3 { color: #111; margin-top: 1.5em; margin-bottom: 0.5em; }
+                        h1 { font-size: 24px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+                        h2 { font-size: 20px; color: #444; }
+                        ul { padding-left: 20px; }
+                        li { margin-bottom: 8px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+                        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+                        th { background-color: #f5f5f5; font-weight: bold; }
+                        tr:nth-child(even) { background-color: #fafafa; }
                     </style>
                 </head>
                 <body>${html}</body>
             </html>
-    `;
+        `;
     };
 
     const handleExportAction = async (format: 'pdf' | 'docx') => {
@@ -225,11 +235,26 @@ const ProjectExportAction: React.FC<ProjectExportActionProps> = ({
         }
     };
 
+    const hasContent = (d: any): boolean => {
+        if (!d) return false;
+        if (typeof d === 'string') return d.trim().length > 0;
+
+        // Handle specific types
+        if (mode === 'summary') return !!(d.summary || (d.keyPoints && d.keyPoints.length > 0));
+        if (mode === 'notes') return !!(d.notes && d.notes.length > 0);
+        if (mode === 'insights') return !!(d.insights && d.insights.length > 0);
+        if (mode === 'flashcards') return !!(d.flashcards && d.flashcards.length > 0);
+        if (mode === 'quiz') return !!(d.quiz && d.quiz.length > 0);
+        if (mode === 'mindmap') return !!(d.nodes && d.nodes.length > 0);
+
+        return true;
+    };
+
     return (
         <div className="relative inline-block z-10">
             <button
                 onClick={toggleDropdown}
-                disabled={!data || isExporting}
+                disabled={!hasContent(data) || isExporting}
                 className={`flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white font-bold px-4 py-3 rounded-xl text-[9px] uppercase tracking-widest transition-all border border-white/5 disabled:opacity-20 active:scale-95 ${isOpen ? 'bg-white/15 border-white/20' : ''}`}
             >
                 {isExporting ? (

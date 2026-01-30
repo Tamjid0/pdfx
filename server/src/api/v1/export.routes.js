@@ -28,27 +28,33 @@ router.post('/', validate(exportSchema), async (req, res, next) => {
             });
             const page = await browser.newPage();
 
-            // Set the content
-            await page.setContent(html || '<html><body>No content</body></html>', { waitUntil: 'networkidle0' });
+            try {
+                // Set the content
+                await page.setContent(html || '<html><body>No content</body></html>', { waitUntil: 'networkidle0', timeout: 30000 });
 
-            // Generate PDF
-            const pdfBuffer = await page.pdf({
-                format: 'A4',
-                printBackground: true,
-                margin: {
-                    top: '20mm',
-                    right: '20mm',
-                    bottom: '20mm',
-                    left: '20mm'
-                }
-            });
+                // Generate PDF
+                const pdfBuffer = await page.pdf({
+                    format: 'A4',
+                    printBackground: true,
+                    margin: {
+                        top: '20mm',
+                        right: '20mm',
+                        bottom: '20mm',
+                        left: '20mm'
+                    }
+                });
 
-            await browser.close();
-            console.log('[Export] PDF generated successfully');
+                await browser.close();
+                console.log('[Export] PDF generated successfully');
 
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `attachment; filename=${filename}.pdf`);
-            res.send(pdfBuffer);
+                res.setHeader('Content-Type', 'application/pdf');
+                res.setHeader('Content-Disposition', `attachment; filename=${filename}.pdf`);
+                res.send(pdfBuffer);
+            } catch (pdfError) {
+                console.error('[Export] Puppeteer generation failed:', pdfError);
+                await browser.close();
+                return res.status(500).json({ error: 'PDF Generation Failed' });
+            }
 
         } else if (format === 'docx') {
             console.log('[Export] Generating DOCX...');

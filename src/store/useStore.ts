@@ -282,6 +282,7 @@ interface AppState {
 
     // Study Continuity
     loadProject: (documentId: string) => Promise<void>;
+    refreshCurrentProject: (documentId?: string) => Promise<void>;
     loadProjectModule: (moduleKey: string) => Promise<void>;
     deleteDocument: (documentId: string) => Promise<void>;
 }

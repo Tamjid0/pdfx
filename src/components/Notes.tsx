@@ -31,18 +31,21 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
     };
 
     const handlePointChange = (e: React.FocusEvent<HTMLDivElement>, sectionIndex: number, pointIndex: number) => {
-        if (notesData) {
+        if (notesData?.notes) {
             const newNotes = [...notesArray];
-            const newPoints = [...newNotes[sectionIndex].points];
-            newPoints[pointIndex] = e.currentTarget.innerText;
-            newNotes[sectionIndex] = { ...newNotes[sectionIndex], points: newPoints };
-            setNotesData({ ...notesData, notes: newNotes });
+            const section = newNotes[sectionIndex];
+            if (section && section.points) {
+                const newPoints = [...section.points];
+                newPoints[pointIndex] = e.currentTarget.innerText;
+                newNotes[sectionIndex] = { ...section, points: newPoints };
+                setNotesData({ ...notesData, notes: newNotes });
+            }
         }
     };
 
     const addSection = () => {
         if (notesData) {
-            const newNotes = [...notesArray, { section: 'New Section', points: ['New insights here...'] }];
+            const newNotes = [...(notesData.notes || []), { section: 'New Section', points: ['New insights here...'] }];
             setNotesData({ ...notesData, notes: newNotes });
         }
     };
@@ -228,7 +231,7 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
                             </div>
 
                             <ul className="space-y-4 ml-2">
-                                {noteSection.points.map((point: string, pointIndex: number) => (
+                                {(noteSection.points || []).map((point: string, pointIndex: number) => (
                                     <li key={pointIndex} className="flex gap-4 group/item items-start">
                                         <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#00ff88]/40 group-hover/item:bg-[#00ff88] transition-colors flex-shrink-0"></div>
                                         <div

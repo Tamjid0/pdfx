@@ -43,20 +43,28 @@ export function transformSummary(data: SummaryData | string): PreviewData | null
         content = data.summary;
     }
 
-    if (!content) return null;
+    // Relaxed check: allow empty strings or partial arrays if non-null
+    if (content === null || content === undefined) return null;
 
     if (typeof content === 'string') {
-        sections.push({ content: content, type: 'paragraph' });
+        sections.push({ content: content || '(Empty summary)', type: 'paragraph' });
     } else if (Array.isArray(content)) {
-        content.forEach((point) => {
-            sections.push({ content: point, type: 'list' });
-        });
+        if (content.length === 0) {
+            sections.push({ content: '(No key points available)', type: 'paragraph' });
+        } else {
+            content.forEach((point) => {
+                sections.push({ content: point, type: 'list' });
+            });
+        }
     }
 
-    if (sections.length === 0) return null;
+    if (sections.length === 0) {
+        // Fallback for unexpected types
+        sections.push({ content: 'Summary content is not text or list.', type: 'paragraph' });
+    }
 
     const wordCount = sections.reduce((acc, section) =>
-        acc + section.content.split(/\s+/).length, 0
+        acc + (section.content || '').split(/\s+/).length, 0
     );
 
     return {

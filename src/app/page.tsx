@@ -54,7 +54,7 @@ const Home = () => {
         summaryData, insightsData, notesData, quizData, flashcardsData,
         isSlideMode, setIsSlideMode, setSlides, fileType, updateStats,
         resetWorkspace, setIsPageLoading, setTopics, isAppendMode, generationScope,
-        updateRevisionsFromSync
+        updateRevisionsFromSync, refreshCurrentProject
     } = useStore();
 
     const backToImport = () => {
@@ -158,6 +158,7 @@ const Home = () => {
                     if (fileId) {
                         const syncRes = await apiService.syncProjectContent(fileId, { insightsData: resultInsights }, { append: isAppendMode, scope: generationScope });
                         if (syncRes.updatedFields) updateRevisionsFromSync(syncRes.updatedFields);
+                        await refreshCurrentProject(fileId);
                     }
                     break;
                 case 'notes':
@@ -167,6 +168,7 @@ const Home = () => {
                     if (fileId) {
                         const syncRes = await apiService.syncProjectContent(fileId, { notesData: resultNotes }, { append: isAppendMode, scope: generationScope });
                         if (syncRes.updatedFields) updateRevisionsFromSync(syncRes.updatedFields);
+                        await refreshCurrentProject(fileId);
                     }
                     break;
                 case 'quiz':
@@ -176,6 +178,7 @@ const Home = () => {
                     if (fileId) {
                         const syncRes = await apiService.syncProjectContent(fileId, { quizData: quiz }, { append: isAppendMode, scope: generationScope });
                         if (syncRes.updatedFields) updateRevisionsFromSync(syncRes.updatedFields);
+                        await refreshCurrentProject(fileId);
                     }
                     break;
                 case 'flashcards':
@@ -185,6 +188,7 @@ const Home = () => {
                     if (fileId) {
                         const syncRes = await apiService.syncProjectContent(fileId, { flashcardsData: flashcards }, { append: isAppendMode, scope: generationScope });
                         if (syncRes.updatedFields) updateRevisionsFromSync(syncRes.updatedFields);
+                        await refreshCurrentProject(fileId);
                     }
                     break;
                 case 'mindmap':
@@ -194,6 +198,7 @@ const Home = () => {
                     if (fileId) {
                         const syncRes = await apiService.syncProjectContent(fileId, { mindmapData: mindmap }, { append: isAppendMode, scope: generationScope });
                         if (syncRes.updatedFields) updateRevisionsFromSync(syncRes.updatedFields);
+                        await refreshCurrentProject(fileId);
                     }
                     break;
                 case 'summary':
@@ -203,6 +208,7 @@ const Home = () => {
                     if (fileId) {
                         const syncRes = await apiService.syncProjectContent(fileId, { summaryData: summary }, { append: isAppendMode, scope: generationScope });
                         if (syncRes.updatedFields) updateRevisionsFromSync(syncRes.updatedFields);
+                        await refreshCurrentProject(fileId);
                     }
                     break;
                 default:

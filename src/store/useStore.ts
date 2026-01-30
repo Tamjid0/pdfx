@@ -519,24 +519,31 @@ export const useStore = create<AppState>((set, get) => ({
     updateRevisionsFromSync: (updatedFields: Record<string, any>) => set((state) => {
         const newState: Partial<AppState> = {};
 
-        // Map backend keys (e.g. summaryData.revisions) to frontend store keys (e.g. summaryRevisions)
-        const mappings: Record<string, keyof AppState> = {
-            'summaryData.revisions': 'summaryRevisions',
-            'notesData.revisions': 'notesRevisions',
-            'insightsData.revisions': 'insightsRevisions',
-            'flashcardsData.revisions': 'flashcardsRevisions',
-            'quizData.revisions': 'quizRevisions',
-            'summaryData': 'summaryData',
-            'notesData': 'notesData',
-            'insightsData': 'insightsData',
-            'flashcardsData': 'flashcardsData',
-            'quizData': 'quizData',
-            'mindmapData': 'mindmapData'
-        };
+        console.log('[Store] updateRevisionsFromSync received:', Object.keys(updatedFields));
 
-        for (const [backendKey, storeKey] of Object.entries(mappings)) {
-            if (updatedFields[backendKey]) {
-                (newState as any)[storeKey] = updatedFields[backendKey];
+        // Process each updated field from backend
+        for (const [key, value] of Object.entries(updatedFields)) {
+            // Handle dot-notation keys like "summaryData.revisions" or "summaryData.content"
+            if (key.includes('.')) {
+                const [module, field] = key.split('.');
+
+                if (field === 'revisions') {
+                    // Update revisions array
+                    const revisionKey = `${module.replace('Data', '')}Revisions` as keyof AppState;
+                    (newState as any)[revisionKey] = value;
+                    console.log(`[Store] Updated ${revisionKey}:`, value?.length || 0, 'revisions');
+                } else if (field === 'content') {
+                    // Update active content - value is already the unwrapped content
+                    const dataKey = module as keyof AppState;
+                    (newState as any)[dataKey] = value;
+                    console.log(`[Store] Updated ${dataKey} with new content`);
+                }
+                // Ignore other fields like activeScope
+            } else {
+                // Handle non-versioned fields (chatHistory, etc.)
+                if (key === 'chatHistory' || key === 'mindmapData') {
+                    (newState as any)[key] = value;
+                }
             }
         }
 
@@ -729,12 +736,25 @@ export const useStore = create<AppState>((set, get) => ({
         if (!fileId) return;
         try {
             const data = await apiService.fetchDocument(fileId);
-            const content = data[moduleKey];
+            const val = data[moduleKey];
+
+            // Helper for content extraction (duplicated for safety)
+            const getContent = (v: any) => {
+                if (!v) return null;
+                if (v.content !== undefined && v.content !== null) return v.content;
+                if (Array.isArray(v.revisions) && v.revisions.length > 0 && v.revisions[0].content) return v.revisions[0].content;
+                if (typeof v === 'object' && !v.revisions) return v; // Legacy
+                return null;
+            };
+
+            const content = getContent(val);
+
             if (content) {
                 const storeKey = moduleKey as keyof AppState;
                 const baseName = moduleKey.replace('Data', '');
                 const genKey = `is${baseName.charAt(0).toUpperCase() + baseName.slice(1)}Generated` as keyof AppState;
                 set({ [storeKey]: content, [genKey]: true } as any);
+                console.log(`[Store] Loaded module ${moduleKey} successfully`);
             }
         } catch (error) {
             console.error(`[Store] loadProjectModule failed for ${moduleKey}:`, error);

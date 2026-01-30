@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import {
     useStore, type SummaryData, type NotesData, type InsightsData,
-    type FlashcardsData, type QuizData, type MindmapData
+    type FlashcardsData, type QuizData, type MindmapData, type PreviewPreset
 } from '../store/useStore';
+import { getExportStyles } from '../utils/exportStyles';
+import { getTemplate } from '../templates';
+import { transformModeContent } from '../utils/contentTransformer';
 
 interface ExportModalProps { }
 
@@ -11,7 +14,8 @@ export const ExportModal: React.FC<ExportModalProps> = () => {
         showExportModal,
         closeExportModal,
         exportMode,
-        exportContent
+        exportContent,
+        previewPreset
     } = useStore();
 
     const [isExporting, setIsExporting] = useState(false);
@@ -23,95 +27,33 @@ export const ExportModal: React.FC<ExportModalProps> = () => {
 
     const renderDataToHtml = (
         mode: string,
-        data: SummaryData | NotesData | InsightsData | FlashcardsData | QuizData | MindmapData | string | null
+        data: any
     ): string => {
         if (mode === 'editor') return (data as string) || '';
         if (!data) return '<h1>No content available</h1>';
 
-        try {
-            switch (mode) {
-                case 'summary': {
-                    const d = data as SummaryData;
-                    return `
-                        <h1>Executive Summary</h1>
-                        <div>${d.summary || '<i>No summary content available.</i>'}</div>
-                        <h2>Key Highlights</h2>
-                        <ul>${(d.keyPoints && d.keyPoints.length > 0)
-                            ? d.keyPoints.map((p) => `<li>${p}</li>`).join('')
-                            : '<li>No key points available.</li>'}</ul>
-                    `;
-                }
-                case 'notes': {
-                    const d = data as NotesData;
-                    return `
-                        <h1>Study Notes</h1>
-                        ${(d.notes && d.notes.length > 0)
-                            ? d.notes.map((s) => `
-                                <h2>${s.section || 'Unstructured Section'}</h2>
-                                <ul>${(s.points || []).map((p) => `<li>${p}</li>`).join('')}</ul>
-                            `).join('') : '<p>No notes available.</p>'}
-                    `;
-                }
-                case 'insights': {
-                    const d = data as InsightsData;
-                    return `
-                        <h1>Core Insights</h1>
-                        ${(d.insights && d.insights.length > 0)
-                            ? d.insights.map((i) => `
-                                <h3>${i.title || 'Untitled Insight'}</h3>
-                                <p>${i.description || ''}</p>
-                            `).join('') : '<p>No insights available.</p>'}
-                    `;
-                }
-                case 'flashcards': {
-                    const d = data as FlashcardsData;
-                    return `
-                        <h1>Flashcards</h1>
-                        <table style="width:100%; border-collapse: collapse; margin-top: 20px;">
-                            ${(d.flashcards && d.flashcards.length > 0)
-                            ? d.flashcards.map((f) => `
-                                    <tr>
-                                        <td style="border: 1px solid #ddd; padding: 12px; font-weight: bold; width: 40%; background: #f9f9f9;">${f.question || ''}</td>
-                                        <td style="border: 1px solid #ddd; padding: 12px;">${f.answer || ''}</td>
-                                    </tr>
-                                `).join('') : '<tr><td>No flashcards available.</td></tr>'}
-                        </table>
-                    `;
-                }
-                case 'quiz': {
-                    const d = data as QuizData;
-                    return `
-                        <h1>Quiz Assessment</h1>
-                        ${(d.quiz && d.quiz.length > 0)
-                            ? d.quiz.map((q, idx: number) => `
-                                <div style="margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
-                                    <p style="font-size: 1.1em;"><strong>Question ${idx + 1}: ${q.question || '...'}</strong></p>
-                                    ${q.type === 'mc' ? `
-                                        <ul style="list-style-type: none; padding-left: 20px;">
-                                            ${(q.options || []).map((o) => `<li style="margin-bottom: 8px;">[ ] ${o.label}: ${o.value}</li>`).join('')}
-                                        </ul>
-                                    ` : ''}
-                                    <p style="color: #666; font-size: 0.9em; margin-top: 10px;"><i>Correct Answer: ${q.correctAnswer || 'Not provided'}</i></p>
-                                </div>
-                            `).join('') : '<p>No quiz questions available.</p>'}
-                    `;
-                }
-                case 'mindmap': {
-                    const d = data as MindmapData;
-                    return `
-                        <h1>Mind Map Structure</h1>
-                        <ul>${(d.nodes && d.nodes.length > 0)
-                            ? d.nodes.map((n) => `<li>${n.data?.label || n.id}</li>`).join('')
-                            : '<li>No mind map nodes available.</li>'}</ul>
-                    `;
-                }
-                default:
-                    return typeof data === 'string' ? data : JSON.stringify(data);
-            }
-        } catch (err) {
-            console.error('Error rendering data to HTML:', err);
-            return `<h1>Error rendering content</h1><p>${JSON.stringify(data)}</p>`;
-        }
+        const previewData = transformModeContent(mode, data);
+        if (!previewData) return '<h1>Unable to process content for export</h1>';
+
+        const template = getTemplate(previewPreset);
+        return template.render(previewData);
+    };
+
+    const wrapInStyle = (html: string) => {
+        const styles = getExportStyles(previewPreset);
+        console.log(`[ExportModal] Wrapping in styles for preset: ${previewPreset}`);
+
+        return `
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <meta charset="utf-8">
+                    <title>Exported Content</title>
+                    <style>${styles}</style>
+                </head>
+                <body class="export-body">${html}</body>
+            </html>
+        `;
     };
 
     const handleExportAction = async (format: 'pdf' | 'docx' | 'csv') => {
@@ -138,7 +80,26 @@ export const ExportModal: React.FC<ExportModalProps> = () => {
                 body: JSON.stringify(body),
             });
 
-            if (!response.ok) throw new Error('Export failed');
+            if (!response.ok) {
+                // Check if response is JSON error
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Export failed');
+                }
+                throw new Error('Export failed');
+            }
+
+            // Verify we got the correct content type
+            const contentType = response.headers.get('content-type');
+            if (format === 'pdf' && (!contentType || !contentType.includes('application/pdf'))) {
+                console.error('[Export] Expected PDF but got:', contentType);
+                throw new Error(`Server returned unexpected content type: ${contentType}`);
+            }
+            if (format === 'docx' && (!contentType || !contentType.includes('application/vnd.openxmlformats'))) {
+                console.error('[Export] Expected DOCX but got:', contentType);
+                throw new Error(`Server returned unexpected content type: ${contentType}`);
+            }
 
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
@@ -151,30 +112,10 @@ export const ExportModal: React.FC<ExportModalProps> = () => {
             closeExportModal();
         } catch (error) {
             console.error('Export error:', error);
-            alert('Failed to export document. Please try again.');
+            alert(error instanceof Error ? error.message : 'Failed to export document. Please try again.');
         } finally {
             setIsExporting(false);
         }
-    };
-
-    const wrapInStyle = (html: string) => {
-        return `
-            <html>
-                <head>
-                    <style>
-                        body { font-family: sans-serif; padding: 40px; line-height: 1.6; color: #333; }
-                        h1, h2, h3 { color: #111; }
-                        .preview-list { list-style: none; padding: 0; }
-                        .preview-list-item { margin-bottom: 12px; }
-                        img { max-width: 100%; height: auto; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                        th { background-color: #f5f5f5; }
-                    </style>
-                </head>
-                <body>${html}</body>
-            </html>
-        `;
     };
 
     const getOptions = () => {

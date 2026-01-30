@@ -7,12 +7,33 @@ import ApiError from '../../utils/ApiError.js';
 
 const router = express.Router();
 
+// Helper to decode basic HTML entities
+function decodeEntities(str) {
+    if (!str) return str;
+    return str
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'") // &apos;
+        .replace(/&#039;/g, "'")
+        .replace(/&amp;/g, '&');
+}
+
 router.post('/', validate(exportSchema), async (req, res, next) => {
     const { format, mode, filename = 'exported-document' } = req.body;
-    const html = req.body.content || req.body.html;
+    let html = req.body.content || req.body.html;
     const data = req.body.data;
 
-    console.log(`[Export] Request: format=${format}, mode=${mode}, filename=${filename}`);
+    // Decode HTML if it appears to be entity-encoded at the start
+    if (html && (html.trim().startsWith('&lt;') || html.includes('&lt;html'))) {
+        console.log('[Export] Detected entity-encoded HTML, decoding...');
+        html = decodeEntities(html);
+    }
+
+    console.log(`[Export] ========== NEW EXPORT REQUEST ==========`);
+    console.log(`[Export] Format: ${format}, Mode: ${mode}, Filename: ${filename}`);
+    console.log(`[Export] HTML length: ${html?.length || 0} characters`);
+    console.log(`[Export] HTML preview:`, html?.substring(0, 200));
 
     if (!html && (format === 'pdf' || format === 'docx')) {
         console.error('[Export] Error: No content/HTML provided for PDF/DOCX export');
@@ -21,16 +42,22 @@ router.post('/', validate(exportSchema), async (req, res, next) => {
 
     try {
         if (format === 'pdf') {
-            console.log('[Export] Generating PDF...');
-            const browser = await puppeteer.launch({
-                headless: true,
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
-            });
-            const page = await browser.newPage();
+            console.log('[Export] Starting PDF generation with Puppeteer...');
+            let browser;
 
             try {
+                browser = await puppeteer.launch({
+                    headless: true,
+                    args: ['--no-sandbox', '--disable-setuid-sandbox']
+                });
+                console.log('[Export] Browser launched successfully');
+
+                const page = await browser.newPage();
+                console.log('[Export] New page created');
+
                 // Set the content
                 await page.setContent(html || '<html><body>No content</body></html>', { waitUntil: 'networkidle0', timeout: 30000 });
+                console.log('[Export] Content set successfully');
 
                 // Generate PDF
                 const pdfBuffer = await page.pdf({
@@ -45,7 +72,7 @@ router.post('/', validate(exportSchema), async (req, res, next) => {
                 });
 
                 await browser.close();
-                console.log('[Export] PDF generated successfully, size:', pdfBuffer.length);
+                console.log('[Export] PDF generated successfully, size:', pdfBuffer.length, 'bytes');
 
                 if (!pdfBuffer || pdfBuffer.length === 0) {
                     throw new Error('Generated PDF buffer is empty');
@@ -53,11 +80,18 @@ router.post('/', validate(exportSchema), async (req, res, next) => {
 
                 res.setHeader('Content-Type', 'application/pdf');
                 res.setHeader('Content-Disposition', `attachment; filename="${filename}.pdf"`);
+                console.log('[Export] Sending PDF response...');
                 res.send(Buffer.from(pdfBuffer));
+                console.log('[Export] PDF sent successfully');
             } catch (pdfError) {
-                console.error('[Export] Puppeteer generation failed:', pdfError);
-                if (browser) await browser.close();
-                return res.status(500).json({ error: 'PDF Generation Failed' });
+                console.error('[Export] !!!!! PUPPETEER ERROR !!!!!');
+                console.error('[Export] Error details:', pdfError.message);
+                console.error('[Export] Error stack:', pdfError.stack);
+                if (browser) {
+                    await browser.close();
+                    console.log('[Export] Browser closed after error');
+                }
+                return res.status(500).json({ error: 'PDF Generation Failed', details: pdfError.message });
             }
 
         } else if (format === 'docx') {

@@ -77,11 +77,11 @@ export const VersionTabs: React.FC<VersionTabsProps> = ({
 
                 {/* Revision Tabs */}
                 {revisions.map((rev) => (
-                    <button
+                    <div
                         key={rev.id}
                         onClick={() => onSwitch(rev.id)}
                         onDoubleClick={() => handleDoubleClick(rev)}
-                        className={`group relative px-4 py-2 pr-8 rounded-t-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${activeRevisionId === rev.id
+                        className={`group relative px-4 py-2 pr-8 rounded-t-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap cursor-pointer ${activeRevisionId === rev.id
                             ? 'text-white bg-white/5'
                             : 'text-white/40 hover:text-white/70 hover:bg-white/5'
                             }`}
@@ -120,7 +120,7 @@ export const VersionTabs: React.FC<VersionTabsProps> = ({
                         {activeRevisionId === rev.id && (
                             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gemini-green rounded-full"></div>
                         )}
-                    </button>
+                    </div>
                 ))}
 
                 {/* New Version Tab */}

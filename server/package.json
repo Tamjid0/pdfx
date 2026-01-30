@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-cloudwatch-logs": "^3.978.0",
     "@google/generative-ai": "^0.24.1",
     "@huggingface/inference": "^4.13.5",
     "@langchain/community": "^1.1.1",

@@ -45,14 +45,18 @@ router.post('/', validate(exportSchema), async (req, res, next) => {
                 });
 
                 await browser.close();
-                console.log('[Export] PDF generated successfully');
+                console.log('[Export] PDF generated successfully, size:', pdfBuffer.length);
+
+                if (!pdfBuffer || pdfBuffer.length === 0) {
+                    throw new Error('Generated PDF buffer is empty');
+                }
 
                 res.setHeader('Content-Type', 'application/pdf');
-                res.setHeader('Content-Disposition', `attachment; filename=${filename}.pdf`);
-                res.send(pdfBuffer);
+                res.setHeader('Content-Disposition', `attachment; filename="${filename}.pdf"`);
+                res.send(Buffer.from(pdfBuffer));
             } catch (pdfError) {
                 console.error('[Export] Puppeteer generation failed:', pdfError);
-                await browser.close();
+                if (browser) await browser.close();
                 return res.status(500).json({ error: 'PDF Generation Failed' });
             }
 

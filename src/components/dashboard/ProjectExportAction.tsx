@@ -222,7 +222,7 @@ const ProjectExportAction: React.FC<ProjectExportActionProps> = ({
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${body.filename}.${format} `;
+            a.download = `${body.filename}.${format}`;
             document.body.appendChild(a);
             a.click();
             a.remove();

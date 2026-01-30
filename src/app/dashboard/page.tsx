@@ -19,8 +19,9 @@ const ProjectsPage = () => {
     const router = useRouter();
     const [projects, setProjects] = useState<DocumentOverview[]>([]);
     const [fetching, setFetching] = useState(true);
-    const [hasMore, setHasMore] = useState(false);
-    const [offset, setOffset] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalProjects, setTotalProjects] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
     const LIMIT = 12; // Use a reasonable limit for the grid
     const [selectedProject, setSelectedProject] = useState<DocumentOverview | null>(null);
     const [previewTarget, setPreviewTarget] = useState<{ mode: string; data: any } | null>(null);
@@ -37,32 +38,32 @@ const ProjectsPage = () => {
         }
 
         if (user) {
-            loadProjects();
+            loadProjects(currentPage);
         }
-    }, [user, authLoading]);
+    }, [user, authLoading, currentPage]);
 
-    const loadProjects = async (isLoadMore = false) => {
+    const loadProjects = async (page: number) => {
         try {
             setFetching(true);
-            if (!isLoadMore) setIsPageLoading(true);
+            setIsPageLoading(true);
 
-            const currentOffset = isLoadMore ? offset : 0;
-            const result = await apiService.fetchUserDocuments(user?.uid || 'guest', LIMIT, currentOffset);
+            const offset = (page - 1) * LIMIT;
+            const result = await apiService.fetchUserDocuments(user?.uid || 'guest', LIMIT, offset);
 
-            if (isLoadMore) {
-                setProjects(prev => [...prev, ...result.data]);
-                setOffset(prev => prev + result.data.length);
-            } else {
-                setProjects(result.data);
-                setOffset(result.data.length);
+            setProjects(result.data);
+            setTotalProjects(result.pagination.total);
+            const total = Math.ceil(result.pagination.total / LIMIT);
+            setTotalPages(total);
+
+            // Handle empty page scenario (e.g. after deletion)
+            if (result.data.length === 0 && page > 1) {
+                setCurrentPage(page - 1);
             }
-
-            setHasMore(result.pagination.hasMore);
         } catch (error) {
             console.error('Failed to load projects:', error);
         } finally {
             setFetching(false);
-            if (!isLoadMore) setIsPageLoading(false);
+            setIsPageLoading(false);
         }
     };
 
@@ -81,8 +82,8 @@ const ProjectsPage = () => {
             const { deleteDocument } = useStore.getState();
             await deleteDocument(projectToDelete.documentId);
 
-            // Remove from local state
-            setProjects(prev => prev.filter(p => p.documentId !== projectToDelete.documentId));
+            // Re-fetch current page to "refill"
+            await loadProjects(currentPage);
             setProjectToDelete(null);
 
             // If the deleted project was the selected one, clear it
@@ -289,6 +290,59 @@ const ProjectsPage = () => {
                                             </div>
                                         </div>
                                     ))}
+                            </div>
+                        )}
+
+                        {/* Numeric Pagination Switcher */}
+                        {totalPages > 1 && (
+                            <div className="mt-12 flex items-center justify-center gap-2">
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                    disabled={currentPage === 1}
+                                    className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-gemini-gray hover:text-white hover:bg-white/10 transition-all disabled:opacity-20 disabled:cursor-not-allowed group"
+                                >
+                                    <svg className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+
+                                <div className="flex items-center gap-1 bg-white/[0.03] border border-white/5 p-1 rounded-2xl">
+                                    {[...Array(totalPages)].map((_, i) => {
+                                        const pageNum = i + 1;
+                                        // Simple logic to show current, first, last, and a few around current
+                                        const shouldShow =
+                                            pageNum === 1 ||
+                                            pageNum === totalPages ||
+                                            (pageNum >= currentPage - 1 && pageNum <= currentPage + 1);
+
+                                        if (!shouldShow) {
+                                            if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
+                                                return <span key={pageNum} className="px-2 text-white/20 text-[10px] font-black uppercase tracking-widest">...</span>;
+                                            }
+                                            return null;
+                                        }
+
+                                        return (
+                                            <button
+                                                key={pageNum}
+                                                onClick={() => setCurrentPage(pageNum)}
+                                                className={`min-w-[40px] h-10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${currentPage === pageNum ? 'bg-white text-black shadow-lg shadow-white/10 scale-105' : 'text-gemini-gray hover:text-white hover:bg-white/5'}`}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-gemini-gray hover:text-white hover:bg-white/10 transition-all disabled:opacity-20 disabled:cursor-not-allowed group"
+                                >
+                                    <svg className="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
                             </div>
                         )}
                     </div>

@@ -283,39 +283,25 @@ interface AppState {
     // Study Continuity
     loadProject: (documentId: string) => Promise<void>;
     // Helper for legacy/versioned content extraction
-    refreshCurrentProject: async (documentId = get().fileId!) => {
-        if(!documentId) return;
-        try {
-    const doc = await apiService.fetchDocument(documentId);
+    refreshCurrentProject: (documentId?: string) => Promise<void>;
+    // Update active content
+    summaryData: getContent(doc.summaryData),
+    notesData: getContent(doc.notesData),
+    insightsData: getContent(doc.insightsData),
+    flashcardsData: getContent(doc.flashcardsData),
+    quizData: getContent(doc.quizData),
+    mindmapData: doc.mindmapData, // Mindmap not fully versioned yet same as loadProject
 
-    // Helper locally scoped (or could be moved out)
-    const getContent = (val: any) => {
-        if (!val) return null;
-        if (val.content !== undefined && val.content !== null) return val.content;
-        if (Array.isArray(val.revisions) && val.revisions.length > 0 && val.revisions[0].content) return val.revisions[0].content;
-        if (typeof val === 'object' && !val.revisions) return val; // Legacy
-        return null;
-    };
-
-    set({
-        // Update active content
-        summaryData: getContent(doc.summaryData),
-        notesData: getContent(doc.notesData),
-        insightsData: getContent(doc.insightsData),
-        flashcardsData: getContent(doc.flashcardsData),
-        quizData: getContent(doc.quizData),
-        mindmapData: doc.mindmapData, // Mindmap not fully versioned yet same as loadProject
-
-        // Update revisions
-        summaryRevisions: doc.summaryData?.revisions || [],
+    // Update revisions
+    summaryRevisions: doc.summaryData?.revisions || [],
         notesRevisions: doc.notesData?.revisions || [],
-        insightsRevisions: doc.insightsData?.revisions || [],
-        flashcardsRevisions: doc.flashcardsData?.revisions || [],
-        quizRevisions: doc.quizData?.revisions || [],
+            insightsRevisions: doc.insightsData?.revisions || [],
+                flashcardsRevisions: doc.flashcardsData?.revisions || [],
+                    quizRevisions: doc.quizData?.revisions || [],
 
-        chatHistory: doc.chatHistory || []
+                        chatHistory: doc.chatHistory || []
     });
-    console.log('[Store] Project refreshed successfully');
+console.log('[Store] Project refreshed successfully');
 } catch (error) {
     console.error('[Store] Failed to refresh project:', error);
 }
@@ -719,6 +705,44 @@ export const useStore = create<AppState>((set, get) => ({
             alert('Failed to load project. Please try again.');
         } finally {
             set({ isLoading: false });
+        }
+    },
+
+    refreshCurrentProject: async (documentId = get().fileId!) => {
+        if (!documentId) return;
+        try {
+            const doc = await apiService.fetchDocument(documentId);
+
+            // Helper locally scoped (or could be moved out)
+            const getContent = (val: any) => {
+                if (!val) return null;
+                if (val.content !== undefined && val.content !== null) return val.content;
+                if (Array.isArray(val.revisions) && val.revisions.length > 0 && val.revisions[0].content) return val.revisions[0].content;
+                if (typeof val === 'object' && !val.revisions) return val; // Legacy
+                return null;
+            };
+
+            set({
+                // Update active content
+                summaryData: getContent(doc.summaryData),
+                notesData: getContent(doc.notesData),
+                insightsData: getContent(doc.insightsData),
+                flashcardsData: getContent(doc.flashcardsData),
+                quizData: getContent(doc.quizData),
+                mindmapData: doc.mindmapData, // Mindmap not fully versioned yet same as loadProject
+
+                // Update revisions
+                summaryRevisions: doc.summaryData?.revisions || [],
+                notesRevisions: doc.notesData?.revisions || [],
+                insightsRevisions: doc.insightsData?.revisions || [],
+                flashcardsRevisions: doc.flashcardsData?.revisions || [],
+                quizRevisions: doc.quizData?.revisions || [],
+
+                chatHistory: doc.chatHistory || []
+            });
+            console.log('[Store] Project refreshed successfully');
+        } catch (error) {
+            console.error('[Store] Failed to refresh project:', error);
         }
     },
 

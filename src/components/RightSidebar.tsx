@@ -9,19 +9,19 @@ import { useAuth } from '../hooks/useAuth';
 // For now, using generic SVG paths. In a real app, you'd import from a library like react-icons or lucide-react
 import type { Mode } from '../store/useStore';
 
-const IconCircle = (props: any) => <svg {...props} viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" /></svg>;
-const IconCheck = (props: any) => <svg {...props} viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>;
-const IconFileText = (props: any) => <svg {...props} viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z" /></svg>;
-const IconBarChart = (props: any) => <svg {...props} viewBox="0 0 24 24"><path d="M4 22H2V2h2v20zm4 0H6V10h2v12zm4 0h-2V6h2v16zm4 0h-2V14h2v8zm4 0h-2V2h2v20z" /></svg>;
-const IconPlusCircle = (props: any) => <svg {...props} viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v4h4v2h-4v4h-2v-4H7v-2h4z" /></svg>;
-const IconSearch = (props: any) => <svg {...props} viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" /></svg>;
-const IconType = (props: any) => <svg {...props} viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16M11 17h2" /></svg>;
-const IconUserCheck = (props: any) => <svg {...props} viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><polyline points="17 11 19 13 23 9" /></svg>;
-const IconLayoutList = (props: any) => <svg {...props} viewBox="0 0 24 24"><path d="M14 10H3" /><path d="M14 6H3" /><path d="M14 14H3" /><path d="M14 18H3" /><rect width="3" height="3" x="21" y="21" rx="1" /><rect width="3" height="3" x="21" y="10" rx="1" /><rect width="3" height="3" x="21" y="6" rx="1" /><rect width="3" height="3" x="21" y="14" rx="1" /></svg>;
-const IconListOrdered = (props: any) => <svg {...props} viewBox="0 0 24 24"><path d="M10 6H3" /><path d="M10 12H3" /><path d="M10 18H3" /><rect width="3" height="3" x="21" y="21" rx="1" /><rect width="3" height="3" x="21" y="10" rx="1" /><rect width="3" height="3" x="21" y="6" rx="1" /><rect width="3" height="3" x="21" y="14" rx="1" /></svg>;
-const IconCheckSquare = (props: any) => <svg {...props} viewBox="0 0 24 24"><path d="M9 11L12 14L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>;
-const IconBox = (props: any) => <svg {...props} viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.29 7 12 12 20.71 7" /><line x1="12" y1="22" x2="12" y2="12" /></svg>;
-const IconFlaskConical = (props: any) => <svg {...props} viewBox="0 0 24 24"><path d="M4 22h16" /><path d="M12 4v14" /><path d="M4.5 4h15" /><path d="M6 22L12 12 18 22" /></svg>;
+const IconCircle = (props: any) => <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /></svg>;
+const IconCheck = (props: any) => <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>;
+const IconFileText = (props: any) => <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>;
+const IconBarChart = (props: any) => <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="20" x2="12" y2="10" /><line x1="18" y1="20" x2="18" y2="4" /><line x1="6" y1="20" x2="6" y2="16" /></svg>;
+const IconPlusCircle = (props: any) => <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>;
+const IconSearch = (props: any) => <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>;
+const IconType = (props: any) => <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 7 4 4 20 4 20 7" /><line x1="9" y1="20" x2="15" y2="20" /><line x1="12" y1="4" x2="12" y2="20" /></svg>;
+const IconUserCheck = (props: any) => <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><polyline points="17 11 19 13 23 9" /></svg>;
+const IconLayoutList = (props: any) => <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="14" width="7" height="7" /><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></svg>;
+const IconListOrdered = (props: any) => <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="10" y1="6" x2="21" y2="6" /><line x1="10" y1="12" x2="21" y2="12" /><line x1="10" y1="18" x2="21" y2="18" /><path d="M4 6h1v4" /><path d="M4 10h2" /><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1" /></svg>;
+const IconCheckSquare = (props: any) => <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 11 12 14 22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>;
+const IconBox = (props: any) => <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg>;
+const IconFlaskConical = (props: any) => <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v8L4.5 20.29A1 1 0 0 0 5.4 22h13.2a1 1 0 0 0 .9-1.71L14 10V2" /><line x1="8.5" y1="2" x2="15.5" y2="2" /><line x1="7" y1="14" x2="17" y2="14" /></svg>;
 
 
 interface RightSidebarProps {
@@ -185,19 +185,6 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
                                         <input type="number" value={quizSettings.timeLimit} onChange={(e) => handleQuizSettingChange('timeLimit', Number(e.target.value))} className="w-full p-2 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg text-white" />
                                     </div>
                                 )}
-                            </div>
-                        </div>
-                        <div className="tool-section bg-gemini-dark-300 border border-gemini-dark-500 rounded-xl p-4 mb-5">
-                            <div className="tool-section-title text-xs font-semibold text-gemini-green uppercase tracking-wider mb-3.5 flex items-center gap-1.5">Evaluation</div>
-                            <div className="tool-options grid gap-2.5">
-                                <button className="tool-option flex items-center gap-2.5 p-2.5 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg cursor-pointer transition-all hover:bg-gemini-green/10 hover:border-gemini-green">
-                                    <IconCheck className="w-4 h-4 fill-gemini-gray shrink-0" />
-                                    <span className="tool-option-label text-sm text-[#ccc]">Auto-Grading</span>
-                                </button>
-                                <button className="tool-option flex items-center gap-2.5 p-2.5 bg-gemini-dark-400 border border-gemini-dark-500 rounded-lg cursor-pointer transition-all hover:bg-gemini-green/10 hover:border-gemini-green">
-                                    <IconUserCheck className="w-4 h-4 fill-gemini-gray shrink-0" />
-                                    <span className="tool-option-label text-sm text-[#ccc]">Performance Review</span>
-                                </button>
                             </div>
                         </div>
                     </>

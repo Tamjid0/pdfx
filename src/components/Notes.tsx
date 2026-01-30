@@ -13,7 +13,7 @@ interface NotesProps {
 const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
     const {
         notesData, setNotesData, openExportModal, isGeneratingNotes,
-        generationScope, notesRevisions, switchRevision, deleteRevision, renameRevision
+        generationScope, notesRevisions, switchRevision, deleteRevision, renameRevision, loadProjectModule
     } = useStore();
 
     const [showRegenerateScope, setShowRegenerateScope] = useState(false);
@@ -174,6 +174,7 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
                         setActiveRevisionId(revId);
                     } else {
                         setActiveRevisionId(null);
+                        loadProjectModule('notesData');
                     }
                 }}
                 onNew={() => setShowRegenerateScope(true)}

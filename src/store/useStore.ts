@@ -282,6 +282,7 @@ interface AppState {
 
     // Study Continuity
     loadProject: (documentId: string) => Promise<void>;
+    loadProjectModule: (moduleKey: string) => Promise<void>;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -445,6 +446,7 @@ export const useStore = create<AppState>((set, get) => ({
     switchRevision: (module, revisionId) => set((state) => {
         const revKey = `${module}Revisions` as keyof AppState;
         const dataKey = `${module}Data` as keyof AppState;
+        const genKey = `is${module.charAt(0).toUpperCase() + module.slice(1)}Generated` as keyof AppState;
         const revisions = state[revKey] as Revision<any>[];
         const revision = revisions.find((r) => r.id === revisionId);
 
@@ -453,7 +455,10 @@ export const useStore = create<AppState>((set, get) => ({
             return state;
         }
 
-        return { [dataKey]: revision.content } as Partial<AppState>;
+        return {
+            [dataKey]: revision.content,
+            [genKey]: true
+        } as Partial<AppState>;
     }),
 
     deleteRevision: async (module, revisionId) => {
@@ -517,7 +522,13 @@ export const useStore = create<AppState>((set, get) => ({
             'notesData.revisions': 'notesRevisions',
             'insightsData.revisions': 'insightsRevisions',
             'flashcardsData.revisions': 'flashcardsRevisions',
-            'quizData.revisions': 'quizRevisions'
+            'quizData.revisions': 'quizRevisions',
+            'summaryData': 'summaryData',
+            'notesData': 'notesData',
+            'insightsData': 'insightsData',
+            'flashcardsData': 'flashcardsData',
+            'quizData': 'quizData',
+            'mindmapData': 'mindmapData'
         };
 
         for (const [backendKey, storeKey] of Object.entries(mappings)) {
@@ -669,6 +680,23 @@ export const useStore = create<AppState>((set, get) => ({
             alert('Failed to load project. Please try again.');
         } finally {
             set({ isLoading: false });
+        }
+    },
+
+    loadProjectModule: async (moduleKey: string) => {
+        const { fileId } = get();
+        if (!fileId) return;
+        try {
+            const data = await apiService.fetchDocument(fileId);
+            const content = data[moduleKey];
+            if (content) {
+                const storeKey = moduleKey as keyof AppState;
+                const baseName = moduleKey.replace('Data', '');
+                const genKey = `is${baseName.charAt(0).toUpperCase() + baseName.slice(1)}Generated` as keyof AppState;
+                set({ [storeKey]: content, [genKey]: true } as any);
+            }
+        } catch (error) {
+            console.error(`[Store] loadProjectModule failed for ${moduleKey}:`, error);
         }
     }
 }));

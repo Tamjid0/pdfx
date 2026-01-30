@@ -25,6 +25,8 @@ const ProjectsPage = () => {
     const [selectedProject, setSelectedProject] = useState<DocumentOverview | null>(null);
     const [previewTarget, setPreviewTarget] = useState<{ mode: string; data: any } | null>(null);
     const [activeExportDropdown, setActiveExportDropdown] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeFilter, setActiveFilter] = useState('All Files');
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -103,15 +105,34 @@ const ProjectsPage = () => {
                         </div>
 
                         {/* Search & Filter */}
-                        <div className="flex gap-3 mb-10 overflow-x-auto no-scrollbar pb-1">
-                            {['All Files', 'Recent', 'Documents', 'Slides'].map((filter, i) => (
-                                <button key={filter} className={`whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border transition-all ${i === 0 ? 'bg-white/10 border-white/20 text-white' : 'bg-transparent border-white/5 text-gemini-gray hover:border-white/10 hover:text-white'}`}>
-                                    {filter}
-                                </button>
-                            ))}
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+                            <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
+                                {['All Files', 'Recent', 'Documents', 'Slides'].map((filter) => (
+                                    <button
+                                        key={filter}
+                                        onClick={() => setActiveFilter(filter)}
+                                        className={`whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border transition-all ${activeFilter === filter ? 'bg-white/10 border-white/20 text-white' : 'bg-transparent border-white/5 text-gemini-gray hover:border-white/10 hover:text-white'}`}
+                                    >
+                                        {filter}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="relative group w-full md:w-72">
+                                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                                    <svg className="w-3.5 h-3.5 text-gemini-gray group-focus-within:text-gemini-green transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder="SEARCH VAULT..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full bg-white/[0.03] border border-white/5 rounded-xl py-2.5 pl-11 pr-4 text-[10px] font-bold tracking-widest uppercase text-white placeholder:text-gemini-gray focus:outline-none focus:border-gemini-green/30 focus:bg-white/[0.05] transition-all"
+                                />
+                            </div>
                         </div>
-
-
 
                         {/* Truly Transparent Transition Overlay */}
                         {showLoader && !fetching && (
@@ -145,73 +166,91 @@ const ProjectsPage = () => {
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {projects.map((project, idx) => (
-                                    <div
-                                        key={project.documentId}
-                                        onClick={() => setSelectedProject(project)}
-                                        style={{ animationDelay: `${idx * 40}ms` }}
-                                        className="group relative bg-[#111] border border-white/[0.05] rounded-xl p-5 cursor-pointer transition-all hover:border-gemini-green/30 hover:-translate-y-1 hover:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.6)] flex flex-col justify-between overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500"
-                                    >
-                                        {/* Minimal subtle glow */}
-                                        <div className="absolute top-0 right-0 w-20 h-20 bg-gemini-green/5 blur-3xl rounded-full group-hover:bg-gemini-green/10 transition-colors"></div>
+                                {projects
+                                    .filter(p => {
+                                        // 1. Category Filter
+                                        if (activeFilter === 'Documents') return p.type.includes('pdf') || p.type.includes('text');
+                                        if (activeFilter === 'Slides') return p.type.includes('presentation') || p.type.includes('pptx');
+                                        if (activeFilter === 'Recent') {
+                                            const aWeekAgo = new Date();
+                                            aWeekAgo.setDate(aWeekAgo.getDate() - 7);
+                                            return new Date(p.createdAt) > aWeekAgo;
+                                        }
+                                        return true; // All Files
+                                    })
+                                    .filter(p => {
+                                        // 2. Search Query
+                                        const name = (p.originalFile?.name || 'Untitled document').toLowerCase();
+                                        const query = searchQuery.toLowerCase();
+                                        return name.includes(query);
+                                    })
+                                    .map((project, idx) => (
+                                        <div
+                                            key={project.documentId}
+                                            onClick={() => setSelectedProject(project)}
+                                            style={{ animationDelay: `${idx * 40}ms` }}
+                                            className="group relative bg-[#111] border border-white/[0.05] rounded-xl p-5 cursor-pointer transition-all hover:border-gemini-green/30 hover:-translate-y-1 hover:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.6)] flex flex-col justify-between overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500"
+                                        >
+                                            {/* Minimal subtle glow */}
+                                            <div className="absolute top-0 right-0 w-20 h-20 bg-gemini-green/5 blur-3xl rounded-full group-hover:bg-gemini-green/10 transition-colors"></div>
 
-                                        <div className="relative z-10">
-                                            <div className="flex justify-between items-start mb-5">
-                                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all group-hover:scale-105 duration-300 ${project.type.includes('pdf') ? 'bg-red-500/5 text-red-500 border border-red-500/10' : 'bg-orange-500/5 text-orange-500 border border-orange-500/10'}`}>
-                                                    {project.type.includes('pdf') ? (
-                                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" /></svg>
-                                                    ) : (
-                                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" /></svg>
-                                                    )}
+                                            <div className="relative z-10">
+                                                <div className="flex justify-between items-start mb-5">
+                                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all group-hover:scale-105 duration-300 ${project.type.includes('pdf') ? 'bg-red-500/5 text-red-500 border border-red-500/10' : 'bg-orange-500/5 text-orange-500 border border-orange-500/10'}`}>
+                                                        {project.type.includes('pdf') ? (
+                                                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" /></svg>
+                                                        ) : (
+                                                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" /></svg>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex flex-col items-end gap-0.5">
+                                                        <span className="text-[10px] font-black uppercase tracking-widest text-[#555] group-hover:text-gemini-green/60 transition-colors">{new Date(project.createdAt).toLocaleDateString()}</span>
+
+                                                    </div>
                                                 </div>
-                                                <div className="flex flex-col items-end gap-0.5">
-                                                    <span className="text-[10px] font-black uppercase tracking-widest text-[#555] group-hover:text-gemini-green/60 transition-colors">{new Date(project.createdAt).toLocaleDateString()}</span>
 
+                                                <h3 className="text-base font-bold mb-2 line-clamp-1 text-white group-hover:text-gemini-green transition-colors">{project.originalFile?.name || 'Untitled Document'}</h3>
+
+                                                <div className="flex items-center gap-3 mb-4">
+                                                    <div className="flex -space-x-1">
+                                                        {['Summary', 'Notes', 'Insights', 'Quiz', 'Mindmap'].map(type => {
+                                                            const isComplete = project[`${type.toLowerCase()}Data`];
+                                                            return (
+                                                                <div
+                                                                    key={type}
+                                                                    title={`${type}`}
+                                                                    className={`w-1.5 h-1.5 rounded-full border border-black transition-all ${isComplete ? 'bg-gemini-green shadow-[0_0_4px_rgba(0,255,136,0.6)]' : 'bg-white/5'}`}
+                                                                ></div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    <span className="text-[8px] font-bold tracking-[0.1em] text-gemini-gray uppercase">Processed</span>
                                                 </div>
                                             </div>
 
-                                            <h3 className="text-base font-bold mb-2 line-clamp-1 text-white group-hover:text-gemini-green transition-colors">{project.originalFile?.name || 'Untitled Document'}</h3>
-
-                                            <div className="flex items-center gap-3 mb-4">
-                                                <div className="flex -space-x-1">
-                                                    {['Summary', 'Notes', 'Insights', 'Quiz', 'Mindmap'].map(type => {
-                                                        const isComplete = project[`${type.toLowerCase()}Data`];
-                                                        return (
-                                                            <div
-                                                                key={type}
-                                                                title={`${type}`}
-                                                                className={`w-1.5 h-1.5 rounded-full border border-black transition-all ${isComplete ? 'bg-gemini-green shadow-[0_0_4px_rgba(0,255,136,0.6)]' : 'bg-white/5'}`}
-                                                            ></div>
-                                                        );
-                                                    })}
+                                            <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/[0.03] relative z-10">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[8px] font-bold text-gemini-gray uppercase tracking-widest leading-none mb-0.5">Scale</span>
+                                                    <span className="text-[10px] font-bold text-white/40">
+                                                        {project.metadata?.pageCount || '0'} Pages
+                                                    </span>
                                                 </div>
-                                                <span className="text-[8px] font-bold tracking-[0.1em] text-gemini-gray uppercase">Processed</span>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleOpenProject(project.documentId);
+                                                    }}
+                                                    className="w-10 h-10 bg-white/5 hover:bg-gemini-green hover:text-black rounded-xl transition-all flex items-center justify-center group/play border border-white/5 active:scale-95 shadow-lg"
+                                                    title="Open Workspace"
+                                                >
+                                                    <svg className="w-5 h-5 transition-transform group-hover/play:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                                    </svg>
+                                                </button>
+
                                             </div>
                                         </div>
-
-                                        <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/[0.03] relative z-10">
-                                            <div className="flex flex-col">
-                                                <span className="text-[8px] font-bold text-gemini-gray uppercase tracking-widest leading-none mb-0.5">Scale</span>
-                                                <span className="text-[10px] font-bold text-white/40">
-                                                    {project.metadata?.pageCount || '0'} Pages
-                                                </span>
-                                            </div>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleOpenProject(project.documentId);
-                                                }}
-                                                className="w-10 h-10 bg-white/5 hover:bg-gemini-green hover:text-black rounded-xl transition-all flex items-center justify-center group/play border border-white/5 active:scale-95 shadow-lg"
-                                                title="Open Workspace"
-                                            >
-                                                <svg className="w-5 h-5 transition-transform group-hover/play:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                                </svg>
-                                            </button>
-
-                                        </div>
-                                    </div>
-                                ))}
+                                    ))}
                             </div>
                         )}
                     </div>
@@ -289,7 +328,7 @@ const ProjectsPage = () => {
                         <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                 <div className="space-y-8">
-                                    {/* Summary Section */}
+                                    {/* Abstract Synthesis (Summary) */}
                                     <div className="space-y-4">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
@@ -300,63 +339,78 @@ const ProjectsPage = () => {
                                                 <button
                                                     onClick={() => setPreviewTarget({ mode: 'summary', data: selectedProject.summaryData })}
                                                     className="p-1.5 hover:bg-white/5 rounded-lg text-gemini-gray hover:text-gemini-green transition-all"
-                                                    title="View Styled Preview"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                                                 </button>
                                             )}
                                         </div>
 
-                                        <div className="bg-white/[0.02] rounded-2xl p-6 border border-white/5 leading-relaxed text-white/70 overflow-hidden">
-                                            {selectedProject.summaryData && selectedProject.summaryData.revisions?.[0]?.content ? (
-                                                <div className="prose prose-invert prose-sm max-w-none line-clamp-[6]"
+                                        <div className="bg-white/[0.02] rounded-2xl p-6 border border-white/5 leading-relaxed text-white/70 overflow-hidden relative min-h-[100px]">
+                                            {selectedProject.summaryData ? (
+                                                <div className="prose prose-invert prose-xs max-w-none line-clamp-[6] text-sm"
                                                     dangerouslySetInnerHTML={{
-                                                        __html: typeof selectedProject.summaryData.revisions[0].content.summary === 'string'
-                                                            ? selectedProject.summaryData.revisions[0].content.summary
-                                                            : (Array.isArray(selectedProject.summaryData.revisions[0].content.summary)
-                                                                ? selectedProject.summaryData.revisions[0].content.summary.join('\n')
-                                                                : '')
+                                                        __html: typeof selectedProject.summaryData === 'string'
+                                                            ? selectedProject.summaryData
+                                                            : (Array.isArray(selectedProject.summaryData.summary)
+                                                                ? selectedProject.summaryData.summary.join('\n')
+                                                                : (selectedProject.summaryData.summary || ''))
                                                     }}>
                                                 </div>
                                             ) : (
-                                                <p className="text-gemini-gray italic text-center py-6 text-[11px]">Summary session pending.</p>
+                                                <div className="flex flex-col items-center justify-center py-6 gap-3 opacity-30">
+                                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                                    <p className="italic text-[11px]">No summary available</p>
+                                                </div>
                                             )}
                                         </div>
                                     </div>
 
-                                    {/* Insights Section */}
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <span className="w-4 h-1 bg-gemini-green rounded-full"></span>
-                                                <h4 className="text-[9px] font-bold text-white/50 uppercase tracking-[0.25em]">Core Insights</h4>
-                                            </div>
-                                            {selectedProject.insightsData && (
-                                                <button
-                                                    onClick={() => setPreviewTarget({ mode: 'insights', data: selectedProject.insightsData })}
-                                                    className="p-1.5 hover:bg-white/5 rounded-lg text-gemini-gray hover:text-gemini-green transition-all"
-                                                    title="View Styled Preview"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                                                </button>
+                                    {/* Collaborative Analysis Grid */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 space-y-3">
+                                            <h4 className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] flex items-center gap-2">
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                Mastery Test
+                                            </h4>
+                                            {selectedProject.quizData ? (
+                                                <div className="flex items-end justify-between">
+                                                    <span className="text-xl font-bold text-white">{selectedProject.quizData.quiz?.length || 0}</span>
+                                                    <span className="text-[10px] text-white/40 font-medium">Questions</span>
+                                                </div>
+                                            ) : (
+                                                <div className="text-[10px] text-white/20 italic">Generated session pending</div>
                                             )}
                                         </div>
 
-                                        <div className="bg-white/[0.02] rounded-2xl p-6 border border-white/5 max-h-[250px] overflow-y-auto no-scrollbar">
-                                            {selectedProject.insightsData && selectedProject.insightsData.revisions?.[0]?.content ? (
-                                                <div className="space-y-4">
-                                                    {(selectedProject.insightsData.revisions[0].content.insights || []).slice(0, 3).map((i, idx: number) => (
-                                                        <div key={idx} className="border-l border-gemini-green/20 pl-4 py-1">
-                                                            <h5 className="text-white text-xs font-bold mb-1">{i.title}</h5>
-                                                            <p className="text-[10px] text-gemini-gray line-clamp-2">{i.description}</p>
-                                                        </div>
-                                                    ))}
-                                                    {selectedProject.insightsData.revisions[0].content.insights.length > 3 && (
-                                                        <p className="text-gemini-green text-[9px] font-bold uppercase tracking-widest pt-2">+ More in Workspace</p>
-                                                    )}
+                                        <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 space-y-3">
+                                            <h4 className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] flex items-center gap-2">
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                                                Knowledge Deck
+                                            </h4>
+                                            {selectedProject.flashcardsData ? (
+                                                <div className="flex items-end justify-between">
+                                                    <span className="text-xl font-bold text-white">{selectedProject.flashcardsData.flashcards?.length || 0}</span>
+                                                    <span className="text-[10px] text-white/40 font-medium">Flashcards</span>
                                                 </div>
                                             ) : (
-                                                <p className="text-gemini-gray italic text-center py-6 text-[11px]">Insight extraction pending.</p>
+                                                <div className="text-[10px] text-white/20 italic">Generated session pending</div>
+                                            )}
+                                        </div>
+
+                                        <div className="col-span-2 bg-white/[0.02] border border-white/5 rounded-2xl p-4 space-y-3">
+                                            <h4 className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] flex items-center gap-2">
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                                                Core Insights
+                                            </h4>
+                                            {selectedProject.insightsData ? (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {(selectedProject.insightsData.topics || []).slice(0, 5).map((t: string, i: number) => (
+                                                        <span key={i} className="px-2 py-1 bg-white/5 rounded-md text-[9px] text-white/60 font-bold uppercase tracking-tight">{t}</span>
+                                                    ))}
+                                                    {(selectedProject.insightsData.topics || []).length > 5 && <span className="text-[9px] text-gemini-green/50 font-bold">+ More</span>}
+                                                </div>
+                                            ) : (
+                                                <div className="text-[10px] text-white/20 italic">Insight session pending</div>
                                             )}
                                         </div>
                                     </div>

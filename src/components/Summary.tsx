@@ -15,7 +15,7 @@ import { toast } from 'react-hot-toast';
 const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
     const {
         summaryData, setSummaryData, openExportModal, isGeneratingSummary,
-        generationScope, summaryRevisions, switchRevision, deleteRevision, renameRevision
+        generationScope, summaryRevisions, switchRevision, deleteRevision, renameRevision, loadProjectModule
     } = useStore();
     const [copied, setCopied] = useState(false);
     const [showRegenerateScope, setShowRegenerateScope] = useState(false);
@@ -180,6 +180,7 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
                         setActiveRevisionId(revId);
                     } else {
                         setActiveRevisionId(null);
+                        loadProjectModule('summaryData');
                     }
                 }}
                 onNew={() => setShowRegenerateScope(true)}

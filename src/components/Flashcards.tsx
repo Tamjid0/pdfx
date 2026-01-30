@@ -1,6 +1,8 @@
 
 import React, { useState } from 'react';
 import { useStore, type Mode, type Flashcard } from '../store/useStore';
+import { VersionTabs } from './dashboard/VersionTabs';
+import { toast } from 'react-hot-toast';
 
 
 interface FlashcardsProps {
@@ -11,10 +13,12 @@ import LocalizedShimmer from './LocalizedShimmer';
 
 const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
     const {
-        flashcardsData, setFlashcardsData, openExportModal, isGeneratingFlashcards
+        flashcardsData, setFlashcardsData, openExportModal, isGeneratingFlashcards,
+        flashcardsRevisions, switchRevision, deleteRevision, renameRevision, loadProjectModule
     } = useStore();
 
     const [flippedCards, setFlippedCards] = useState<number[]>([]);
+    const [activeRevisionId, setActiveRevisionId] = useState<string | null>(null);
 
     const cardsArray = flashcardsData?.flashcards || [];
 
@@ -105,6 +109,41 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
                     {isGeneratingFlashcards ? 'CREATING...' : 'REGENERATE'}
                 </button>
             </div>
+
+            <VersionTabs
+                module="flashcards"
+                revisions={flashcardsRevisions}
+                activeRevisionId={activeRevisionId}
+                onSwitch={(revId) => {
+                    if (revId) {
+                        switchRevision('flashcards', revId);
+                        setActiveRevisionId(revId);
+                    } else {
+                        setActiveRevisionId(null);
+                        loadProjectModule('flashcardsData');
+                    }
+                }}
+                onNew={() => onGenerate('flashcards')}
+                onRename={async (revId, newName) => {
+                    try {
+                        await renameRevision('flashcards', revId, newName);
+                        toast.success('Revision renamed');
+                    } catch (err) {
+                        toast.error('Failed to rename revision');
+                    }
+                }}
+                onDelete={async (revisionId) => {
+                    try {
+                        await deleteRevision('flashcards', revisionId);
+                        toast.success('Revision deleted');
+                        if (activeRevisionId === revisionId) {
+                            setActiveRevisionId(null);
+                        }
+                    } catch (err) {
+                        toast.error('Failed to delete revision');
+                    }
+                }}
+            />
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
                 <p className="text-[#666] text-[10px] font-black uppercase tracking-[0.3em] mb-8 text-center">Interactive Sessions • Click to reveal</p>

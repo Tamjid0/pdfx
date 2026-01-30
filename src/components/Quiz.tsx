@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useStore, type Mode, type QuizItem } from '../store/useStore';
 import LocalizedShimmer from './LocalizedShimmer';
+import { VersionTabs } from './dashboard/VersionTabs';
+import { toast } from 'react-hot-toast';
 
 // Local types removed, using QuizItem from store
 
@@ -12,7 +14,7 @@ interface QuizProps {
 const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
     const {
         quizData, setQuizData, openExportModal, isGeneratingQuiz,
-        switchRevision, deleteRevision, renameRevision, quizRevisions
+        switchRevision, deleteRevision, renameRevision, quizRevisions, loadProjectModule
     } = useStore();
 
     const [selectedAnswers, setSelectedAnswers] = useState<Record<string, any>>({});
@@ -63,6 +65,8 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
         setScore(currentScore);
         setShowResults(true);
     };
+
+    const [activeRevisionId, setActiveRevisionId] = useState<string | null>(null);
 
     if (!quizData || !quizData.quiz || quizData.quiz.length === 0) {
         return (
@@ -120,6 +124,41 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
                     {isGeneratingQuiz ? 'DRAFTING...' : 'RESET & REGENERATE'}
                 </button>
             </div>
+
+            <VersionTabs
+                module="quiz"
+                revisions={quizRevisions}
+                activeRevisionId={activeRevisionId}
+                onSwitch={(revId) => {
+                    if (revId) {
+                        switchRevision('quiz', revId);
+                        setActiveRevisionId(revId);
+                    } else {
+                        setActiveRevisionId(null);
+                        loadProjectModule('quizData');
+                    }
+                }}
+                onNew={() => onGenerate('quiz')}
+                onRename={async (revId, newName) => {
+                    try {
+                        await renameRevision('quiz', revId, newName);
+                        toast.success('Revision renamed');
+                    } catch (err) {
+                        toast.error('Failed to rename revision');
+                    }
+                }}
+                onDelete={async (revisionId) => {
+                    try {
+                        await deleteRevision('quiz', revisionId);
+                        toast.success('Revision deleted');
+                        if (activeRevisionId === revisionId) {
+                            setActiveRevisionId(null);
+                        }
+                    } catch (err) {
+                        toast.error('Failed to delete revision');
+                    }
+                }}
+            />
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
                 <div className="max-w-3xl mx-auto space-y-8">

@@ -14,8 +14,11 @@ interface QuizProps {
 const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
     const {
         quizData, setQuizData, openExportModal, isGeneratingQuiz,
-        switchRevision, deleteRevision, renameRevision, quizRevisions, loadProjectModule
+        switchRevision, deleteRevision, renameRevision, quizRevisions, loadProjectModule,
+        activeRevisionIds
     } = useStore();
+
+    const activeRevisionId = activeRevisionIds['quiz'];
 
     const [selectedAnswers, setSelectedAnswers] = useState<Record<string, any>>({});
     const [showResults, setShowResults] = useState<boolean>(false);
@@ -61,8 +64,6 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
         setScore(currentScore);
         setShowResults(true);
     };
-
-    const [activeRevisionId, setActiveRevisionId] = useState<string | null>(null);
 
     if (!quizData || !quizData.quiz || quizData.quiz.length === 0) {
         return (
@@ -126,11 +127,8 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
                 revisions={quizRevisions}
                 activeRevisionId={activeRevisionId}
                 onSwitch={(revId) => {
-                    if (revId) {
-                        switchRevision('quiz', revId);
-                        setActiveRevisionId(revId);
-                    } else {
-                        setActiveRevisionId(null);
+                    switchRevision('quiz', revId);
+                    if (!revId) {
                         loadProjectModule('quizData');
                     }
                 }}
@@ -147,9 +145,6 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
                     try {
                         await deleteRevision('quiz', revisionId);
                         toast.success('Revision deleted');
-                        if (activeRevisionId === revisionId) {
-                            setActiveRevisionId(null);
-                        }
                     } catch (err) {
                         toast.error('Failed to delete revision');
                     }

@@ -13,10 +13,12 @@ interface InsightsProps {
 const Insights: React.FC<InsightsProps> = ({ onGenerate }) => {
     const {
         insightsData, setInsightsData, openExportModal, isGeneratingInsights,
-        generationScope, insightsRevisions, switchRevision, deleteRevision, renameRevision
+        generationScope, insightsRevisions, switchRevision, deleteRevision, renameRevision, loadProjectModule,
+        activeRevisionIds
     } = useStore();
-    const [activeRevisionId, setActiveRevisionId] = useState<string | null>(null);
     const [showRegenerateScope, setShowRegenerateScope] = useState(false);
+
+    const activeRevisionId = activeRevisionIds['insights'];
 
     const insightsArray = insightsData?.insights || [];
 
@@ -136,11 +138,9 @@ const Insights: React.FC<InsightsProps> = ({ onGenerate }) => {
                 revisions={insightsRevisions}
                 activeRevisionId={activeRevisionId}
                 onSwitch={(revId) => {
-                    if (revId) {
-                        switchRevision('insights', revId);
-                        setActiveRevisionId(revId);
-                    } else {
-                        setActiveRevisionId(null);
+                    switchRevision('insights', revId);
+                    if (!revId) {
+                        loadProjectModule('insightsData');
                     }
                 }}
                 onNew={() => setShowRegenerateScope(true)}
@@ -156,9 +156,6 @@ const Insights: React.FC<InsightsProps> = ({ onGenerate }) => {
                     try {
                         await deleteRevision('insights', revisionId);
                         toast.success('Revision deleted');
-                        if (activeRevisionId === revisionId) {
-                            setActiveRevisionId(null);
-                        }
                     } catch (err) {
                         toast.error('Failed to delete revision');
                     }

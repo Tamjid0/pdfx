@@ -13,12 +13,14 @@ interface NotesProps {
 const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
     const {
         notesData, setNotesData, openExportModal, isGeneratingNotes,
-        generationScope, notesRevisions, switchRevision, deleteRevision, renameRevision, loadProjectModule
+        generationScope, notesRevisions, switchRevision, deleteRevision, renameRevision, loadProjectModule,
+        activeRevisionIds
     } = useStore();
 
     const [showRegenerateScope, setShowRegenerateScope] = useState(false);
-    const [activeRevisionId, setActiveRevisionId] = useState<string | null>(null);
     const [showHistory, setShowHistory] = useState(false);
+
+    const activeRevisionId = activeRevisionIds['notes'];
 
     const notesArray = notesData?.notes || [];
 
@@ -172,11 +174,8 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
                 revisions={notesRevisions}
                 activeRevisionId={activeRevisionId}
                 onSwitch={(revId) => {
-                    if (revId) {
-                        switchRevision('notes', revId);
-                        setActiveRevisionId(revId);
-                    } else {
-                        setActiveRevisionId(null);
+                    switchRevision('notes', revId);
+                    if (!revId) {
                         loadProjectModule('notesData');
                     }
                 }}
@@ -193,9 +192,6 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
                     try {
                         await deleteRevision('notes', revisionId);
                         toast.success('Revision deleted');
-                        if (activeRevisionId === revisionId) {
-                            setActiveRevisionId(null);
-                        }
                     } catch (err) {
                         toast.error('Failed to delete revision');
                     }

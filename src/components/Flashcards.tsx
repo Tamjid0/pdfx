@@ -14,11 +14,13 @@ import LocalizedShimmer from './LocalizedShimmer';
 const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
     const {
         flashcardsData, setFlashcardsData, openExportModal, isGeneratingFlashcards,
-        flashcardsRevisions, switchRevision, deleteRevision, renameRevision, loadProjectModule
+        flashcardsRevisions, switchRevision, deleteRevision, renameRevision, loadProjectModule,
+        activeRevisionIds
     } = useStore();
 
     const [flippedCards, setFlippedCards] = useState<number[]>([]);
-    const [activeRevisionId, setActiveRevisionId] = useState<string | null>(null);
+
+    const activeRevisionId = activeRevisionIds['flashcards'];
 
     const cardsArray = flashcardsData?.flashcards || [];
 
@@ -115,11 +117,8 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
                 revisions={flashcardsRevisions}
                 activeRevisionId={activeRevisionId}
                 onSwitch={(revId) => {
-                    if (revId) {
-                        switchRevision('flashcards', revId);
-                        setActiveRevisionId(revId);
-                    } else {
-                        setActiveRevisionId(null);
+                    switchRevision('flashcards', revId);
+                    if (!revId) {
                         loadProjectModule('flashcardsData');
                     }
                 }}
@@ -136,9 +135,6 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
                     try {
                         await deleteRevision('flashcards', revisionId);
                         toast.success('Revision deleted');
-                        if (activeRevisionId === revisionId) {
-                            setActiveRevisionId(null);
-                        }
                     } catch (err) {
                         toast.error('Failed to delete revision');
                     }

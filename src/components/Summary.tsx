@@ -15,12 +15,14 @@ import { toast } from 'react-hot-toast';
 const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
     const {
         summaryData, setSummaryData, openExportModal, isGeneratingSummary,
-        generationScope, summaryRevisions, switchRevision, deleteRevision, renameRevision, loadProjectModule
+        generationScope, summaryRevisions, switchRevision, deleteRevision, renameRevision, loadProjectModule,
+        activeRevisionIds
     } = useStore();
     const [copied, setCopied] = useState(false);
     const [showRegenerateScope, setShowRegenerateScope] = useState(false);
-    const [activeRevisionId, setActiveRevisionId] = useState<string | null>(null);
     const [showHistory, setShowHistory] = useState(false);
+
+    const activeRevisionId = activeRevisionIds['summary'];
 
     const handleCopy = () => {
         if (!summaryData?.summary) return;
@@ -175,11 +177,8 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
                 revisions={summaryRevisions}
                 activeRevisionId={activeRevisionId}
                 onSwitch={(revId) => {
-                    if (revId) {
-                        switchRevision('summary', revId);
-                        setActiveRevisionId(revId);
-                    } else {
-                        setActiveRevisionId(null);
+                    switchRevision('summary', revId);
+                    if (!revId) {
                         loadProjectModule('summaryData');
                     }
                 }}
@@ -196,9 +195,6 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
                     try {
                         await deleteRevision('summary', revisionId);
                         toast.success('Revision deleted');
-                        if (activeRevisionId === revisionId) {
-                            setActiveRevisionId(null);
-                        }
                     } catch (err) {
                         toast.error('Failed to delete revision');
                     }

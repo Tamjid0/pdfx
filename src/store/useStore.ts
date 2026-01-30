@@ -111,8 +111,9 @@ export interface DocumentOverview {
 export interface Revision<T> {
     id: string;
     name: string;
-    content: T;
+    data: T; // Matches backend's .data field for revisions
     timestamp: string;
+    scope?: GenerationScope;
 }
 
 export interface Topic {
@@ -157,6 +158,7 @@ interface AppState {
     summaryRevisions: Revision<SummaryData>[];
     flashcardsRevisions: Revision<FlashcardsData>[];
     quizRevisions: Revision<QuizData>[];
+    activeRevisionIds: Record<string, string | null>;
     chatHistory: { role: 'user' | 'assistant' | 'ai'; content: string; timestamp?: string }[];
     fileId: string | null;
     fileType: 'pdf' | 'pptx' | 'text' | null;
@@ -272,7 +274,7 @@ interface AppState {
     updateStats: (text: string, pageCount?: number) => void;
 
     // Revision Actions
-    switchRevision: (module: 'summary' | 'notes' | 'insights' | 'flashcards' | 'quiz', revisionId: string) => void;
+    switchRevision: (module: 'summary' | 'notes' | 'insights' | 'flashcards' | 'quiz', revisionId: string | null) => void;
     updateRevisionsFromSync: (updatedFields: any) => void;
     deleteRevision: (module: 'summary' | 'notes' | 'insights' | 'flashcards' | 'quiz', revisionId: string) => Promise<void>;
     renameRevision: (module: 'summary' | 'notes' | 'insights' | 'flashcards' | 'quiz', revisionId: string, name: string) => Promise<void>;
@@ -313,6 +315,13 @@ export const useStore = create<AppState>((set, get) => ({
     summaryRevisions: [],
     flashcardsRevisions: [],
     quizRevisions: [],
+    activeRevisionIds: {
+        summary: null,
+        notes: null,
+        insights: null,
+        flashcards: null,
+        quiz: null
+    },
     chatHistory: [],
     fileId: null,
     fileType: null,
@@ -450,8 +459,21 @@ export const useStore = create<AppState>((set, get) => ({
         const revKey = `${module}Revisions` as keyof AppState;
         const dataKey = `${module}Data` as keyof AppState;
         const genKey = `is${module.charAt(0).toUpperCase() + module.slice(1)}Generated` as keyof AppState;
+
+        // Update activeRevisionIds map
+        const newActiveRevisionIds = { ...state.activeRevisionIds, [module]: revisionId };
+
+        if (revisionId === null) {
+            // Re-load the latest "Current" content from the project data
+            // This is handled by components calling loadProjectModule(dataKey)
+            // but we can also set it to null here to trigger the fallback
+            return {
+                activeRevisionIds: newActiveRevisionIds
+            } as Partial<AppState>;
+        }
+
         const revisions = state[revKey] as Revision<any>[];
-        const revision = revisions.find((r) => r.id === revisionId);
+        const revision = revisions?.find((r) => r.id === revisionId);
 
         if (!revision) {
             console.warn(`[Store] Revision ${revisionId} not found in ${module}`);
@@ -459,8 +481,9 @@ export const useStore = create<AppState>((set, get) => ({
         }
 
         return {
-            [dataKey]: revision.content,
-            [genKey]: true
+            [dataKey]: revision.data, // Use .data from the revision
+            [genKey]: true,
+            activeRevisionIds: newActiveRevisionIds
         } as Partial<AppState>;
     }),
 
@@ -603,7 +626,14 @@ export const useStore = create<AppState>((set, get) => ({
             isGeneratingNotes: false,
             isGeneratingFlashcards: false,
             isGeneratingQuiz: false,
-            isGeneratingMindmap: false
+            isGeneratingMindmap: false,
+            activeRevisionIds: {
+                summary: null,
+                notes: null,
+                insights: null,
+                flashcards: null,
+                quiz: null
+            }
         });
     },
 
@@ -665,11 +695,20 @@ export const useStore = create<AppState>((set, get) => ({
 
                 topics: data.topics || [],
                 view: 'viewer', // Switch to viewer view for projects
-                mode: 'editor',
+                // Smart mode select: if current mode is study mode and it has data, stay. Else pick first that has data.
+                mode: (get().mode !== 'editor' && getActiveContent(data, `${get().mode}Data`)) ? get().mode : (getActiveContent(data, 'summaryData') ? 'summary' : 'editor'),
                 leftPanelView: isPptx ? 'slides' : 'editor',
                 isSlideMode: isPptx,
                 isProcessingSlides: false,
-                renderingProgress: 100
+                renderingProgress: 100,
+                // Reset revision tracking on project change
+                activeRevisionIds: {
+                    summary: null,
+                    notes: null,
+                    insights: null,
+                    flashcards: null,
+                    quiz: null
+                }
             });
 
             // Recalculate stats for restored document
@@ -701,9 +740,14 @@ export const useStore = create<AppState>((set, get) => ({
             // Helper locally scoped (or could be moved out)
             const getContent = (val: any) => {
                 if (!val) return null;
+                // 1. Check for standard active content
                 if (val.content !== undefined && val.content !== null) return val.content;
-                if (Array.isArray(val.revisions) && val.revisions.length > 0 && val.revisions[0].content) return val.revisions[0].content;
-                if (typeof val === 'object' && !val.revisions) return val; // Legacy
+                // 2. Fallback to latest revision if active content is missing (e.g. after sync error)
+                if (Array.isArray(val.revisions) && val.revisions.length > 0) {
+                    return val.revisions[0].data || val.revisions[0].content;
+                }
+                // 3. Legacy Phase 10 format (direct object)
+                if (typeof val === 'object' && !val.revisions && !val.content) return val;
                 return null;
             };
 
@@ -742,8 +786,10 @@ export const useStore = create<AppState>((set, get) => ({
             const getContent = (v: any) => {
                 if (!v) return null;
                 if (v.content !== undefined && v.content !== null) return v.content;
-                if (Array.isArray(v.revisions) && v.revisions.length > 0 && v.revisions[0].content) return v.revisions[0].content;
-                if (typeof v === 'object' && !v.revisions) return v; // Legacy
+                if (Array.isArray(v.revisions) && v.revisions.length > 0) {
+                    return v.revisions[0].data || v.revisions[0].content;
+                }
+                if (typeof v === 'object' && !v.revisions && !v.content) return v;
                 return null;
             };
 

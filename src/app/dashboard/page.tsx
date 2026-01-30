@@ -27,6 +27,8 @@ const ProjectsPage = () => {
     const [activeExportDropdown, setActiveExportDropdown] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('All Files');
+    const [projectToDelete, setProjectToDelete] = useState<DocumentOverview | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -69,6 +71,29 @@ const ProjectsPage = () => {
         await loadProject(documentId);
         setIsPageLoading(false);
         router.push('/');
+    };
+
+    const handleDeleteProject = async () => {
+        if (!projectToDelete) return;
+
+        try {
+            setIsDeleting(true);
+            const { deleteDocument } = useStore.getState();
+            await deleteDocument(projectToDelete.documentId);
+
+            // Remove from local state
+            setProjects(prev => prev.filter(p => p.documentId !== projectToDelete.documentId));
+            setProjectToDelete(null);
+
+            // If the deleted project was the selected one, clear it
+            if (selectedProject?.documentId === projectToDelete.documentId) {
+                setSelectedProject(null);
+            }
+        } catch (error) {
+            console.error('Failed to delete project:', error);
+        } finally {
+            setIsDeleting(false);
+        }
     };
 
     // Page-level transition loader
@@ -235,19 +260,32 @@ const ProjectsPage = () => {
                                                         {project.metadata?.pageCount || '0'} Pages
                                                     </span>
                                                 </div>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleOpenProject(project.documentId);
-                                                    }}
-                                                    className="w-10 h-10 bg-white/5 hover:bg-gemini-green hover:text-black rounded-xl transition-all flex items-center justify-center group/play border border-white/5 active:scale-95 shadow-lg"
-                                                    title="Open Workspace"
-                                                >
-                                                    <svg className="w-5 h-5 transition-transform group-hover/play:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                                    </svg>
-                                                </button>
-
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setProjectToDelete(project);
+                                                        }}
+                                                        className="w-10 h-10 bg-white/5 hover:bg-red-500/10 hover:text-red-500 rounded-xl transition-all flex items-center justify-center border border-white/5 active:scale-95 group/delete"
+                                                        title="Delete Project"
+                                                    >
+                                                        <svg className="w-4 h-4 transition-transform group-hover/delete:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleOpenProject(project.documentId);
+                                                        }}
+                                                        className="w-10 h-10 bg-white/5 hover:bg-gemini-green hover:text-black rounded-xl transition-all flex items-center justify-center group/play border border-white/5 active:scale-95 shadow-lg"
+                                                        title="Open Workspace"
+                                                    >
+                                                        <svg className="w-5 h-5 transition-transform group-hover/play:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
@@ -463,6 +501,43 @@ const ProjectsPage = () => {
                     data={previewTarget.data}
                     onClose={() => setPreviewTarget(null)}
                 />
+            )}
+            {/* Confirmation Modal */}
+            {projectToDelete && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="absolute inset-0 bg-black/60" onClick={() => !isDeleting && setProjectToDelete(null)}></div>
+                    <div className="bg-[#1a1a1a] border border-white/10 w-full max-w-md rounded-3xl p-8 shadow-2xl relative z-10 animate-in zoom-in-95 duration-300">
+                        <div className="w-16 h-16 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-500 mb-6 mx-auto">
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </div>
+
+                        <h3 className="text-xl font-bold text-center mb-2">Discard Information?</h3>
+                        <p className="text-gemini-gray text-center text-sm font-medium mb-8 leading-relaxed">
+                            This will move <span className="text-white font-bold">{projectToDelete.originalFile?.name}</span> to the archive. You can restore it later from your dashboard settings.
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <button
+                                onClick={() => setProjectToDelete(null)}
+                                disabled={isDeleting}
+                                className="px-6 py-3 rounded-xl bg-white/5 text-gemini-gray font-bold text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-50"
+                            >
+                                Retain Asset
+                            </button>
+                            <button
+                                onClick={handleDeleteProject}
+                                disabled={isDeleting}
+                                className="px-6 py-3 rounded-xl bg-red-500 text-white font-bold text-[10px] uppercase tracking-widest hover:bg-red-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-red-500/20"
+                            >
+                                {isDeleting ? (
+                                    <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                ) : 'Discard Project'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

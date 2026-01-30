@@ -318,3 +318,17 @@ export async function fetchDocument(documentId: string): Promise<any> {
     }
     return response.json();
 }
+/**
+ * Deletes a document by its ID
+ */
+export async function deleteDocument(documentId: string): Promise<{ success: boolean; message: string }> {
+    const response = await fetch(`/api/v1/documents/${documentId}`, {
+        method: 'DELETE',
+        headers: await getAuthHeaders()
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete document');
+    }
+    return response.json();
+}

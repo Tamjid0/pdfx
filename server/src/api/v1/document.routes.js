@@ -331,6 +331,27 @@ router.patch('/:documentId/revisions/:revisionId', verifyToken, checkDocumentOwn
     }
 });
 
+// 6. Delete a document (soft delete)
+router.delete('/:documentId', verifyToken, checkDocumentOwnership(Document), async (req, res) => {
+    try {
+        const { documentId } = req.params;
+        const userId = req.user.uid;
+
+        // Soft delete by setting isArchived to true
+        await Document.updateOne({ documentId }, { $set: { isArchived: true } });
+
+        // Invalidate Cache for this user's document list
+        deleteCachePattern(`docs_list:${userId}:*`).catch(err =>
+            logger.error(`[Cache] Invalidation failed for user ${userId}: ${err.message}`)
+        );
+
+        res.json({ success: true, message: 'Project deleted successfully' });
+    } catch (error) {
+        console.error('[DocumentRoutes] Error deleting document:', error);
+        res.status(500).json({ error: 'Failed to delete project' });
+    }
+});
+
 import crypto from 'crypto';
 
 export default router;

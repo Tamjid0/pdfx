@@ -283,6 +283,7 @@ interface AppState {
     // Study Continuity
     loadProject: (documentId: string) => Promise<void>;
     loadProjectModule: (moduleKey: string) => Promise<void>;
+    deleteDocument: (documentId: string) => Promise<void>;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -697,6 +698,17 @@ export const useStore = create<AppState>((set, get) => ({
             }
         } catch (error) {
             console.error(`[Store] loadProjectModule failed for ${moduleKey}:`, error);
+        }
+    },
+
+    deleteDocument: async (documentId: string) => {
+        try {
+            await apiService.deleteDocument(documentId);
+            toast.success('Project discarded successfully');
+        } catch (error: any) {
+            console.error('[Store] deleteDocument failed:', error);
+            toast.error(error.message || 'Failed to delete project');
+            throw error;
         }
     }
 }));

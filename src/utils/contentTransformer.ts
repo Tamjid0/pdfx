@@ -166,11 +166,11 @@ function transformAdaptiveBlocks(blocks: any[]): PreviewSection[] {
         }
         if (block.items) {
             block.items.forEach((item: any) => {
-                if (item.heading) {
-                    sections.push({ content: item.heading, type: 'heading' });
+                if (item.heading || item.example || item.term || item.step) {
+                    sections.push({ content: item.heading || item.example || item.term || item.step, type: 'heading' });
                 }
-                if (item.explanation) {
-                    sections.push({ content: item.explanation, type: 'paragraph' });
+                if (item.explanation || item.description || item.content) {
+                    sections.push({ content: item.explanation || item.description || item.content, type: 'paragraph' });
                 }
                 if (item.question) {
                     sections.push({ content: `Q: ${item.question}`, type: 'paragraph' });

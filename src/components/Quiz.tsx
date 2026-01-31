@@ -102,7 +102,7 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
     }
 
     return (
-        <div className="flex flex-col h-full bg-[#0a0a0a] rounded-xl border border-[#222] overflow-hidden shadow-2xl">
+        <div className="flex flex-col h-full w-full bg-[#0a0a0a] rounded-xl border border-[#222] overflow-hidden shadow-2xl relative">
             <div className="flex items-center justify-between p-5 border-b border-[#222] bg-[#111]">
                 <div className="flex items-center gap-3">
                     <div className="px-2 py-0.5 bg-[#00ff88]/10 border border-[#00ff88]/20 rounded text-[9px] font-black text-[#00ff88] uppercase tracking-tighter">Live Session</div>
@@ -151,7 +151,7 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
                 }}
             />
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
+            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 relative">
                 <div className="max-w-3xl mx-auto space-y-8">
                     {quizData.quiz.map((q: QuizItem, qIndex: number) => (
                         <div key={qIndex} className={`group relative bg-[#111] border border-[#222] rounded-2xl p-6 transition-all ${showResults ? 'opacity-80' : 'hover:border-[#333]'}`}>

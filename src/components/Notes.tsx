@@ -70,7 +70,7 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
     }
 
     return (
-        <div className="flex flex-col h-full bg-[#0a0a0a] rounded-xl border border-[#222] overflow-hidden shadow-2xl">
+        <div className="flex flex-col h-full w-full bg-[#0a0a0a] rounded-xl border border-[#222] overflow-hidden shadow-2xl relative">
             <div className="flex items-center justify-between px-5 py-3 border-b border-[#222] bg-[#111] relative z-20">
                 <div className="flex items-center gap-3">
                     <svg className="w-5 h-5 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
@@ -146,7 +146,7 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
                 }}
             />
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
+            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8">
                 <div className="max-w-4xl mx-auto text-left">
                     {notesData?.blocks ? (
                         <DynamicBlockRenderer blocks={notesData.blocks} />

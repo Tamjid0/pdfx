@@ -124,7 +124,7 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
     }
 
     return (
-        <div className="flex flex-col h-full bg-gemini-dark rounded-xl border border-gemini-dark-400 overflow-hidden shadow-2xl">
+        <div className="flex flex-col h-full w-full bg-gemini-dark rounded-xl border border-gemini-dark-400 overflow-hidden shadow-2xl relative">
             <div className="flex items-center justify-between px-5 py-3 border-b border-gemini-dark-400 bg-gemini-dark-200 backdrop-blur-md relative z-20">
                 <div className="flex items-center gap-3">
                     <div className="flex space-x-1">
@@ -201,7 +201,7 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
                 }}
             />
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar">
+            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar relative">
                 <div className="p-8 space-y-12 max-w-4xl mx-auto">
                     <section className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                         <div className="flex items-center gap-4 mb-6">

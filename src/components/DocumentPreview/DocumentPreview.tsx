@@ -63,15 +63,16 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ mode, children
     return (
         <div className="flex flex-col h-full">
             {/* Content Area */}
-            <div className="flex-1 overflow-hidden relative bg-[#0a0a0a]">
+            <div className="flex-1 min-h-0 overflow-hidden relative bg-[#0a0a0a]">
                 {/* Interactive Mode */}
                 <div
-                    className={`absolute inset-0 transition-all duration-500 ease-out ${isPreviewMode
-                        ? 'opacity-0 pointer-events-none scale-95'
-                        : 'opacity-100 scale-100'
+                    className={`absolute inset-0 flex flex-col min-h-0 transition-all duration-500 ease-out 
+                        ${isPreviewMode
+                            ? 'opacity-0 pointer-events-none invisible -z-10 scale-95'
+                            : 'opacity-100 pointer-events-auto visible z-10 scale-100'
                         }`}
                     style={{
-                        transitionProperty: 'opacity, transform',
+                        transitionProperty: 'opacity, transform, visibility',
                         transformOrigin: 'center'
                     }}
                 >
@@ -80,12 +81,13 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ mode, children
 
                 {/* Preview Mode */}
                 <div
-                    className={`absolute inset-0 transition-all duration-500 ease-out ${isPreviewMode
-                        ? 'opacity-100 scale-100'
-                        : 'opacity-0 pointer-events-none scale-95'
+                    className={`absolute inset-0 flex flex-col min-h-0 transition-all duration-500 ease-out 
+                        ${isPreviewMode
+                            ? 'opacity-100 pointer-events-auto visible z-10 scale-100'
+                            : 'opacity-0 pointer-events-none invisible -z-10 scale-95'
                         }`}
                     style={{
-                        transitionProperty: 'opacity, transform',
+                        transitionProperty: 'opacity, transform, visibility',
                         transformOrigin: 'center'
                     }}
                 >

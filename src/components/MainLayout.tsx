@@ -200,7 +200,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                                         </Allotment.Pane>
                                         {showSecondPane && (
                                             <Allotment.Pane>
-                                                <div className="flex-1 flex flex-col p-6 overflow-y-auto h-full">
+                                                <div className="h-full flex flex-col p-6 overflow-hidden">
                                                     {mode === 'editor' ? (
                                                         <Artboard htmlContent={htmlPreview} isLoading={false} activeNotesToggles={activeNotesToggles} activeInsightsToggles={activeInsightsToggles} onExport={handleExport} />
                                                     ) : (

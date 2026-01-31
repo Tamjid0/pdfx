@@ -93,19 +93,37 @@ export const DynamicBlockRenderer: React.FC<DynamicBlockRendererProps> = ({ bloc
 
                     case 'definitions':
                     case 'steps':
+                    case 'examples':
                     case 'key_takeaways':
                     case 'exam_focus':
                     case 'real_world':
                         return (
                             <div key={index} className="space-y-4">
-                                {block.title && <h3 className="text-sm font-black text-gray-500 uppercase tracking-[0.3em]">{block.title}</h3>}
-                                <div className="space-y-3">
-                                    {(Array.isArray(block.content) ? block.content : [block.content]).map((text, i) => (
-                                        <div key={i} className="flex gap-4 p-4 bg-white/5 rounded-xl border border-white/5 group hover:bg-white/[0.07] transition-all">
-                                            <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#00ff88]/30 group-hover:bg-[#00ff88] transition-colors flex-shrink-0"></div>
-                                            <div className="text-sm text-gray-300 leading-relaxed italic">{text}</div>
+                                {block.title && <h3 className="text-sm font-black text-gray-400 uppercase tracking-[0.3em]">{block.title}</h3>}
+                                <div className="space-y-4">
+                                    {block.items ? (
+                                        <div className="grid gap-4">
+                                            {block.items.map((item, i) => (
+                                                <div key={i} className="bg-white/5 p-5 rounded-2xl border border-white/5 hover:border-[#00ff88]/20 transition-all">
+                                                    {(item.example || item.term || item.step) && (
+                                                        <div className="text-[#00ff88] text-xs font-black uppercase tracking-widest mb-2">
+                                                            {item.example || item.term || item.step}
+                                                        </div>
+                                                    )}
+                                                    <div className="text-sm text-gray-300 leading-relaxed italic">
+                                                        {item.description || item.explanation || item.content}
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
+                                    ) : (
+                                        (Array.isArray(block.content) ? block.content : [block.content]).map((text, i) => (
+                                            <div key={i} className="flex gap-4 p-4 bg-white/5 rounded-xl border border-white/5 group hover:bg-white/[0.07] transition-all">
+                                                <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#00ff88]/30 group-hover:bg-[#00ff88] transition-colors flex-shrink-0"></div>
+                                                <div className="text-sm text-gray-300 leading-relaxed italic">{text}</div>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
                             </div>
                         );

@@ -65,7 +65,7 @@ const Insights: React.FC<InsightsProps> = ({ onGenerate }) => {
     }
 
     return (
-        <div className="flex flex-col h-full bg-[#0a0a0a] rounded-xl border border-[#222] overflow-hidden shadow-2xl">
+        <div className="flex flex-col h-full w-full bg-[#0a0a0a] rounded-xl border border-[#222] overflow-hidden shadow-2xl relative">
             <div className="flex items-center justify-between px-5 py-3 border-b border-[#222] bg-[#111] relative z-20">
                 <div className="flex items-center gap-3">
                     <div className="w-2 h-2 bg-[#00ff88] rounded-full shadow-[0_0_8px_rgba(0,255,136,1)]"></div>
@@ -141,7 +141,7 @@ const Insights: React.FC<InsightsProps> = ({ onGenerate }) => {
                 }}
             />
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
+            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 relative">
                 <div className="max-w-4xl mx-auto text-left">
                     {insightsData?.blocks ? (
                         <DynamicBlockRenderer blocks={insightsData.blocks} />

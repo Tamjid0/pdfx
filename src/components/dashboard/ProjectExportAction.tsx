@@ -166,8 +166,8 @@ const ProjectExportAction: React.FC<ProjectExportActionProps> = ({
 
         // Handle specific types
         if (mode === 'summary') return !!(d.summary || (d.keyPoints && d.keyPoints.length > 0));
-        if (mode === 'notes') return !!(d.notes && d.notes.length > 0);
-        if (mode === 'insights') return !!(d.insights && d.insights.length > 0);
+        if (mode === 'notes') return !!((d.notes && d.notes.length > 0) || (d.blocks && d.blocks.length > 0));
+        if (mode === 'insights') return !!((d.insights && d.insights.length > 0) || (d.blocks && d.blocks.length > 0));
         if (mode === 'flashcards') return !!(d.flashcards && d.flashcards.length > 0);
         if (mode === 'quiz') return !!(d.quiz && d.quiz.length > 0);
         if (mode === 'mindmap') return !!(d.nodes && d.nodes.length > 0);

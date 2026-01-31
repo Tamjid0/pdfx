@@ -4,6 +4,7 @@ import LocalizedShimmer from './LocalizedShimmer';
 import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
 import { VersionTabs } from './dashboard/VersionTabs';
 import { toast } from 'react-hot-toast';
+import { DynamicBlockRenderer } from './dashboard/DynamicBlockRenderer';
 
 
 interface InsightsProps {
@@ -20,31 +21,9 @@ const Insights: React.FC<InsightsProps> = ({ onGenerate }) => {
 
     const activeRevisionId = activeRevisionIds['insights'];
 
-    const insightsArray = insightsData?.insights || [];
+    const hasData = (insightsData?.blocks && insightsData.blocks.length > 0) || (insightsData?.insights && insightsData.insights.length > 0);
 
-    const handleContentChange = (e: React.FocusEvent<HTMLHeadingElement | HTMLParagraphElement>, index: number, field: 'title' | 'description') => {
-        if (insightsData) {
-            const newInsights = [...insightsArray];
-            newInsights[index] = { ...newInsights[index], [field]: e.currentTarget.innerText };
-            setInsightsData({ ...insightsData, insights: newInsights });
-        }
-    };
-
-    const addInsight = () => {
-        if (insightsData) {
-            const newInsights = [...insightsArray, { title: 'New Insight Title', description: 'New insight description...' }];
-            setInsightsData({ ...insightsData, insights: newInsights });
-        }
-    };
-
-    const deleteInsight = (index: number) => {
-        if (insightsData) {
-            const newInsights = insightsArray.filter((_: Insight, i: number) => i !== index);
-            setInsightsData({ ...insightsData, insights: newInsights });
-        }
-    };
-
-    if (insightsArray.length === 0) {
+    if (!hasData) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-[#0a0a0a] rounded-xl border border-[#222]">
                 {isGeneratingInsights ? (
@@ -163,46 +142,23 @@ const Insights: React.FC<InsightsProps> = ({ onGenerate }) => {
             />
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
-                <div className="max-w-4xl mx-auto grid grid-cols-1 gap-4 text-left">
-                    {insightsArray.map((insight: Insight, index: number) => (
-                        <div key={index} className="group relative bg-[#111]/50 border border-[#222] rounded-xl p-5 transition-all hover:bg-[#111] hover:border-[#00ff88]/30 hover:-translate-y-1">
-                            <div className="absolute top-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                                <button
-                                    onClick={() => deleteInsight(index)}
-                                    className="p-1 text-gray-500 hover:text-red-500 transition-colors"
-                                    title="Delete Insight"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                </button>
-                                <div className="p-1 opacity-50">
-                                    <svg className="w-5 h-5 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                <div className="max-w-4xl mx-auto text-left">
+                    {insightsData?.blocks ? (
+                        <DynamicBlockRenderer blocks={insightsData.blocks} />
+                    ) : (
+                        <div className="grid grid-cols-1 gap-4">
+                            {insightsData?.insights?.map((insight: Insight, index: number) => (
+                                <div key={index} className="group relative bg-[#111]/50 border border-[#222] rounded-xl p-5 transition-all hover:bg-[#111] hover:border-[#00ff88]/30 hover:-translate-y-1">
+                                    <h4 className="text-base font-bold text-white mb-2 mr-8">
+                                        {insight.title}
+                                    </h4>
+                                    <p className="text-sm text-[#999] leading-relaxed">
+                                        {insight.description}
+                                    </p>
                                 </div>
-                            </div>
-                            <h4
-                                className="text-base font-bold text-white mb-2 outline-none mr-8"
-                                contentEditable={true}
-                                suppressContentEditableWarning={true}
-                                onBlur={(e) => handleContentChange(e, index, 'title')}
-                            >
-                                {insight.title}
-                            </h4>
-                            <p
-                                className="text-sm text-[#999] leading-relaxed outline-none focus:text-[#ccc]"
-                                contentEditable={true}
-                                suppressContentEditableWarning={true}
-                                onBlur={(e) => handleContentChange(e, index, 'description')}
-                            >
-                                {insight.description}
-                            </p>
+                            ))}
                         </div>
-                    ))}
-
-                    <button
-                        onClick={addInsight}
-                        className="w-full py-6 border-2 border-[#1a1a1a] border-dashed rounded-2xl text-xs font-black text-[#444] uppercase tracking-widest hover:text-[#00ff88] hover:border-[#00ff88]/30 hover:bg-[#00ff88]/5 transition-all text-center"
-                    >
-                        + Register New Insight
-                    </button>
+                    )}
                 </div>
             </div>
 

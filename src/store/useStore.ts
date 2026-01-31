@@ -30,17 +30,29 @@ export interface NoteSection {
     points: string[];
 }
 
-export interface NotesData {
-    notes: NoteSection[];
-}
-
 export interface Insight {
     title: string;
     description: string;
+    type?: string;
+}
+
+export interface AdaptiveBlock {
+    type: string;
+    title?: string;
+    content?: string | string[];
+    items?: any[];
+    source_pages?: number[];
+    language?: string;
+}
+
+export interface NotesData {
+    notes?: NoteSection[];
+    blocks?: AdaptiveBlock[];
 }
 
 export interface InsightsData {
-    insights: Insight[];
+    insights?: Insight[];
+    blocks?: AdaptiveBlock[];
 }
 
 export interface Flashcard {

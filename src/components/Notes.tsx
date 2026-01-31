@@ -4,6 +4,7 @@ import LocalizedShimmer from './LocalizedShimmer';
 import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
 import { VersionTabs } from './dashboard/VersionTabs';
 import { toast } from 'react-hot-toast';
+import { DynamicBlockRenderer } from './dashboard/DynamicBlockRenderer';
 
 
 interface NotesProps {
@@ -22,62 +23,9 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
 
     const activeRevisionId = activeRevisionIds['notes'];
 
-    const notesArray = notesData?.notes || [];
+    const hasData = (notesData?.blocks && notesData.blocks.length > 0) || (notesData?.notes && notesData.notes.length > 0);
 
-    const handleSectionTitleChange = (e: React.FocusEvent<HTMLHeadingElement>, sectionIndex: number) => {
-        if (notesData) {
-            const newNotes = [...notesArray];
-            newNotes[sectionIndex] = { ...newNotes[sectionIndex], section: e.currentTarget.innerText };
-            setNotesData({ ...notesData, notes: newNotes });
-        }
-    };
-
-    const handlePointChange = (e: React.FocusEvent<HTMLDivElement>, sectionIndex: number, pointIndex: number) => {
-        if (notesData?.notes) {
-            const newNotes = [...notesArray];
-            const section = newNotes[sectionIndex];
-            if (section && section.points) {
-                const newPoints = [...section.points];
-                newPoints[pointIndex] = e.currentTarget.innerText;
-                newNotes[sectionIndex] = { ...section, points: newPoints };
-                setNotesData({ ...notesData, notes: newNotes });
-            }
-        }
-    };
-
-    const addSection = () => {
-        if (notesData) {
-            const newNotes = [...(notesData.notes || []), { section: 'New Section', points: ['New insights here...'] }];
-            setNotesData({ ...notesData, notes: newNotes });
-        }
-    };
-
-    const addPoint = (sectionIndex: number) => {
-        if (notesData) {
-            const newNotes = [...notesArray];
-            const newPoints = [...newNotes[sectionIndex].points, 'New point...'];
-            newNotes[sectionIndex] = { ...newNotes[sectionIndex], points: newPoints };
-            setNotesData({ ...notesData, notes: newNotes });
-        }
-    };
-
-    const deleteSection = (sectionIndex: number) => {
-        if (notesData) {
-            const newNotes = notesArray.filter((_: NoteSection, i: number) => i !== sectionIndex);
-            setNotesData({ ...notesData, notes: newNotes });
-        }
-    };
-
-    const deletePoint = (sectionIndex: number, pointIndex: number) => {
-        if (notesData) {
-            const newNotes = [...notesArray];
-            const newPoints = newNotes[sectionIndex].points.filter((_: string, i: number) => i !== pointIndex);
-            newNotes[sectionIndex] = { ...newNotes[sectionIndex], points: newPoints };
-            setNotesData({ ...notesData, notes: newNotes });
-        }
-    };
-
-    if (notesArray.length === 0) {
+    if (!hasData) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-[#0a0a0a] rounded-xl border border-[#222]">
                 {isGeneratingNotes ? (
@@ -199,71 +147,39 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
             />
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
-                <div className="max-w-4xl mx-auto space-y-12 text-left">
-                    <div className="flex flex-col gap-1">
-                        <h1 className="text-4xl font-black text-white tracking-tight">Structured Notes</h1>
-                        <p className="text-[#666] text-sm uppercase tracking-widest font-mono">Curated Knowledge Base</p>
-                    </div>
-
-                    {notesArray.map((noteSection: NoteSection, sectionIndex: number) => (
-                        <div key={sectionIndex} className="group relative">
-                            <div className="flex items-center gap-4 mb-6">
-                                <h3
-                                    className="text-lg font-bold text-[#00ff88] outline-none hover:text-white transition-colors flex-1"
-                                    contentEditable={true}
-                                    suppressContentEditableWarning={true}
-                                    onBlur={(e) => handleSectionTitleChange(e, sectionIndex)}
-                                >
-                                    {noteSection.section}
-                                </h3>
-                                <div className="h-px flex-1 bg-gradient-to-r from-[#00ff88]/30 to-transparent"></div>
-                                <button
-                                    onClick={() => deleteSection(sectionIndex)}
-                                    className="text-gray-600 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 p-2"
-                                    title="Delete Section"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                </button>
+                <div className="max-w-4xl mx-auto text-left">
+                    {notesData?.blocks ? (
+                        <DynamicBlockRenderer blocks={notesData.blocks} />
+                    ) : (
+                        <div className="space-y-12">
+                            <div className="flex flex-col gap-1">
+                                <h1 className="text-4xl font-black text-white tracking-tight">Structured Notes</h1>
+                                <p className="text-[#666] text-sm uppercase tracking-widest font-mono">Curated Knowledge Base</p>
                             </div>
 
-                            <ul className="space-y-4 ml-2">
-                                {(noteSection.points || []).map((point: string, pointIndex: number) => (
-                                    <li key={pointIndex} className="flex gap-4 group/item items-start">
-                                        <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#00ff88]/40 group-hover/item:bg-[#00ff88] transition-colors flex-shrink-0"></div>
-                                        <div
-                                            className="flex-1 text-[#ccc] text-sm leading-relaxed outline-none focus:text-white group-hover/item:text-[#eee]"
-                                            contentEditable={true}
-                                            suppressContentEditableWarning={true}
-                                            onBlur={(e) => handlePointChange(e, sectionIndex, pointIndex)}
-                                        >
-                                            {point}
-                                        </div>
-                                        <button
-                                            onClick={() => deletePoint(sectionIndex, pointIndex)}
-                                            className="text-gray-600 hover:text-red-500 transition-colors opacity-0 group-hover/item:opacity-100 p-1"
-                                            title="Delete Point"
-                                        >
-                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
+                            {notesData?.notes?.map((noteSection: NoteSection, sectionIndex: number) => (
+                                <div key={sectionIndex} className="group relative">
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <h3 className="text-lg font-bold text-[#00ff88] flex-1">
+                                            {noteSection.section}
+                                        </h3>
+                                        <div className="h-px flex-1 bg-gradient-to-r from-[#00ff88]/30 to-transparent"></div>
+                                    </div>
 
-                            <button
-                                onClick={() => addPoint(sectionIndex)}
-                                className="mt-6 ml-6 text-[10px] font-black text-[#444] uppercase tracking-widest hover:text-[#00ff88] transition-all"
-                            >
-                                + Add Point to {noteSection.section}
-                            </button>
+                                    <ul className="space-y-4 ml-2">
+                                        {(noteSection.points || []).map((point: string, pointIndex: number) => (
+                                            <li key={pointIndex} className="flex gap-4 group/item items-start">
+                                                <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#00ff88]/40 flex-shrink-0"></div>
+                                                <div className="text-[#ccc] text-sm leading-relaxed">
+                                                    {point}
+                                                </div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ))}
                         </div>
-                    ))}
-
-                    <button
-                        onClick={addSection}
-                        className="w-full py-6 border-2 border-[#1a1a1a] border-dashed rounded-2xl text-xs font-black text-[#444] uppercase tracking-widest hover:text-[#00ff88] hover:border-[#00ff88]/30 hover:bg-[#00ff88]/5 transition-all text-center"
-                    >
-                        + Create Functional Category
-                    </button>
+                    )}
                 </div>
             </div>
 

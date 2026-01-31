@@ -81,8 +81,16 @@ export function transformSummary(data: SummaryData | string): PreviewData | null
  * Transform Insights data for preview
  */
 export function transformInsights(data: InsightsData): PreviewData | null {
-    const insightsArray = data?.insights || [];
+    if (data?.blocks && Array.isArray(data.blocks)) {
+        const sections = transformAdaptiveBlocks(data.blocks);
+        return {
+            title: 'Key Insights',
+            sections,
+            metadata: { count: data.blocks.length }
+        };
+    }
 
+    const insightsArray = data?.insights || [];
     if (insightsArray.length === 0) return null;
 
     const sections: PreviewSection[] = insightsArray.map((insight) => ({
@@ -105,6 +113,15 @@ export function transformInsights(data: InsightsData): PreviewData | null {
  * Transform Notes data for preview
  */
 export function transformNotes(data: NotesData): PreviewData | null {
+    if (data?.blocks && Array.isArray(data.blocks)) {
+        const sections = transformAdaptiveBlocks(data.blocks);
+        return {
+            title: 'Study Notes',
+            sections,
+            metadata: { count: data.blocks.length }
+        };
+    }
+
     const sections: PreviewSection[] = [];
     const notesArray = data?.notes || [];
 
@@ -127,6 +144,45 @@ export function transformNotes(data: NotesData): PreviewData | null {
             count: sections.length
         }
     };
+}
+
+/**
+ * Helper to transform adaptive blocks into flat preview sections
+ */
+function transformAdaptiveBlocks(blocks: any[]): PreviewSection[] {
+    const sections: PreviewSection[] = [];
+    blocks.forEach(block => {
+        if (block.title) {
+            sections.push({ content: block.title, type: 'heading' });
+        }
+        if (block.content) {
+            if (Array.isArray(block.content)) {
+                block.content.forEach((point: string) => {
+                    sections.push({ content: point, type: 'list' });
+                });
+            } else {
+                sections.push({ content: block.content, type: 'paragraph' });
+            }
+        }
+        if (block.items) {
+            block.items.forEach((item: any) => {
+                if (item.heading) {
+                    sections.push({ content: item.heading, type: 'heading' });
+                }
+                if (item.explanation) {
+                    sections.push({ content: item.explanation, type: 'paragraph' });
+                }
+                if (item.question) {
+                    sections.push({ content: `Q: ${item.question}`, type: 'paragraph' });
+                    if (item.hint) sections.push({ content: `Hint: ${item.hint}`, type: 'paragraph' });
+                }
+                if (item.formula) {
+                    sections.push({ content: item.label ? `${item.label}: ${item.formula}` : item.formula, type: 'paragraph' });
+                }
+            });
+        }
+    });
+    return sections;
 }
 
 /**

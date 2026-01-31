@@ -1,27 +1,179 @@
-i want to bring the app into a stable form with the current available feature...its ui stablity and and adding small new updates like 
+I want you to redesig the Note Mode and Insight Mode of my document-based AI app.
 
-1"one simple issue.....project overview card (when clicked on a project) shows import notes and summary and other items even though noting was generated in that project i think this is a bug...........
+The app already extracts:
 
-2.and btw show what contents has been generated in that project in the deafult card not the overview card...."......and fix similar type of issue through the site...
+text content
 
-3. also add project searching feature with searchbox......
+page numbers
 
-4. src/components/dashboard/VersionTabs.tsx (106:29) @ <unknown> when tried to change the version summary and all versions disappared after clicking...even thoyugh it had previously generated summary it all disappers and ask for new generation.....
+font size & style
+
+bounding boxes
+
+section hierarchy
+
+Goal
+
+Design a document-adaptive Note & Insight system that:
+
+Works for short and long documents
+
+Automatically decides which blocks to include
+
+Does NOT force all sections for every document
+
+Returns a structured JSON response that frontend can render dynamically
+
+Requirements
+
+Note Mode
+
+Focuses on structured understanding
+
+Uses blocks such as:
+
+Overview
+
+Key Concepts (section/topic wise)
+
+Definitions (only if present)
+
+Steps / Processes
+
+Examples / Evidence
+
+Quick Revision Summary
+formula block using katex which is already installed i guess(only if formulas exits in the document)
+code blocks (only if codes are presnt in the document)
 
 
-5. also fix the content settings that are on right side bar....there some icons are broken while chking options for sttings....
+and you can as much as dynamic behaviour you wwant but it must be production grade
 
-6. in quiz mode [Evaluation
+Should be exam-friendly and concise and also be good for professionals and all level of users
 
-Auto-Grading
+Insight Mode
 
-Performance Review] it has no use so either remove this fetaure or make it functional
+Focuses on higher-level understanding
 
-7. double clicking one mode tabs that conatins content should allow user to rename the file....
+Uses blocks such as:
 
-8. current the history doesnt update after geenrating new content instantlly like im in insight mode and if i click on generate it generates new content but history still doent show it....and history should always show the rnamed version of the tab...
+Key Takeaways
 
-9. btw currently project filtering also not working
+Patterns / Relationships
 
-10. adittionally while ficix these things look for similar bugs or ui mismatch and fix them and clean the codebase...
+Exam-Focused Insights
 
+Real-World Applications (optional)
+
+Conceptual Self-Test Questions
+
+Dynamic Behavior
+
+AI must decide:
+
+which blocks to include
+
+which to skip
+
+based on document length, structure, and content richness
+
+Output Format
+
+Return a clean JSON schema like:
+
+{
+  "note_mode": { "blocks": [...] },
+  "insight_mode": { "blocks": [...] }
+}
+
+
+Each block should include:
+
+type
+
+title (optional)
+
+content/items
+
+source pages if applicable
+
+Task
+
+Design the full architecture
+
+Define block types
+
+Define decision logic for short vs long documents
+
+Explain how frontend should render dynamically
+
+Keep it scalable for future features (like highlighting, citations, exam mode)
+
+Think like this will be used by thousands of students.
+
+
+and additionally :
+ The JSON structure your AI should return
+
+This is CRITICAL.
+Everything becomes easy after this.
+
+Example AI response
+{
+  "document_type": "academic_notes",
+  "document_length": "short",
+  "note_mode": {
+    "blocks": [
+      {
+        "type": "overview",
+        "title": "Document Overview",
+        "content": [
+          "This document explains the basics of harmonic motion.",
+          "It focuses on definitions, formulas, and examples."
+        ]
+      },
+      {
+        "type": "key_concepts",
+        "title": "Key Concepts",
+        "items": [
+          {
+            "heading": "Simple Harmonic Motion",
+            "explanation": "A type of periodic motion where the restoring force is proportional to displacement.",
+            "source_pages": [2, 3]
+          }
+        ]
+      },
+      {
+        "type": "revision_summary",
+        "title": "Quick Revision",
+        "content": [
+          "SHM is periodic motion",
+          "Restoring force ∝ displacement"
+        ]
+      }
+    ]
+  },
+  "insight_mode": {
+    "blocks": [
+      {
+        "type": "key_takeaways",
+        "content": [
+          "Understanding SHM is crucial for oscillation problems.",
+          "Most errors occur in sign conventions."
+        ]
+      },
+      {
+        "type": "exam_focus",
+        "content": [
+          "Frequently confused with uniform circular motion.",
+          "Derivation of equations is often asked."
+        ]
+      }
+    ]
+  }
+}
+
+Frontend logic (simple)
+for each block:
+  if block exists → render component
+  else → skip

@@ -41,7 +41,7 @@ export const ExportModal: React.FC<ExportModalProps> = () => {
 
     const wrapInStyle = (html: string) => {
         const styles = getExportStyles(previewPreset);
-        console.log(`[ExportModal] Wrapping in styles for preset: ${previewPreset}`);
+
 
         return `
             <!DOCTYPE html>

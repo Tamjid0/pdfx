@@ -8,6 +8,7 @@ import cacheMiddleware from '../../middleware/cacheMiddleware.js';
 import { deleteCachePattern } from '../../services/cacheService.js';
 
 import Document from '../../models/Document.js';
+import logger from '../../utils/logger.js';
 
 const router = express.Router();
 
@@ -44,7 +45,7 @@ router.get('/', optionalVerifyToken, cacheMiddleware(600, 'docs_list'), async (r
             }
         });
     } catch (error) {
-        console.error('[DocumentRoutes] Error listing documents:', error);
+        logger.error('[DocumentRoutes] Error listing documents:', error);
         res.status(500).json({ error: 'Failed to list documents' });
     }
 });
@@ -168,6 +169,7 @@ router.get('/:documentId/page/:pageIndex', optionalVerifyToken, checkDocumentOwn
             }
         });
     } catch (error) {
+        logger.error('[DocumentRoutes] Error reading page:', error);
         res.status(500).json({ error: 'Failed to read page' });
     }
 });
@@ -260,7 +262,7 @@ router.post('/:documentId/sync', optionalVerifyToken, checkDocumentOwnership(Doc
             updatedFields: updateData
         });
     } catch (error) {
-        console.error('[DocumentRoutes] Error syncing content:', error);
+        logger.error('[DocumentRoutes] Error syncing content:', error);
         res.status(500).json({ error: 'Failed to sync content' });
     }
 });
@@ -292,7 +294,7 @@ router.delete('/:documentId/revisions/:revisionId', verifyToken, checkDocumentOw
 
         res.json({ success: true, message: 'Revision deleted successfully' });
     } catch (error) {
-        console.error('[DocumentRoutes] Error deleting revision:', error);
+        logger.error('[DocumentRoutes] Error deleting revision:', error);
         res.status(500).json({ error: 'Failed to delete revision' });
     }
 });

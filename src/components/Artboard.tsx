@@ -104,7 +104,7 @@ const Artboard: React.FC<ArtboardProps> = ({ htmlContent, isLoading, activeNotes
 
 
   const parsedContent = getParsedContent();
-  console.log("Artboard rendering content:", parsedContent.substring(0, 200));
+
 
   const iframeContent = `
     <html>

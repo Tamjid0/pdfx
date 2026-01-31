@@ -75,7 +75,7 @@ const ProjectExportAction: React.FC<ProjectExportActionProps> = ({
 
     const wrapInStyle = (html: string) => {
         const styles = getExportStyles(previewPreset);
-        console.log(`[ProjectExportAction] Wrapping in styles for preset: ${previewPreset}`);
+
 
         return `
             <!DOCTYPE html>
@@ -99,7 +99,7 @@ const ProjectExportAction: React.FC<ProjectExportActionProps> = ({
             if (selectedVersion !== 'current' && revisions.length > 0) {
                 const revision = revisions.find(r => r.id === selectedVersion);
                 if (revision) {
-                    exportData = revision.content;
+                    exportData = revision.data;
                 }
             }
 

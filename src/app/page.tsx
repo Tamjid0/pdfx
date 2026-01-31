@@ -6,6 +6,7 @@ import MainLayout from "../components/MainLayout";
 import { ExportModal } from "../components/ExportModal";
 import * as apiService from "../services/apiService";
 import { useStore } from "../store/useStore";
+import { toast } from 'react-hot-toast';
 
 import { useFileUpload } from "../hooks/useFileUpload";
 import { useChat } from "../hooks/useChat";
@@ -95,6 +96,7 @@ const Home = () => {
             updateStats(textContent);
             triggerBackgroundEmbedding(textContent, url);
         } catch (error) {
+            toast.error("Failed to scrape URL. Please check the URL and try again.");
             console.error("Error scraping URL:", error);
         } finally {
             setIsPageLoading(false);
@@ -215,6 +217,7 @@ const Home = () => {
                     break;
             }
         } catch (error) {
+            toast.error(`Generation failed for ${targetMode}. Please try again.`);
             console.error(`Error fetching data for ${targetMode}:`, error);
         } finally {
             switch (targetMode) {

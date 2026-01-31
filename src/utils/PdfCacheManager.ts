@@ -76,7 +76,8 @@ class PdfCacheManager {
             this.pageCache.set(key, bitmap);
             this.renderStatus.set(key, 'completed');
 
-            console.log(`[PdfCacheManager] Cached page ${pageNumber} at scale ${scale}`);
+            // Page cached successfully
+
         } catch (err) {
             console.error(`[PdfCacheManager] Failed to cache page ${pageNumber}`, err);
             this.renderStatus.set(key, 'failed');

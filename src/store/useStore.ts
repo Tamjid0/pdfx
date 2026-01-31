@@ -5,6 +5,20 @@ import * as apiService from '../services/apiService';
 export type PreviewPreset = 'professional' | 'academic' | 'minimal' | 'creative';
 export type Mode = 'summary' | 'insights' | 'notes' | 'quiz' | 'flashcards' | 'mindmap' | 'editor' | 'chat' | 'slides';
 
+// Helper for data extraction across modules
+const getContent = (val: any) => {
+    if (!val) return null;
+    // 1. Check for standard active content field
+    if (val.content !== undefined && val.content !== null) return val.content;
+    // 2. Fallback to latest revision content if available
+    if (Array.isArray(val.revisions) && val.revisions.length > 0) {
+        return val.revisions[0].data || val.revisions[0].content;
+    }
+    // 3. Fallback to legacy format (no revisions or content field)
+    if (typeof val === 'object' && !val.revisions && !val.content) return val;
+    return null;
+};
+
 // --- Data Interfaces ---
 export interface SummaryData {
     summary: string | string[];
@@ -542,8 +556,6 @@ export const useStore = create<AppState>((set, get) => ({
     updateRevisionsFromSync: (updatedFields: Record<string, any>) => set((state) => {
         const newState: Partial<AppState> = {};
 
-        console.log('[Store] updateRevisionsFromSync received:', Object.keys(updatedFields));
-
         // Process each updated field from backend
         for (const [key, value] of Object.entries(updatedFields)) {
             // Handle dot-notation keys like "summaryData.revisions" or "summaryData.content"
@@ -554,14 +566,11 @@ export const useStore = create<AppState>((set, get) => ({
                     // Update revisions array
                     const revisionKey = `${module.replace('Data', '')}Revisions` as keyof AppState;
                     (newState as any)[revisionKey] = value;
-                    console.log(`[Store] Updated ${revisionKey}:`, value?.length || 0, 'revisions');
                 } else if (field === 'content') {
-                    // Update active content - value is already the unwrapped content
+                    // Update active content
                     const dataKey = module as keyof AppState;
                     (newState as any)[dataKey] = value;
-                    console.log(`[Store] Updated ${dataKey} with new content`);
                 }
-                // Ignore other fields like activeScope
             } else {
                 // Handle non-versioned fields (chatHistory, etc.)
                 if (key === 'chatHistory' || key === 'mindmapData') {
@@ -647,21 +656,6 @@ export const useStore = create<AppState>((set, get) => ({
             const isPptx = typeStr.includes('presentation') || typeStr.includes('powerpoint') || typeStr.includes('pptx');
             const isPdf = typeStr.includes('pdf');
 
-            // Helper to handle legacy data format (Phase 10)
-            const getActiveContent = (dataObj: any, key: string) => {
-                const val = dataObj[key];
-                if (!val) return null;
-                // 1. Check for standard content field
-                if (val.content !== undefined && val.content !== null) return val.content;
-                // 2. Fallback to latest revision content if available
-                if (Array.isArray(val.revisions) && val.revisions.length > 0 && val.revisions[0].content) {
-                    return val.revisions[0].content;
-                }
-                // 3. Fallback to legacy format (no revisions field, just the data)
-                if (typeof val === 'object' && !val.revisions) return val;
-                return null;
-            };
-
             // Populate workspace state from stored project data
             set({
                 fileId: data.documentId,
@@ -670,11 +664,11 @@ export const useStore = create<AppState>((set, get) => ({
                 htmlPreview: (isPdf || isPptx) ? null : (data.extractedText || ''),
 
                 // Active Content (Mapping from .content with legacy fallback)
-                summaryData: getActiveContent(data, 'summaryData'),
-                notesData: getActiveContent(data, 'notesData'),
-                flashcardsData: getActiveContent(data, 'flashcardsData'),
-                quizData: getActiveContent(data, 'quizData'),
-                insightsData: getActiveContent(data, 'insightsData'),
+                summaryData: getContent(data.summaryData),
+                notesData: getContent(data.notesData),
+                flashcardsData: getContent(data.flashcardsData),
+                quizData: getContent(data.quizData),
+                insightsData: getContent(data.insightsData),
                 mindmapData: data.mindmapData, // Not versioned yet
                 chatHistory: data.chatHistory || [],
 
@@ -686,17 +680,17 @@ export const useStore = create<AppState>((set, get) => ({
                 insightsRevisions: data.insightsData?.revisions || [],
 
                 // Flags
-                isSummaryGenerated: !!getActiveContent(data, 'summaryData'),
-                isNotesGenerated: !!getActiveContent(data, 'notesData'),
-                isFlashcardsGenerated: !!getActiveContent(data, 'flashcardsData'),
-                isQuizGenerated: !!getActiveContent(data, 'quizData'),
+                isSummaryGenerated: !!getContent(data.summaryData),
+                isNotesGenerated: !!getContent(data.notesData),
+                isFlashcardsGenerated: !!getContent(data.flashcardsData),
+                isQuizGenerated: !!getContent(data.quizData),
                 isMindmapGenerated: !!data.mindmapData,
-                isInsightsGenerated: !!getActiveContent(data, 'insightsData'),
+                isInsightsGenerated: !!getContent(data.insightsData),
 
                 topics: data.topics || [],
                 view: 'viewer', // Switch to viewer view for projects
                 // Smart mode select: if current mode is study mode and it has data, stay. Else pick first that has data.
-                mode: (get().mode !== 'editor' && getActiveContent(data, `${get().mode}Data`)) ? get().mode : (getActiveContent(data, 'summaryData') ? 'summary' : 'editor'),
+                mode: (get().mode !== 'editor' && getContent(data[`${get().mode}Data`])) ? get().mode : (getContent(data.summaryData) ? 'summary' : 'editor'),
                 leftPanelView: isPptx ? 'slides' : 'editor',
                 isSlideMode: isPptx,
                 isProcessingSlides: false,
@@ -721,7 +715,6 @@ export const useStore = create<AppState>((set, get) => ({
                     content: chunk.content
                 }));
                 set({ slides, currentSlideIndex: 0 });
-                console.log(`[Store] Loaded ${slides.length} slides for PPTX project`);
             }
 
         } catch (error) {
@@ -737,20 +730,6 @@ export const useStore = create<AppState>((set, get) => ({
         try {
             const doc = await apiService.fetchDocument(documentId);
 
-            // Helper locally scoped (or could be moved out)
-            const getContent = (val: any) => {
-                if (!val) return null;
-                // 1. Check for standard active content
-                if (val.content !== undefined && val.content !== null) return val.content;
-                // 2. Fallback to latest revision if active content is missing (e.g. after sync error)
-                if (Array.isArray(val.revisions) && val.revisions.length > 0) {
-                    return val.revisions[0].data || val.revisions[0].content;
-                }
-                // 3. Legacy Phase 10 format (direct object)
-                if (typeof val === 'object' && !val.revisions && !val.content) return val;
-                return null;
-            };
-
             set({
                 // Update active content
                 summaryData: getContent(doc.summaryData),
@@ -758,7 +737,7 @@ export const useStore = create<AppState>((set, get) => ({
                 insightsData: getContent(doc.insightsData),
                 flashcardsData: getContent(doc.flashcardsData),
                 quizData: getContent(doc.quizData),
-                mindmapData: doc.mindmapData, // Mindmap not fully versioned yet same as loadProject
+                mindmapData: doc.mindmapData,
 
                 // Update revisions
                 summaryRevisions: doc.summaryData?.revisions || [],
@@ -769,7 +748,6 @@ export const useStore = create<AppState>((set, get) => ({
 
                 chatHistory: doc.chatHistory || []
             });
-            console.log('[Store] Project refreshed successfully');
         } catch (error) {
             console.error('[Store] Failed to refresh project:', error);
         }
@@ -781,18 +759,6 @@ export const useStore = create<AppState>((set, get) => ({
         try {
             const data = await apiService.fetchDocument(fileId);
             const val = data[moduleKey];
-
-            // Helper for content extraction (duplicated for safety)
-            const getContent = (v: any) => {
-                if (!v) return null;
-                if (v.content !== undefined && v.content !== null) return v.content;
-                if (Array.isArray(v.revisions) && v.revisions.length > 0) {
-                    return v.revisions[0].data || v.revisions[0].content;
-                }
-                if (typeof v === 'object' && !v.revisions && !v.content) return v;
-                return null;
-            };
-
             const content = getContent(val);
 
             if (content) {
@@ -800,7 +766,6 @@ export const useStore = create<AppState>((set, get) => ({
                 const baseName = moduleKey.replace('Data', '');
                 const genKey = `is${baseName.charAt(0).toUpperCase() + baseName.slice(1)}Generated` as keyof AppState;
                 set({ [storeKey]: content, [genKey]: true } as any);
-                console.log(`[Store] Loaded module ${moduleKey} successfully`);
             }
         } catch (error) {
             console.error(`[Store] loadProjectModule failed for ${moduleKey}:`, error);

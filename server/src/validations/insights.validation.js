@@ -8,6 +8,7 @@ export const insightsSchema = {
             keyEntities: z.boolean().optional(),
             topics: z.boolean().optional(),
             customExtraction: z.string().optional(),
+            'key-entities': z.boolean().optional(), // Match the UI toggle key
         }).optional(),
         scope: z.object({
             type: z.enum(['all', 'pages', 'topics']),

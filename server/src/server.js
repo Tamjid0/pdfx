@@ -140,3 +140,7 @@ initBackupSchedule();
 const server = app.listen(env.PORT, () => {
     logger.info(`Server running on port ${env.PORT}`);
 });
+
+server.timeout = 300000; // 5 minutes timeout for deep AI generation
+server.keepAliveTimeout = 305000; // Slightly higher than timeout
+server.headersTimeout = 310000; // Slightly higher than keepAliveTimeout

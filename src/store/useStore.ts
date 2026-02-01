@@ -379,6 +379,7 @@ export const useStore = create<AppState>((set, get) => ({
         customExtraction: ''
     },
     notesSettings: {
+        category: 'study',
         detailLevel: 'medium',
         keyConcepts: true,
         actionItems: true,

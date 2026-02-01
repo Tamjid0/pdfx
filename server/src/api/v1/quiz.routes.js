@@ -31,13 +31,18 @@ router.post('/analyze', validate(analysisSchema), async (req, res, next) => {
         const wordCount = fullText.split(/\s+/).filter(w => w.length > 0).length;
         const readingTime = Math.ceil(wordCount / 200); // Avg 200 wpm
 
-        // Cost-effective calculation: 1 question per ~150 words, min 5, max 30.
-        const suggestedCount = Math.min(30, Math.max(5, Math.floor(wordCount / 150)));
+        // Dynamic density algorithm
+        // Suggested: 1 question per ~150 words, min 5, max 50
+        const suggestedCount = Math.min(50, Math.max(5, Math.floor(wordCount / 150)));
+
+        // Maximum: 1 question per ~75 words, min 20, max 100
+        const maxCount = Math.min(100, Math.max(20, Math.floor(wordCount / 75)));
 
         res.json({
             wordCount,
             readingTime,
-            suggestedCount
+            suggestedCount,
+            maxCount
         });
     } catch (error) {
         next(error);

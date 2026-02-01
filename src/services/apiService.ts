@@ -149,7 +149,7 @@ export async function fetchQuiz(arg1: GenerationPayload, settings?: Record<strin
     return response.json();
 }
 
-export async function analyzeQuizContent(arg1: GenerationPayload): Promise<{ wordCount: number; suggestedCount: number; suggestedTopics: string[]; readingTime: number }> {
+export async function analyzeQuizContent(arg1: GenerationPayload): Promise<{ wordCount: number; suggestedCount: number; maxCount: number; suggestedTopics: string[]; readingTime: number }> {
     const payload = getPayload(arg1);
     const response = await fetch('/api/v1/quiz/analyze', {
         method: 'POST',

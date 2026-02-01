@@ -30,7 +30,7 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
     const [examResults, setExamResults] = useState<{ score: number; timeTaken: number } | null>(null);
     const [showRegenerateScope, setShowRegenerateScope] = useState(false);
     const [sessionStartTime, setSessionStartTime] = useState(0);
-    const [analysisData, setAnalysisData] = useState<{ wordCount: number; suggestedCount: number; readingTime: number } | null>(null);
+    const [analysisData, setAnalysisData] = useState<{ wordCount: number; suggestedCount: number; maxCount: number; readingTime: number } | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
 
     // Reset local state when data changes (e.g., switches revisions or generates new)
@@ -42,8 +42,8 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
             setSelectedAnswers({});
             setExamResults(null);
             setShowRegenerateScope(false);
-        } else if (!isGeneratingQuiz && !isAnalyzing) {
-            // No data and not busy -> start from beginning
+        } else if (!isGeneratingQuiz && !isAnalyzing && phase !== 'setup' && phase !== 'analysis' && phase !== 'selection') {
+            // Only reset to initial if we are not currently in the generation/setup flow
             setPhase('initial');
             setAnalysisData(null);
         }
@@ -331,7 +331,7 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
                                         <span className="text-xl font-black text-[#00ff88]">{quizSettings.questionCount}</span>
                                     </div>
                                     <input
-                                        type="range" min="5" max="50" step="5"
+                                        type="range" min="5" max={analysisData?.maxCount || 50} step="5"
                                         value={quizSettings.questionCount}
                                         onChange={(e) => setQuizSettings({ ...quizSettings, questionCount: parseInt(e.target.value) })}
                                         className="w-full h-1 bg-white/5 rounded-lg appearance-none cursor-pointer accent-[#00ff88]"
@@ -528,6 +528,7 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
 
     // --- PHASE: SESSION ---
     if (phase === 'exam') {
+        if (!quizData?.quiz) return null;
         const isExamMode = quizSettings.quizMode === 'exam';
         if (!isExamMode) {
             // NORMAL MODE: List Rendering
@@ -614,6 +615,7 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
 
         // EXAM MODE: Step Rendering
         const q = quizData.quiz[currentIndex];
+        if (!q) return null;
         const progress = ((currentIndex + 1) / quizData.quiz.length) * 100;
 
         return (
@@ -723,6 +725,7 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
 
     // --- PHASE: RESULTS ---
     if (phase === 'results' && examResults) {
+        if (!quizData?.quiz?.length) return null;
         const accuracy = Math.round((examResults.score / quizData.quiz.length) * 100);
 
         return (

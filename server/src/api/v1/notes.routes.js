@@ -17,7 +17,7 @@ const getPromptByCategory = (category) => {
 Possible Block Types:
 1. "overview": A comprehensive executive summary that sets the context. Significant detail is expected.
 2. "key_concepts": In-depth topic-wise breakdown. Each concept should have a substantial explanation. Include "source_pages" if possible.
-3. "definitions": Precise definitions for every specialized term found.
+3. "definitions": Precise definitions for specialized terms. Use format: {"type": "definitions", "items": [{"term": "Concept", "explanation": "Detailed definition..."}]}.
 4. "steps": Detailed, step-by-step sequential processes or workflows.
 5. "examples": Rich illustrative cases, evidence, or scenarios mentioned in the text.
 6. "formulas": Mathematical formulas rendered in Katex. Use format: {"type": "formulas", "items": [{"formula": "E=mc^2", "label": "Energy-Mass Equivalence"}]}.

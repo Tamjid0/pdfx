@@ -1,5 +1,5 @@
-import React from 'react';
-import { AdaptiveBlock } from '../../store/useStore';
+import React, { useState } from 'react';
+import { AdaptiveBlock, useStore } from '../../store/useStore';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -31,7 +31,53 @@ const FormulaBlock: React.FC<{ formula: string; label?: string }> = ({ formula, 
     );
 };
 
+const TerminologyMatrix: React.FC<{ items: any[] }> = ({ items }) => {
+    const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+    return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {items.map((item, i) => (
+                <div
+                    key={i}
+                    onClick={() => setActiveIndex(activeIndex === i ? null : i)}
+                    className={`group relative p-6 rounded-3xl border transition-all duration-500 cursor-pointer overflow-hidden ${activeIndex === i
+                            ? 'bg-[#00ff88]/10 border-[#00ff88]/40 ring-1 ring-[#00ff88]/20'
+                            : 'bg-white/[0.03] border-white/5 hover:border-[#00ff88]/30 hover:bg-white/[0.05]'
+                        }`}
+                >
+                    <div className="flex flex-col h-full">
+                        <div className={`text-[11px] font-black uppercase tracking-[0.2em] transition-colors duration-500 ${activeIndex === i ? 'text-[#00ff88]' : 'text-gray-400 group-hover:text-white'}`}>
+                            {item.term || item.heading || 'Terminology'}
+                        </div>
+
+                        <div className={`mt-4 overflow-hidden transition-all duration-500 ease-in-out ${activeIndex === i ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+                            <div className="text-sm text-gray-300 leading-relaxed border-t border-white/10 pt-4 prose prose-invert prose-xs max-w-none">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {item.description || item.explanation || item.content || ''}
+                                </ReactMarkdown>
+                            </div>
+                        </div>
+
+                        {!activeIndex && activeIndex !== i && (
+                            <div className="mt-4 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span className="text-[9px] font-bold text-[#00ff88] uppercase tracking-[0.1em]">Reveal Definition</span>
+                                <svg className="w-4 h-4 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Subtle corner accent */}
+                    <div className={`absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl from-[#00ff88]/10 to-transparent transition-opacity duration-500 ${activeIndex === i ? 'opacity-100' : 'opacity-0'}`}></div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
 export const DynamicBlockRenderer: React.FC<DynamicBlockRendererProps> = ({ blocks, onContentChange }) => {
+    const isPreviewMode = useStore(state => state.isPreviewMode);
     if (!blocks || blocks.length === 0) return null;
 
     // Filter out blocks with no meaningful content
@@ -116,15 +162,50 @@ export const DynamicBlockRenderer: React.FC<DynamicBlockRendererProps> = ({ bloc
                         );
 
                     case 'definitions':
+                        const defItems = block.items?.filter(item => item.term || item.description || item.explanation || item.content) || [];
+                        if (defItems.length === 0 && !block.title) return null;
+
+                        return (
+                            <div key={index} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                {block.title && (
+                                    <div className="flex items-center gap-4">
+                                        <h3 className="text-xl font-bold text-[#00ff88] whitespace-nowrap uppercase tracking-widest">{block.title}</h3>
+                                        <div className="h-px w-full bg-gradient-to-r from-[#00ff88]/30 to-transparent"></div>
+                                    </div>
+                                )}
+
+                                {!isPreviewMode ? (
+                                    <TerminologyMatrix items={defItems} />
+                                ) : (
+                                    <div className="grid gap-4">
+                                        {defItems.map((item, i) => (
+                                            <div key={i} className="bg-white/[0.03] p-6 rounded-2xl border border-white/5 hover:border-[#00ff88]/20 transition-all duration-300">
+                                                {item.term && (
+                                                    <div className="text-[#00ff88] text-[11px] font-black uppercase tracking-[0.2em] mb-3">
+                                                        {item.term}
+                                                    </div>
+                                                )}
+                                                <div className="text-sm text-gray-300 leading-relaxed prose prose-invert prose-sm max-w-none">
+                                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                        {item.description || item.explanation || item.content || ''}
+                                                    </ReactMarkdown>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        );
+
                     case 'steps':
                     case 'examples':
                     case 'key_takeaways':
                     case 'exam_focus':
                     case 'real_world':
-                        const validItems = block.items?.filter(item => item.example || item.term || item.step || item.description || item.explanation || item.content) || [];
+                        const regularItems = block.items?.filter(item => item.example || item.step || item.description || item.explanation || item.content) || [];
                         const hasStaticContent = block.content && (Array.isArray(block.content) ? block.content.length > 0 : !!block.content);
 
-                        if (validItems.length === 0 && !hasStaticContent && !block.title) return null;
+                        if (regularItems.length === 0 && !hasStaticContent && !block.title) return null;
 
                         return (
                             <div key={index} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -132,11 +213,11 @@ export const DynamicBlockRenderer: React.FC<DynamicBlockRendererProps> = ({ bloc
                                 <div className="space-y-4">
                                     {block.items ? (
                                         <div className="grid gap-4">
-                                            {validItems.map((item, i) => (
+                                            {regularItems.map((item, i) => (
                                                 <div key={i} className="bg-white/[0.03] p-6 rounded-2xl border border-white/5 hover:border-[#00ff88]/20 transition-all duration-300">
-                                                    {(item.example || item.term || item.step) && (
+                                                    {(item.example || item.step) && (
                                                         <div className="text-[#00ff88] text-[11px] font-black uppercase tracking-[0.2em] mb-3">
-                                                            {item.example || item.term || item.step}
+                                                            {item.example || item.step}
                                                         </div>
                                                     )}
                                                     <div className="text-sm text-gray-300 leading-relaxed prose prose-invert prose-sm max-w-none">

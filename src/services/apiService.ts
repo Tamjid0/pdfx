@@ -149,6 +149,21 @@ export async function fetchQuiz(arg1: GenerationPayload, settings?: Record<strin
     return response.json();
 }
 
+export async function analyzeQuizContent(arg1: GenerationPayload): Promise<{ wordCount: number; suggestedCount: number; suggestedTopics: string[]; readingTime: number }> {
+    const payload = getPayload(arg1);
+    const response = await fetch('/api/v1/quiz/analyze', {
+        method: 'POST',
+        headers: await getAuthHeaders({
+            'Content-Type': 'application/json',
+        }),
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+        throw new Error('Failed to analyze material');
+    }
+    return response.json();
+}
+
 export async function fetchMindmap(arg1: GenerationPayload, settings?: Record<string, any>): Promise<MindmapData> {
     const payload = getPayload(arg1, settings);
     const response = await fetch('/api/v1/mindmap', {

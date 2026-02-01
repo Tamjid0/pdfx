@@ -391,7 +391,8 @@ export const useStore = create<AppState>((set, get) => ({
         questionTypes: ['multiple-choice'],
         timed: false,
         timeLimit: 10,
-        quizMode: 'normal'
+        quizMode: 'normal',
+        timerType: 'total'
     },
     mindmapSettings: {
         depth: 2,

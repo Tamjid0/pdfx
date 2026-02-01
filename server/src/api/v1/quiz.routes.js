@@ -20,25 +20,26 @@ router.post('/', aiGenerationLimiter, validate(quizSchema), async (req, res, nex
             fullText = await resolveScopedText(fileId, scope);
         }
 
-        const { questionTypes = ['multiple-choice'], difficulty = 'medium' } = settings || {};
+        const { questionTypes = ['multiple-choice'], difficulty = 'medium', questionCount = 10 } = settings || {};
 
         let questionTypeInstructions = "";
         if (questionTypes.includes('multiple-choice')) {
             questionTypeInstructions += `
-            - Multiple Choice: Provide "question", "type": "mc", "options": [{"label": "A", "value": "option1"}, ...], and "correctAnswer": "value_of_correct_option".`;
+            - Multiple Choice (mc): Provide "question", "options": [{"label": "A", "value": "option1"}, ...], and "correctAnswer": "value_of_correct_option".`;
         }
         if (questionTypes.includes('true-false')) {
             questionTypeInstructions += `
-            - True/False: Provide "question", "type": "tf", "correctAnswer": boolean.`;
+            - True/False (tf): Provide "question", "correctAnswer": "true" or "false".`;
         }
         if (questionTypes.includes('fill-in-the-blank')) {
             questionTypeInstructions += `
-            - Fill-in-the-Blank: Provide "question", "type": "fib", "correctAnswer": "string_answer".`;
+            - Fill-in-the-Blank (fib): Provide "question" (use ____ for blank), and "correctAnswer": "string_answer".`;
         }
 
-        const promptInstruction = `Generate a ${difficulty} difficulty quiz with ${questionTypes.length * 5} questions based on the text.
-        Mix the following question types as requested: ${questionTypes.join(', ')}.
+        const promptInstruction = `Generate a ${difficulty} difficulty quiz with EXACTLY ${questionCount} questions based on the text.
+        Mix the following question types: ${questionTypes.join(', ')}.
         
+        CRITICAL: Follow this formatting for types:
         ${questionTypeInstructions}
 
         Return ONLY a valid JSON object in this exact structure:
@@ -47,7 +48,7 @@ router.post('/', aiGenerationLimiter, validate(quizSchema), async (req, res, nex
             { "question": "...", "type": "mc|tf|fib", ...rest_of_fields }
           ]
         }
-        Do NOT include markdown formatting or explanations.`;
+        Do NOT include markdown formatting, explanations, or any text outside the JSON.`;
 
         const aiResponse = await generateFullDocumentTransformation(fullText, promptInstruction, { outputFormat: 'json' });
 

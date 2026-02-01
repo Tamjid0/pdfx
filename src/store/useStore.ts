@@ -390,7 +390,8 @@ export const useStore = create<AppState>((set, get) => ({
         difficulty: 'medium',
         questionTypes: ['multiple-choice'],
         timed: false,
-        timeLimit: 10
+        timeLimit: 10,
+        quizMode: 'normal'
     },
     mindmapSettings: {
         depth: 2,

@@ -217,8 +217,16 @@ export const DynamicBlockRenderer: React.FC<DynamicBlockRendererProps> = ({ bloc
                         );
 
                     case 'blockers':
-                        const blockerItems = Array.isArray(block.content) ? block.content : (block.items?.map(i => i.content || i.description || i.blocker) || []);
-                        const validBlockers = blockerItems.filter(b => !!b);
+                        let blockerItems: string[] = [];
+                        if (Array.isArray(block.content)) {
+                            blockerItems = block.content;
+                        } else if (typeof block.content === 'string') {
+                            blockerItems = [block.content];
+                        } else if (block.items) {
+                            blockerItems = block.items.map(i => i.content || i.description || i.blocker).filter(b => !!b);
+                        }
+
+                        const validBlockers = blockerItems.filter(b => !!b && b.trim() !== '');
                         if (validBlockers.length === 0 && !block.title) return null;
 
                         return (
@@ -301,7 +309,8 @@ export const DynamicBlockRenderer: React.FC<DynamicBlockRendererProps> = ({ bloc
                         );
 
                     case 'revision_summary':
-                        const validPoints = (block.content as string[])?.filter(p => !!p && p.trim() !== '') || [];
+                        const summaryContent = Array.isArray(block.content) ? block.content : (typeof block.content === 'string' ? [block.content] : []);
+                        const validPoints = summaryContent.filter(p => !!p && p.trim() !== '') || [];
                         if (validPoints.length === 0 && !block.title) return null;
 
                         return (

@@ -24,7 +24,6 @@ router.post('/analyze', validate(analysisSchema), async (req, res, next) => {
             return res.json({
                 wordCount: 0,
                 suggestedCount: 5,
-                suggestedTopics: [],
                 readingTime: 0
             });
         }
@@ -32,28 +31,13 @@ router.post('/analyze', validate(analysisSchema), async (req, res, next) => {
         const wordCount = fullText.split(/\s+/).filter(w => w.length > 0).length;
         const readingTime = Math.ceil(wordCount / 200); // Avg 200 wpm
 
-        const analysisPrompt = `Analyze the following text for an upcoming quiz. 
-        Provide a recommendation for the number of questions (between 5 and 30) that would thoroughly test mastery of the material.
-        Also, extract 3-5 core topics or key themes found in this specific text.
-
-        Return ONLY a JSON object:
-        {
-          "suggestedCount": number,
-          "suggestedTopics": ["topic1", "topic2", ...]
-        }
-        
-        Text to analyze:
-        ${fullText.substring(0, 10000)} // Capped for analysis efficiency
-        `;
-
-        const aiResponse = await generateFullDocumentTransformation(fullText, analysisPrompt, { outputFormat: 'json' });
-        const analysis = safeParseAiJson(aiResponse, 'QuizAnalysis');
+        // Cost-effective calculation: 1 question per ~150 words, min 5, max 30.
+        const suggestedCount = Math.min(30, Math.max(5, Math.floor(wordCount / 150)));
 
         res.json({
             wordCount,
             readingTime,
-            suggestedCount: analysis?.suggestedCount || Math.min(30, Math.max(5, Math.floor(wordCount / 150))),
-            suggestedTopics: analysis?.suggestedTopics || []
+            suggestedCount
         });
     } catch (error) {
         next(error);

@@ -11,7 +11,7 @@ interface QuizProps {
     onGenerate: (mode: Mode) => void;
 }
 
-type QuizPhase = 'initial' | 'analysis' | 'setup' | 'exam' | 'results';
+type QuizPhase = 'initial' | 'analysis' | 'setup' | 'selection' | 'exam' | 'results';
 
 const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
     const {
@@ -30,21 +30,24 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
     const [examResults, setExamResults] = useState<{ score: number; timeTaken: number } | null>(null);
     const [showRegenerateScope, setShowRegenerateScope] = useState(false);
     const [sessionStartTime, setSessionStartTime] = useState(0);
-    const [analysisData, setAnalysisData] = useState<{ wordCount: number; suggestedCount: number; suggestedTopics: string[]; readingTime: number } | null>(null);
+    const [analysisData, setAnalysisData] = useState<{ wordCount: number; suggestedCount: number; readingTime: number } | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
 
     // Reset local state when data changes (e.g., switches revisions or generates new)
     useEffect(() => {
         if (quizData?.quiz?.length) {
-            setPhase('setup');
+            // If we have data, jump to selection phase (Mode selection)
+            setPhase('selection');
             setCurrentIndex(0);
             setSelectedAnswers({});
             setExamResults(null);
             setShowRegenerateScope(false);
-        } else {
+        } else if (!isGeneratingQuiz && !isAnalyzing) {
+            // No data and not busy -> start from beginning
             setPhase('initial');
+            setAnalysisData(null);
         }
-    }, [quizData]);
+    }, [activeRevisionId, quizData, isGeneratingQuiz, isAnalyzing]);
 
     // --- Timer Logic ---
     useEffect(() => {
@@ -85,6 +88,22 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
     };
 
     // --- Actions ---
+    const handleAnalyze = async () => {
+        setIsAnalyzing(true);
+        setPhase('analysis');
+        try {
+            const result = await analyzeQuizContent({ fileId: fileId || undefined, scope: generationScope });
+            setAnalysisData(result);
+            setQuizSettings({ ...quizSettings, questionCount: result.suggestedCount });
+            setPhase('setup');
+        } catch (error) {
+            toast.error('Failed to analyze material');
+            setPhase('initial');
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
     const startExam = () => {
         if (!quizData?.quiz?.length) return;
         const isExamMode = quizSettings.quizMode === 'exam';
@@ -173,33 +192,54 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
 
     if (phase === 'initial') {
         return (
-            <div className="flex flex-col h-full bg-[#0a0a0a] rounded-xl border border-[#222] overflow-y-auto custom-scrollbar">
-                <div className="p-10 max-w-2xl mx-auto w-full space-y-12">
-                    <div className="text-center space-y-4">
-                        <div className="w-20 h-20 bg-[#00ff88]/5 rounded-[2.5rem] flex items-center justify-center mx-auto border border-[#00ff88]/10 shadow-2xl">
-                            <svg className="w-10 h-10 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                            </svg>
+            <div className="flex flex-col h-full bg-[#0a0a0a] rounded-xl border border-[#222] overflow-hidden">
+                <div className="border-b border-white/5 bg-white/[0.01]">
+                    <VersionTabs
+                        module="quiz"
+                        revisions={quizRevisions}
+                        activeRevisionId={activeRevisionId}
+                        onSwitch={(revId) => {
+                            switchRevision('quiz', revId);
+                            if (!revId) {
+                                loadProjectModule('quizData');
+                            }
+                        }}
+                        onNew={() => {
+                            setQuizData(null);
+                            setPhase('initial');
+                        }}
+                        onRename={async (revId, name) => renameRevision('quiz', revId, name)}
+                        onDelete={async (revId) => deleteRevision('quiz', revId)}
+                    />
+                </div>
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                    <div className="p-10 max-w-2xl mx-auto w-full space-y-12">
+                        <div className="text-center space-y-4 pt-8">
+                            <div className="w-20 h-20 bg-[#00ff88]/5 rounded-[2.5rem] flex items-center justify-center mx-auto border border-[#00ff88]/10 shadow-2xl">
+                                <svg className="w-10 h-10 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                </svg>
+                            </div>
+                            <h3 className="text-3xl font-black text-white tracking-tight uppercase italic">Adaptive Exam Engine</h3>
+                            <p className="text-gray-500 max-w-sm mx-auto leading-relaxed text-sm">
+                                Target specific sections to engineer a custom assessment grid.
+                            </p>
                         </div>
-                        <h3 className="text-3xl font-black text-white tracking-tight">Adaptive Exam Engine</h3>
-                        <p className="text-gray-500 max-w-sm mx-auto leading-relaxed text-sm">
-                            Target specific sections to engineer a custom assessment grid.
-                        </p>
-                    </div>
 
-                    <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-8 space-y-8">
-                        <div className="space-y-4">
-                            <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Select Scope</h4>
-                            <GenerationScopeSelector />
+                        <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-8 space-y-8">
+                            <div className="space-y-4">
+                                <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Select Scope</h4>
+                                <GenerationScopeSelector />
+                            </div>
+
+                            <button
+                                onClick={handleAnalyze}
+                                className="w-full py-5 bg-[#00ff88] text-black rounded-2xl text-xs font-black transition-all hover:bg-[#00dd77] active:scale-95 shadow-2xl flex items-center justify-center gap-3 uppercase tracking-widest"
+                            >
+                                Analyze Selected Scope
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                            </button>
                         </div>
-
-                        <button
-                            onClick={handleAnalyze}
-                            className="w-full py-5 bg-[#00ff88] text-black rounded-2xl text-xs font-black transition-all hover:bg-[#00dd77] active:scale-95 shadow-2xl flex items-center justify-center gap-3 uppercase tracking-widest"
-                        >
-                            Analyze Chosen Scope
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                        </button>
                     </div>
                 </div>
             </div>
@@ -226,124 +266,111 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
     if (!quizData || !quizData.quiz || quizData.quiz.length === 0) {
         // This is the setup phase after analysis
         return (
-            <div className="flex flex-col h-full bg-[#0a0a0a] rounded-xl border border-[#222] overflow-y-auto custom-scrollbar">
-                <div className="p-10 max-w-4xl mx-auto w-full space-y-12">
-                    <div className="text-center space-y-4">
-                        <h3 className="text-3xl font-black text-white tracking-tight">Generation Matrix</h3>
-                        <p className="text-gray-500 max-w-md mx-auto leading-relaxed text-sm">
-                            Fine-tune the parameters for your {quizSettings.quizMode === 'exam' ? 'timed exam' : 'study list'}.
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* Summary Column */}
-                        <div className="bg-white/[0.02] border border-white/5 rounded-[2rem] p-8 space-y-6">
-                            <div className="flex items-center gap-3">
-                                <span className="w-1 h-4 bg-[#00ff88] rounded-full"></span>
-                                <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Material Intelligence</h4>
-                            </div>
-                            <div className="space-y-4">
-                                <div className="p-4 bg-white/5 rounded-2xl flex justify-between items-center">
-                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Scope Volume</span>
-                                    <span className="text-sm font-black text-white">{analysisData?.wordCount.toLocaleString() || '...'} Words</span>
-                                </div>
-                                <div className="p-4 bg-white/5 rounded-2xl flex justify-between items-center">
-                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Reading Time</span>
-                                    <span className="text-sm font-black text-white">{analysisData?.readingTime || '...'} Min</span>
-                                </div>
-                                <div className="p-4 bg-[#00ff88]/5 border border-[#00ff88]/10 rounded-2xl space-y-2">
-                                    <span className="text-[9px] font-black text-[#00ff88]/60 uppercase tracking-widest block">AI Recommended Density</span>
-                                    <p className="text-xs text-[#00ff88] font-bold">{analysisData?.suggestedCount || 10} Questions</p>
-                                </div>
-                                {analysisData?.suggestedTopics && analysisData.suggestedTopics.length > 0 && (
-                                    <div className="pt-4 space-y-3">
-                                        <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest block">Core Themes Detected</span>
-                                        <div className="flex flex-wrap gap-2">
-                                            {analysisData.suggestedTopics.map((topic, i) => (
-                                                <span key={i} className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-bold text-gray-400 border border-white/5">{topic}</span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+            <div className="flex flex-col h-full bg-[#0a0a0a] rounded-xl border border-[#222] overflow-hidden">
+                <div className="border-b border-white/5 bg-white/[0.01]">
+                    <VersionTabs
+                        module="quiz"
+                        revisions={quizRevisions}
+                        activeRevisionId={activeRevisionId}
+                        onSwitch={(revId) => {
+                            switchRevision('quiz', revId);
+                            if (!revId) {
+                                loadProjectModule('quizData');
+                            }
+                        }}
+                        onNew={() => {
+                            setQuizData(null);
+                            setPhase('initial');
+                        }}
+                        onRename={async (revId, name) => renameRevision('quiz', revId, name)}
+                        onDelete={async (revId) => deleteRevision('quiz', revId)}
+                    />
+                </div>
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                    <div className="p-10 max-w-4xl mx-auto w-full space-y-12">
+                        <div className="text-center space-y-4 pt-8">
+                            <h3 className="text-3xl font-black text-white tracking-tight uppercase italic">Generation Matrix</h3>
+                            <p className="text-gray-500 max-w-md mx-auto leading-relaxed text-sm">
+                                Fine-tune your assessment density based on material intelligence.
+                            </p>
                         </div>
 
-                        {/* Configuration Column */}
-                        <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-8 space-y-8">
-                            <div className="flex items-center gap-3">
-                                <span className="w-1 h-4 bg-[#00ff88] rounded-full"></span>
-                                <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Set Parameters</h4>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-end">
-                                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest text-[9px]">Item Count</span>
-                                    <span className="text-xl font-black text-[#00ff88]">{quizSettings.questionCount}</span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {/* Summary Column */}
+                            <div className="bg-white/[0.02] border border-white/5 rounded-[2rem] p-8 space-y-6">
+                                <div className="flex items-center gap-3">
+                                    <span className="w-1 h-4 bg-[#00ff88] rounded-full"></span>
+                                    <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Material Intelligence</h4>
                                 </div>
-                                <input
-                                    type="range" min="5" max="50" step="5"
-                                    value={quizSettings.questionCount}
-                                    onChange={(e) => setQuizSettings({ ...quizSettings, questionCount: parseInt(e.target.value) })}
-                                    className="w-full h-1 bg-white/5 rounded-lg appearance-none cursor-pointer accent-[#00ff88]"
-                                />
-                            </div>
-
-                            <div className="space-y-4">
-                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest text-[9px] block">Difficulty</span>
-                                <div className="flex gap-2">
-                                    {['easy', 'medium', 'hard'].map((lvl) => (
-                                        <button
-                                            key={lvl}
-                                            onClick={() => setQuizSettings({ ...quizSettings, difficulty: lvl })}
-                                            className={`flex-1 py-2.5 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all ${quizSettings.difficulty === lvl
-                                                ? 'bg-[#00ff88] text-black border-transparent'
-                                                : 'bg-white/5 border-white/5 text-gray-500 hover:text-white'
-                                                }`}
-                                        >
-                                            {lvl}
-                                        </button>
-                                    ))}
+                                <div className="space-y-4">
+                                    <div className="p-4 bg-white/5 rounded-2xl flex justify-between items-center">
+                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Scope Volume</span>
+                                        <span className="text-sm font-black text-white">{analysisData?.wordCount.toLocaleString() || '...'} Words</span>
+                                    </div>
+                                    <div className="p-4 bg-white/5 rounded-2xl flex justify-between items-center">
+                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Reading Time</span>
+                                        <span className="text-sm font-black text-white">{analysisData?.readingTime || '...'} Min</span>
+                                    </div>
+                                    <div className="p-4 bg-[#00ff88]/5 border border-[#00ff88]/10 rounded-2xl space-y-2">
+                                        <span className="text-[9px] font-black text-[#00ff88]/60 uppercase tracking-widest block">AI Recommended Density</span>
+                                        <p className="text-xs text-[#00ff88] font-bold">{analysisData?.suggestedCount || 10} Questions</p>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="space-y-4">
-                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest text-[9px] block">Quiz Mode</span>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => setQuizSettings({ ...quizSettings, quizMode: 'normal' })}
-                                        className={`flex-1 py-2.5 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all ${quizSettings.quizMode === 'normal'
-                                            ? 'bg-white text-black border-transparent'
-                                            : 'bg-white/5 border-white/5 text-gray-500'
-                                            }`}
-                                    >
-                                        Study List
-                                    </button>
-                                    <button
-                                        onClick={() => setQuizSettings({ ...quizSettings, quizMode: 'exam' })}
-                                        className={`flex-1 py-2.5 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all ${quizSettings.quizMode === 'exam'
-                                            ? 'bg-[#00ff88] text-black border-transparent'
-                                            : 'bg-white/5 border-white/5 text-gray-500'
-                                            }`}
-                                    >
-                                        Exam Mode
-                                    </button>
+                            {/* Configuration Column */}
+                            <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-8 space-y-8">
+                                <div className="flex items-center gap-3">
+                                    <span className="w-1 h-4 bg-[#00ff88] rounded-full"></span>
+                                    <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Set Parameters</h4>
                                 </div>
+
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-end">
+                                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest text-[9px]">Item Count</span>
+                                        <span className="text-xl font-black text-[#00ff88]">{quizSettings.questionCount}</span>
+                                    </div>
+                                    <input
+                                        type="range" min="5" max="50" step="5"
+                                        value={quizSettings.questionCount}
+                                        onChange={(e) => setQuizSettings({ ...quizSettings, questionCount: parseInt(e.target.value) })}
+                                        className="w-full h-1 bg-white/5 rounded-lg appearance-none cursor-pointer accent-[#00ff88]"
+                                    />
+                                </div>
+
+                                <div className="space-y-4">
+                                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest text-[9px] block">Difficulty</span>
+                                    <div className="flex gap-2">
+                                        {['easy', 'medium', 'hard'].map((lvl) => (
+                                            <button
+                                                key={lvl}
+                                                onClick={() => setQuizSettings({ ...quizSettings, difficulty: lvl })}
+                                                className={`flex-1 py-2.5 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all ${quizSettings.difficulty === lvl
+                                                    ? 'bg-[#00ff88] text-black border-transparent'
+                                                    : 'bg-white/5 border-white/5 text-gray-500 hover:text-white'
+                                                    }`}
+                                            >
+                                                {lvl}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => onGenerate('quiz')}
+                                    className="w-full py-5 bg-[#ffffff] text-black rounded-2xl text-[10px] font-black transition-all hover:bg-[#00ff88] shadow-2xl flex items-center justify-center gap-3 uppercase tracking-widest"
+                                >
+                                    Generate Questions
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                                </button>
+
+                                <button
+                                    onClick={() => setPhase('initial')}
+                                    className="w-full py-3 text-[9px] font-black text-gray-500 uppercase tracking-widest hover:text-white transition-colors"
+                                >
+                                    Adjust Scope
+                                </button>
                             </div>
-
-                            <button
-                                onClick={() => onGenerate('quiz')}
-                                className="w-full py-5 bg-[#ffffff] text-black rounded-2xl text-[10px] font-black transition-all hover:bg-[#00ff88] shadow-2xl flex items-center justify-center gap-3 uppercase tracking-widest"
-                            >
-                                Generate Questions
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                            </button>
-
-                            <button
-                                onClick={() => setPhase('initial')}
-                                className="w-full py-3 text-[9px] font-black text-gray-500 uppercase tracking-widest hover:text-white transition-colors"
-                            >
-                                Adjust Scope
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -351,146 +378,147 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
         );
     }
 
-    // --- PHASE: SETUP ---
-    if (phase === 'setup') {
+    if (phase === 'selection') {
         return (
             <div className="flex flex-col h-full bg-[#0a0a0a] rounded-xl border border-[#222] overflow-hidden">
-                <div className="flex items-center justify-between p-6 border-b border-[#222]">
-                    <div className="flex items-center gap-3">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#00ff88] animate-pulse"></div>
-                        <h3 className="text-xs font-black text-white uppercase tracking-[0.3em]">Configure Assessment</h3>
-                    </div>
-
-                    <div className="relative">
-                        <button
-                            onClick={() => setShowRegenerateScope(!showRegenerateScope)}
-                            className="px-4 py-2 bg-[#1a1a1a] text-[#00ff88] border border-[#00ff88]/20 rounded-lg text-xs font-bold hover:bg-[#00ff88]/10 transition-all flex items-center gap-2"
-                        >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                            {generationScope.type === 'all' ? 'FULL SCOPE' : 'CUSTOM SCOPE'}
-                        </button>
-
-                        {showRegenerateScope && (
-                            <div className="absolute top-full right-0 mt-3 w-80 bg-[#111] border border-[#222] rounded-3xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[100] animate-in fade-in zoom-in-95 duration-200 text-left">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h4 className="text-[10px] font-black text-white/60 uppercase tracking-[0.2em]">Adjust Context</h4>
-                                    <button onClick={() => setShowRegenerateScope(false)} className="text-white/20 hover:text-white transition-colors">
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                    </button>
-                                </div>
-                                <GenerationScopeSelector className="!space-y-4" />
-                                <button
-                                    onClick={() => onGenerate('quiz')}
-                                    className="w-full mt-6 py-3 bg-[#00ff88] text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#00dd77] transition-all shadow-[0_10px_20px_rgba(0,255,136,0.2)]"
-                                >
-                                    Confirm & Regenerate
-                                </button>
-                            </div>
-                        )}
-                    </div>
+                <div className="border-b border-white/5 bg-white/[0.01]">
+                    <VersionTabs
+                        module="quiz"
+                        revisions={quizRevisions}
+                        activeRevisionId={activeRevisionId}
+                        onSwitch={(revId) => {
+                            switchRevision('quiz', revId);
+                            if (!revId) {
+                                loadProjectModule('quizData');
+                            }
+                        }}
+                        onNew={() => {
+                            setQuizData(null);
+                            setPhase('initial');
+                        }}
+                        onRename={async (revId, name) => renameRevision('quiz', revId, name)}
+                        onDelete={async (revId) => deleteRevision('quiz', revId)}
+                    />
                 </div>
-
-                <VersionTabs
-                    module="quiz"
-                    revisions={quizRevisions}
-                    activeRevisionId={activeRevisionId}
-                    onSwitch={(revId) => switchRevision('quiz', revId)}
-                    onNew={() => onGenerate('quiz')}
-                    onRename={async (revId, name) => renameRevision('quiz', revId, name)}
-                    onDelete={async (revId) => deleteRevision('quiz', revId)}
-                />
-
-                <div className="flex-1 overflow-y-auto p-12 custom-scrollbar">
-                    <div className="max-w-2xl mx-auto space-y-14">
-                        {/* Mode Selection */}
-                        <div className="space-y-4">
-                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Session Profile</h4>
-                            <div className="grid grid-cols-2 gap-4">
-                                <button
-                                    onClick={() => setQuizSettings({ ...quizSettings, quizMode: 'normal' })}
-                                    className={`p-6 rounded-3xl border transition-all flex flex-col gap-2 ${quizSettings.quizMode === 'normal'
-                                        ? 'bg-white/10 border-white/30'
-                                        : 'bg-white/[0.03] border-white/5 opacity-60'
-                                        }`}
-                                >
-                                    <span className={`text-xs font-black uppercase tracking-widest ${quizSettings.quizMode === 'normal' ? 'text-white' : 'text-gray-500'}`}>Normal Mode</span>
-                                    <span className="text-[10px] text-gray-500">Full knowledge audit in list view.</span>
-                                </button>
-                                <button
-                                    onClick={() => setQuizSettings({ ...quizSettings, quizMode: 'exam' })}
-                                    className={`p-6 rounded-3xl border transition-all flex flex-col gap-2 ${quizSettings.quizMode === 'exam'
-                                        ? 'bg-[#00ff88]/10 border-[#00ff88]/50'
-                                        : 'bg-white/[0.03] border-white/5 opacity-60'
-                                        }`}
-                                >
-                                    <span className={`text-xs font-black uppercase tracking-widest ${quizSettings.quizMode === 'exam' ? 'text-[#00ff88]' : 'text-gray-500'}`}>Exam Mode</span>
-                                    <span className="text-[10px] text-gray-500">Strict timed assessment simulation.</span>
-                                </button>
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                    <div className="p-10 max-w-2xl mx-auto w-full space-y-12">
+                        <div className="text-center space-y-6 pt-8">
+                            <div className="w-20 h-20 bg-[#00ff88]/5 rounded-full flex items-center justify-center mx-auto border border-[#00ff88]/20 group">
+                                <svg className="w-10 h-10 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
                             </div>
+                            <h3 className="text-3xl font-black text-white tracking-tight uppercase italic">Questions Synthesized</h3>
+                            <p className="text-gray-500 leading-relaxed text-sm">
+                                Assess your knowledge with specialized study environments.
+                            </p>
                         </div>
 
-                        {quizSettings.quizMode === 'exam' && (
-                            <div className="space-y-10 animate-in fade-in slide-in-from-top-4 duration-500">
-                                <div className="space-y-4">
-                                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Timer Strategy</h4>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <button
-                                            onClick={() => setQuizSettings({ ...quizSettings, timerType: 'total' })}
-                                            className={`py-4 px-6 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all ${quizSettings.timerType === 'total'
-                                                ? 'bg-white/5 border-white/20 text-white'
-                                                : 'bg-transparent border-white/5 text-gray-600'
-                                                }`}
-                                        >
-                                            Solid Time (Global)
-                                        </button>
-                                        <button
-                                            onClick={() => setQuizSettings({ ...quizSettings, timerType: 'question' })}
-                                            className={`py-4 px-6 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all ${quizSettings.timerType === 'question'
-                                                ? 'bg-white/5 border-white/20 text-white'
-                                                : 'bg-transparent border-white/5 text-gray-600'
-                                                }`}
-                                        >
-                                            Pace Time (Per Question)
-                                        </button>
+                        <div className="space-y-8">
+                            <div className="grid grid-cols-2 gap-6">
+                                <button
+                                    onClick={() => setQuizSettings({ ...quizSettings, quizMode: 'normal' })}
+                                    className={`p-8 rounded-[2rem] border transition-all text-left flex flex-col gap-4 group ${quizSettings.quizMode === 'normal'
+                                        ? 'bg-white/10 border-white/30'
+                                        : 'bg-white/[0.02] border-white/5 opacity-60 hover:opacity-100'
+                                        }`}
+                                >
+                                    <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center">
+                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
                                     </div>
-                                </div>
+                                    <div>
+                                        <span className="text-sm font-black text-white uppercase tracking-widest block mb-1">Study Mode</span>
+                                        <p className="text-[10px] text-gray-500 leading-relaxed">Relaxed scrollable list style with immediate feedback.</p>
+                                    </div>
+                                </button>
 
-                                <div className="space-y-6">
-                                    <div className="flex justify-between items-center">
-                                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">
-                                            {quizSettings.timerType === 'question' ? 'Seconds per Question' : 'Session Duration'}
-                                        </h4>
-                                        <div className="text-2xl font-black text-[#00ff88]">
-                                            {quizSettings.timeLimit}
-                                            <span className="text-[10px] text-gray-600 ml-1 uppercase">{quizSettings.timerType === 'question' ? 'Secs' : 'Mins'}</span>
+                                <button
+                                    onClick={() => setQuizSettings({ ...quizSettings, quizMode: 'exam' })}
+                                    className={`p-8 rounded-[2rem] border transition-all text-left flex flex-col gap-4 group ${quizSettings.quizMode === 'exam'
+                                        ? 'bg-[#00ff88]/10 border-[#00ff88]/50'
+                                        : 'bg-white/[0.02] border-white/5 opacity-60 hover:opacity-100'
+                                        }`}
+                                >
+                                    <div className="w-12 h-12 bg-[#00ff88]/10 rounded-2xl flex items-center justify-center">
+                                        <svg className="w-6 h-6 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    </div>
+                                    <div>
+                                        <span className="text-sm font-black text-[#00ff88] uppercase tracking-widest block mb-1">Exam Mode</span>
+                                        <p className="text-[10px] text-gray-500 leading-relaxed">High-stakes timed assessment with focused navigation.</p>
+                                    </div>
+                                </button>
+                            </div>
+
+                            {quizSettings.quizMode === 'exam' && (
+                                <div className="bg-white/[0.03] border border-white/5 rounded-[2rem] p-8 space-y-10 animate-in fade-in slide-in-from-top-4 duration-500">
+                                    <div className="space-y-6">
+                                        <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Timer Strategy</h4>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <button
+                                                onClick={() => setQuizSettings({ ...quizSettings, timerType: 'total' })}
+                                                className={`py-4 px-6 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all ${quizSettings.timerType === 'total'
+                                                    ? 'bg-white border-white text-black'
+                                                    : 'bg-transparent border-white/10 text-gray-500'
+                                                    }`}
+                                            >
+                                                Solid Time (Global)
+                                            </button>
+                                            <button
+                                                onClick={() => setQuizSettings({ ...quizSettings, timerType: 'question' })}
+                                                className={`py-4 px-6 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all ${quizSettings.timerType === 'question'
+                                                    ? 'bg-white border-white text-black'
+                                                    : 'bg-transparent border-white/10 text-gray-500'
+                                                    }`}
+                                            >
+                                                Pace Time (Per Question)
+                                            </button>
                                         </div>
                                     </div>
-                                    <input
-                                        type="range"
-                                        min={quizSettings.timerType === 'question' ? 15 : 5}
-                                        max={quizSettings.timerType === 'question' ? 120 : 60}
-                                        step={quizSettings.timerType === 'question' ? 15 : 5}
-                                        value={quizSettings.timeLimit}
-                                        onChange={(e) => setQuizSettings({ ...quizSettings, timeLimit: parseInt(e.target.value) })}
-                                        className="w-full h-1 bg-white/5 rounded-lg appearance-none cursor-pointer accent-[#00ff88]"
-                                    />
-                                </div>
-                            </div>
-                        )}
 
-                        <div className="pt-8 flex gap-4">
-                            <button
-                                onClick={startExam}
-                                className="flex-1 py-5 bg-[#00ff88] text-black rounded-3xl text-xs font-black uppercase tracking-widest transition-all hover:bg-[#00dd77] hover:scale-[1.02] shadow-2xl active:scale-95"
-                            >
-                                Launch {quizSettings.quizMode === 'exam' ? 'Exam Session' : 'Study Mode'}
-                            </button>
-                            <button
-                                onClick={() => setQuizData(null)}
-                                className="px-8 py-5 border border-white/10 text-white rounded-3xl text-xs font-bold uppercase tracking-widest hover:bg-white/5 transition-all"
-                            >
-                                Back to Analysis
-                            </button>
+                                    <div className="space-y-6">
+                                        <div className="flex justify-between items-center">
+                                            <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">
+                                                {quizSettings.timerType === 'question' ? 'Seconds per Question' : 'Session Duration'}
+                                            </h4>
+                                            <div className="text-2xl font-black text-[#00ff88]">
+                                                {quizSettings.timeLimit}
+                                                <span className="text-[10px] text-gray-600 ml-1 uppercase">{quizSettings.timerType === 'question' ? 'Secs' : 'Mins'}</span>
+                                            </div>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min={quizSettings.timerType === 'question' ? 15 : 5}
+                                            max={quizSettings.timerType === 'question' ? 120 : 60}
+                                            step={quizSettings.timerType === 'question' ? 15 : 5}
+                                            value={quizSettings.timeLimit}
+                                            onChange={(e) => setQuizSettings({ ...quizSettings, timeLimit: parseInt(e.target.value) })}
+                                            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#00ff88]"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={startExam}
+                                    className="flex-1 py-6 bg-[#00ff88] text-black rounded-[2rem] text-xs font-black uppercase tracking-[0.2em] transition-all hover:bg-[#00dd77] hover:scale-[1.02] active:scale-95 shadow-2xl"
+                                >
+                                    Launch Session
+                                </button>
+                                <button
+                                    onClick={() => setPhase('setup')}
+                                    className="px-10 py-6 border border-white/10 text-white rounded-[2rem] text-xs font-black uppercase tracking-widest hover:bg-white/5 transition-all"
+                                >
+                                    Back
+                                </button>
+                                <button
+                                    onClick={() => onGenerate('quiz')}
+                                    className="px-6 py-6 bg-white/5 border border-white/10 text-white rounded-[2rem] text-xs font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center"
+                                    title="Regenerate with current presets"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -501,7 +529,6 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
     // --- PHASE: SESSION ---
     if (phase === 'exam') {
         const isExamMode = quizSettings.quizMode === 'exam';
-
         if (!isExamMode) {
             // NORMAL MODE: List Rendering
             return (

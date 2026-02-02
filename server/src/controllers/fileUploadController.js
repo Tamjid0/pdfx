@@ -13,18 +13,7 @@ import { extractSlides } from '../services/pptxService.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Configure Multer for file storage
-const uploadsDir = path.resolve(__dirname, '../../uploads');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Directory to store FAISS indexes
-const indexesDir = path.join(process.cwd(), 'src', 'database', 'indexes');
-if (!fs.existsSync(indexesDir)) {
-    fs.mkdirSync(indexesDir, { recursive: true });
-}
-
+import storageService from '../services/storageService.js';
 import { DocumentProcessor } from '../services/DocumentProcessor.js';
 import { addDocumentJob, isRedisConnected } from '../services/queueService.js';
 import User from '../models/User.js';
@@ -35,11 +24,7 @@ const documentProcessor = new DocumentProcessor();
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const userId = req.body.userId || 'guest';
-        const userDir = path.join(uploadsDir, userId);
-
-        if (!fs.existsSync(userDir)) {
-            fs.mkdirSync(userDir, { recursive: true });
-        }
+        const userDir = storageService.getUserDir(userId);
         cb(null, userDir);
     },
     filename: (req, file, cb) => {
@@ -56,7 +41,7 @@ const upload = multer({ storage: storage });
  */
 export const embedStructuredChunks = async (documentId, docsWithMetadata) => {
     const vectorStore = await FaissStore.fromDocuments(docsWithMetadata, hfEmbeddings);
-    const indexPath = path.join(indexesDir, documentId);
+    const indexPath = storageService.getIndexPath(documentId);
     await vectorStore.save(indexPath);
     return indexPath;
 };
@@ -191,7 +176,7 @@ export const embedText = async (req, res) => {
         const docs = await splitter.createDocuments([cleanedText]);
 
         const vectorStore = await FaissStore.fromDocuments(docs, hfEmbeddings);
-        const indexPath = path.join(indexesDir, fileId);
+        const indexPath = storageService.getIndexPath(fileId);
         await vectorStore.save(indexPath);
 
         console.log(`[+] FAISS index created successfully for pasted text, fileId: ${fileId}`);

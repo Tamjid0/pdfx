@@ -22,9 +22,9 @@ export class StructuredChunker {
         }
 
         for (const page of docGraph.structure.pages) {
-            const chunk = this.createChunkFromPage(page, docGraph);
-            if (chunk.content.trim()) {
-                chunks.push(chunk);
+            const pageChunks = this.createChunksFromPage(page, docGraph);
+            if (pageChunks.length > 0) {
+                chunks.push(...pageChunks);
             }
         }
 
@@ -32,23 +32,76 @@ export class StructuredChunker {
     }
 
     /**
-     * Creates a chunk from a single page/slide
+     * Creates chunks from a single page/slide, splitting if content is too large.
      * @param {DocumentPage} page - The page to convert
      * @param {DocumentRoot} docGraph - The parent document
-     * @returns {{content: string, metadata: object}}
+     * @returns {Array<{content: string, metadata: object}>}
      */
-    static createChunkFromPage(page, docGraph) {
+    static createChunksFromPage(page, docGraph) {
         const textNodes = page.nodes.filter(node => node.type === 'text');
         const imageNodes = page.nodes.filter(node => node.type === 'image');
 
         // Concatenate all text content from the page with IDs for Referential AI
-        const content = textNodes
+        const rawContent = textNodes
             .map(node => `[[${node.id}]]: ${node.content.text || ''}`)
             .filter(text => text.trim())
             .join('\n');
 
-        // Build rich metadata
-        const metadata = {
+        if (!rawContent.trim()) return [];
+
+        // Production Targeting: ~512 token limit (approx 2000 chars)
+        const MAX_CHUNK_SIZE = 2000;
+        const OVERLAP = 300;
+
+        const chunks = [];
+
+        if (rawContent.length <= MAX_CHUNK_SIZE) {
+            chunks.push({
+                content: rawContent,
+                metadata: this.getMetadata(page, docGraph, textNodes, imageNodes)
+            });
+        } else {
+            // Split into sub-chunks
+            let start = 0;
+            let subIndex = 0;
+
+            while (start < rawContent.length) {
+                let end = start + MAX_CHUNK_SIZE;
+
+                // Try to split at a newline if possible
+                if (end < rawContent.length) {
+                    const lastNewline = rawContent.lastIndexOf('\n', end);
+                    if (lastNewline > start + (MAX_CHUNK_SIZE / 2)) {
+                        end = lastNewline + 1;
+                    }
+                }
+
+                const subContent = rawContent.substring(start, end).trim();
+                if (subContent) {
+                    chunks.push({
+                        content: subContent,
+                        metadata: {
+                            ...this.getMetadata(page, docGraph, textNodes, imageNodes),
+                            subIndex
+                        }
+                    });
+                    subIndex++;
+                }
+
+                start = end - OVERLAP;
+                if (start < 0) start = 0;
+                if (start >= rawContent.length - 100) break; // Avoid tiny orphans
+            }
+        }
+
+        return chunks;
+    }
+
+    /**
+     * Build rich metadata helper
+     */
+    static getMetadata(page, docGraph, textNodes, imageNodes) {
+        return {
             documentId: docGraph.documentId,
             documentType: docGraph.type,
             pageIndex: page.index,
@@ -59,13 +112,6 @@ export class StructuredChunker {
             imageUrls: imageNodes.map(n => n.content.url),
             dimensions: page.dimensions
         };
-
-        // Add slide-specific metadata if applicable
-        if (page.type === 'slide' && page.title) {
-            metadata.slideTitle = page.title;
-        }
-
-        return { content, metadata };
     }
 
     /**

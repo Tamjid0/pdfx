@@ -36,12 +36,16 @@ export function safeParseAiJson(text, moduleName = 'AI') {
     }
 
     // 3. Last Resort: Brute-force extraction of the first '{' to last '}'
-    // This handles conversational text before or after the JSON block
     const firstBrace = cleanText.indexOf('{');
     const lastBrace = cleanText.lastIndexOf('}');
 
     if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-        const jsonCandidate = cleanText.substring(firstBrace, lastBrace + 1);
+        let jsonCandidate = cleanText.substring(firstBrace, lastBrace + 1);
+
+        // Final Hardening: Remove trailing commas in arrays/objects which break JSON.parse
+        // This is a common LLM mistake
+        jsonCandidate = jsonCandidate.replace(/,(\s*[\]}])/g, '$1');
+
         try {
             return JSON.parse(jsonCandidate);
         } catch (e) {

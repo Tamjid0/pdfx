@@ -7,13 +7,7 @@ import { ImageExtractor } from './ImageExtractor.js';
 import LibreOfficeService from './LibreOfficeService.js';
 import crypto from 'crypto';
 
-const BASE_STORAGE_DIR = path.resolve(process.cwd(), 'uploads');
-
-// Ensure base storage exists
-if (!fs.existsSync(BASE_STORAGE_DIR)) {
-    fs.mkdirSync(BASE_STORAGE_DIR, { recursive: true });
-}
-
+import storageService from './storageService.js';
 import PdfImageRenderer from './PdfImageRenderer.js';
 import Document from '../models/Document.js';
 
@@ -27,11 +21,7 @@ export class DocumentProcessor {
      * Gets the user-specific storage directory
      */
     getUserDir(userId) {
-        const userDir = path.join(BASE_STORAGE_DIR, userId);
-        if (!fs.existsSync(userDir)) {
-            fs.mkdirSync(userDir, { recursive: true });
-        }
-        return userDir;
+        return storageService.getUserDir(userId);
     }
 
     /**
@@ -40,12 +30,7 @@ export class DocumentProcessor {
     async extract(filePath, mime, originalName, forcedDocumentId = null, userId = 'guest') {
         let documentGraph;
         const documentId = forcedDocumentId || crypto.randomUUID();
-        const userDir = this.getUserDir(userId);
-        const docDir = path.join(userDir, documentId);
-
-        if (!fs.existsSync(docDir)) {
-            fs.mkdirSync(docDir, { recursive: true });
-        }
+        const docDir = storageService.getDocDir(userId, documentId);
 
         console.log(`[DocumentProcessor] Fast JSON Extraction: ${originalName} (User: ${userId})`);
 
@@ -131,7 +116,7 @@ export class DocumentProcessor {
             userId = 'guest';
         }
 
-        const docDir = path.join(this.getUserDir(userId), documentId);
+        const docDir = storageService.getDocDir(userId, documentId);
         const jsonPath = path.join(docDir, 'metadata.json');
 
         if (!fs.existsSync(jsonPath)) throw new Error('Document metadata not found for conversion');

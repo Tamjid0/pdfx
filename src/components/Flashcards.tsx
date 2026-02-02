@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useStore, type Mode, type Flashcard } from '../store/useStore';
 import { VersionTabs } from './dashboard/VersionTabs';
 import { toast } from 'react-hot-toast';
+import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
 
 
 interface FlashcardsProps {
@@ -20,6 +21,16 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
     } = useStore();
 
     const [flippedCards, setFlippedCards] = useState<number[]>([]);
+    const [phase, setPhase] = useState<'initial' | 'session'>('initial');
+
+    // Sync phase with data availability
+    React.useEffect(() => {
+        if (flashcardsData?.flashcards?.length) {
+            setPhase('session');
+        } else if (!isGeneratingFlashcards) {
+            setPhase('initial');
+        }
+    }, [flashcardsData, isGeneratingFlashcards]);
 
     const activeRevisionId = activeRevisionIds['flashcards'];
 
@@ -107,38 +118,64 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
         toast.success('Anki deck exported!');
     };
 
-    if (cardsArray.length === 0) {
+    if (phase === 'initial' || cardsArray.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-[#0a0a0a] rounded-xl border border-[#222]">
-                {isGeneratingFlashcards ? (
-                    <div className="w-full max-w-md">
-                        <div className="flex flex-col items-center mb-8">
-                            <div className="w-12 h-12 bg-gemini-green/5 rounded-2xl flex items-center justify-center mb-4 border border-gemini-green/10">
-                                <div className="w-6 h-6 border-2 border-gemini-green border-t-transparent rounded-full animate-spin"></div>
+            <div className="flex flex-col h-full bg-[#0a0a0a] rounded-xl border border-[#222] overflow-hidden">
+                <div className="border-b border-white/5 bg-white/[0.01]">
+                    <VersionTabs
+                        module="flashcards"
+                        revisions={flashcardsRevisions}
+                        activeRevisionId={activeRevisionId}
+                        onSwitch={(revId) => switchRevision('flashcards', revId)}
+                        onNew={() => {
+                            setFlashcardsData(null);
+                            setPhase('initial');
+                        }}
+                        onRename={async (revId, name) => renameRevision('flashcards', revId, name)}
+                        onDelete={async (revId) => deleteRevision('flashcards', revId)}
+                    />
+                </div>
+
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                    <div className="p-10 max-w-2xl mx-auto w-full space-y-12">
+                        <div className="text-center space-y-4 pt-8">
+                            <div className="w-20 h-20 bg-[#00ff88]/5 rounded-[2.5rem] flex items-center justify-center mx-auto border border-[#00ff88]/10 shadow-2xl">
+                                <svg className="w-10 h-10 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
                             </div>
-                            <h3 className="text-sm font-bold text-white uppercase tracking-[0.3em]">Creating Flashcards...</h3>
+                            <h3 className="text-3xl font-black text-white tracking-tight uppercase italic">Flashcard Laboratory</h3>
+                            <p className="text-gray-400 max-w-sm mx-auto leading-relaxed text-sm">
+                                Isolate specific material to synthesize high-retention smart decks.
+                            </p>
                         </div>
-                        <LocalizedShimmer blocks={2} />
+
+                        {isGeneratingFlashcards ? (
+                            <div className="w-full space-y-8 animate-pulse">
+                                <div className="h-40 bg-white/5 rounded-[2rem] border border-white/10 flex flex-col items-center justify-center">
+                                    <div className="w-8 h-8 border-2 border-[#00ff88] border-t-transparent rounded-full animate-spin mb-4"></div>
+                                    <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">Synthesizing Decks...</span>
+                                </div>
+                                <LocalizedShimmer blocks={2} />
+                            </div>
+                        ) : (
+                            <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-8 space-y-8">
+                                <div className="space-y-4">
+                                    <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Select Target Scope</h4>
+                                    <GenerationScopeSelector />
+                                </div>
+
+                                <button
+                                    onClick={() => onGenerate('flashcards')}
+                                    className="w-full py-5 bg-[#00ff88] text-black rounded-2xl text-xs font-black transition-all hover:bg-[#00dd77] active:scale-95 shadow-2xl flex items-center justify-center gap-3 uppercase tracking-widest"
+                                >
+                                    Generate Flashcards
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                                </button>
+                            </div>
+                        )}
                     </div>
-                ) : (
-                    <>
-                        <div className="w-20 h-20 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-6 border border-[#333] shadow-inner text-[#00ff88]">
-                            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                            </svg>
-                        </div>
-                        <h3 className="text-2xl font-bold text-white mb-3">Self-Quizzing Flashcards</h3>
-                        <p className="text-gray-400 mb-8 max-w-sm leading-relaxed">
-                            Generate interactive flashcards to test your knowledge. Flip to reveal answers and edit them to match your learning style.
-                        </p>
-                        <button
-                            onClick={() => onGenerate('flashcards')}
-                            className="px-8 py-3.5 bg-[#00ff88] text-black rounded-xl text-sm font-black transition-all hover:bg-[#00dd77] active:scale-95 shadow-[0_5px_15px_rgba(0,255,136,0.3)]"
-                        >
-                            GENERATE CARDS
-                        </button>
-                    </>
-                )}
+                </div>
             </div>
         );
     }
@@ -171,10 +208,14 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
                 onSwitch={(revId) => {
                     switchRevision('flashcards', revId);
                     if (!revId) {
-                        loadProjectModule('flashcardsData');
+                        setPhase('initial');
+                        setFlashcardsData(null);
                     }
                 }}
-                onNew={() => onGenerate('flashcards')}
+                onNew={() => {
+                    setFlashcardsData(null);
+                    setPhase('initial');
+                }}
                 onRename={async (revId, newName) => {
                     try {
                         await renameRevision('flashcards', revId, newName);

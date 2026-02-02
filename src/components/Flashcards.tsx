@@ -10,12 +10,13 @@ interface FlashcardsProps {
 }
 
 import LocalizedShimmer from './LocalizedShimmer';
+import { calculateNextReview, type Rating } from '../utils/srsEngine';
 
 const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
     const {
         flashcardsData, setFlashcardsData, openExportModal, isGeneratingFlashcards,
         flashcardsRevisions, switchRevision, deleteRevision, renameRevision, loadProjectModule,
-        activeRevisionIds
+        activeRevisionIds, setMode, setPrompt, logActivity
     } = useStore();
 
     const [flippedCards, setFlippedCards] = useState<number[]>([]);
@@ -53,6 +54,57 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
             const newCards = cardsArray.filter((_: Flashcard, i: number) => i !== index);
             setFlashcardsData({ ...flashcardsData, flashcards: newCards });
         }
+    };
+
+    const handleRateCard = (index: number, rating: Rating) => {
+        if (!flashcardsData) return;
+        const card = cardsArray[index];
+        const result = calculateNextReview(card, rating);
+
+        const newCards = [...cardsArray];
+        newCards[index] = {
+            ...newCards[index],
+            ...result
+        };
+
+        setFlashcardsData({ ...flashcardsData, flashcards: newCards });
+        logActivity(1); // Track engagement
+        toast.success(`Scheduled for ${result.interval === 0 ? 'immediate' : result.interval + ' day'} review`);
+
+        // Auto-flip back after rating
+        setTimeout(() => {
+            setFlippedCards(prev => prev.filter(i => i !== index));
+        }, 1000);
+    };
+
+    const handleAskAI = (index: number) => {
+        const card = cardsArray[index];
+        const contextualPrompt = `I'm studying a flashcard. The question is: "${card.question}". The answer provided is: "${card.answer}". Can you explain this concept in more detail?`;
+        setPrompt(contextualPrompt);
+        setMode('chat');
+    };
+
+    const handleAnkiExport = () => {
+        if (!flashcardsData?.flashcards.length) return;
+
+        // Format for Anki: "Front, Back, Tags"
+        // Escaping quotes for CSV validity
+        const csvContent = flashcardsData.flashcards.map(card => {
+            const front = `"${card.question.replace(/"/g, '""')}"`;
+            const back = `"${card.answer.replace(/"/g, '""')}"`;
+            return `${front},${back},"PDFx_Generated"`; // Adding a default tag
+        }).join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `anki_deck_${new Date().getTime()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        toast.success('Anki deck exported!');
     };
 
     if (cardsArray.length === 0) {
@@ -179,19 +231,64 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
                                         </p>
                                     </div>
                                     {/* Back */}
-                                    <div className="absolute w-full h-full backface-hidden rounded-xl flex flex-col p-6 bg-gradient-to-br from-[#00ff88] to-[#00cc66] text-black transform rotate-y-180 shadow-[0_0_30px_rgba(0,255,136,0.2)]">
-                                        <div className="flex justify-between items-start mb-4">
-                                            <span className="text-[10px] font-black text-black/40 uppercase tracking-widest">The Truth</span>
-                                            <svg className="w-4 h-4 text-black/20" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>
+                                    <div className="absolute w-full h-full backface-hidden rounded-xl flex flex-col p-6 bg-[#1a1a1a] border-2 border-[#00ff88]/50 text-white transform rotate-y-180 shadow-[0_0_30px_rgba(0,255,136,0.1)]">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-black text-[#00ff88] uppercase tracking-widest">Self-Assessment</span>
+                                                {card.interval !== undefined && (
+                                                    <span className="text-[8px] text-gray-500 font-bold uppercase tracking-tighter">Current Interval: {card.interval}d</span>
+                                                )}
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleAskAI(index); }}
+                                                    className="p-1.5 bg-[#00ff88]/10 rounded-lg text-[#00ff88] hover:bg-[#00ff88]/20 transition-all border border-[#00ff88]/20"
+                                                    title="Ask AI for explanation"
+                                                >
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                                                </button>
+                                                <svg className="w-4 h-4 text-[#00ff88]/40" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>
+                                            </div>
                                         </div>
                                         <p
-                                            className="flex-1 text-sm font-black text-center flex items-center justify-center outline-none"
+                                            className="flex-1 text-sm font-bold text-center flex items-center justify-center outline-none px-4"
                                             contentEditable={true}
                                             suppressContentEditableWarning={true}
                                             onBlur={(e) => handleContentChange(e, index, 'answer')}
                                         >
                                             {card.answer}
                                         </p>
+
+                                        <div className="mt-4 grid grid-cols-4 gap-1.5 pt-4 border-t border-white/5">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleRateCard(index, 'again'); }}
+                                                className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-red-500/10 transition-colors group/btn"
+                                            >
+                                                <span className="text-[8px] font-black text-red-500 uppercase tracking-tighter group-hover/btn:text-red-400">Again</span>
+                                                <div className="w-full h-1 bg-red-500/20 rounded-full group-hover/btn:bg-red-500/40"></div>
+                                            </button>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleRateCard(index, 'hard'); }}
+                                                className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-orange-500/10 transition-colors group/btn"
+                                            >
+                                                <span className="text-[8px] font-black text-orange-500 uppercase tracking-tighter group-hover/btn:text-orange-400">Hard</span>
+                                                <div className="w-full h-1 bg-orange-500/20 rounded-full group-hover/btn:bg-orange-500/40"></div>
+                                            </button>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleRateCard(index, 'good'); }}
+                                                className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-blue-500/10 transition-colors group/btn"
+                                            >
+                                                <span className="text-[8px] font-black text-blue-500 uppercase tracking-tighter group-hover/btn:text-blue-400">Good</span>
+                                                <div className="w-full h-1 bg-blue-500/20 rounded-full group-hover/btn:bg-blue-500/40"></div>
+                                            </button>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleRateCard(index, 'easy'); }}
+                                                className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-[#00ff88]/10 transition-colors group/btn"
+                                            >
+                                                <span className="text-[8px] font-black text-[#00ff88] uppercase tracking-tighter group-hover/btn:text-[#00ff88]">Easy</span>
+                                                <div className="w-full h-1 bg-[#00ff88]/20 rounded-full group-hover/btn:bg-[#00ff88]/40"></div>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -210,12 +307,22 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
 
             <div className="p-6 bg-[#0f0f0f] border-t border-[#222] flex justify-between items-center">
                 <button className="text-[10px] font-black text-[#444] uppercase tracking-widest hover:text-white transition-all">Clear Session</button>
-                <button
-                    onClick={() => openExportModal('flashcards', flashcardsData)}
-                    className="px-8 py-2.5 bg-[#00ff88] text-black rounded-xl text-xs font-bold hover:bg-[#00dd77] transition-all shadow-xl active:scale-95"
-                >
-                    EXPORT CARDS
-                </button>
+                <div className="flex gap-4">
+                    <button
+                        onClick={handleAnkiExport}
+                        className="px-6 py-2.5 bg-[#444] text-white rounded-xl text-xs font-bold hover:bg-[#666] transition-all flex items-center gap-2"
+                        title="Export as CSV for Anki"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        ANKI CSV
+                    </button>
+                    <button
+                        onClick={() => openExportModal('flashcards', flashcardsData)}
+                        className="px-8 py-2.5 bg-[#00ff88] text-black rounded-xl text-xs font-bold hover:bg-[#00dd77] transition-all shadow-xl active:scale-95"
+                    >
+                        EXPORT JSON
+                    </button>
+                </div>
             </div>
         </div>
     );

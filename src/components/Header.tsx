@@ -5,11 +5,46 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 
 import { useAuth } from '../hooks/useAuth';
+import { useStore } from '../store/useStore';
 
 const Header: React.FC = () => {
     const { user, mongoUser, logout } = useAuth();
+    const { studyActivity } = useStore();
     const router = useRouter();
     const pathname = usePathname();
+
+    const calculateStreak = () => {
+        if (!studyActivity || studyActivity.length === 0) return 0;
+
+        // Sort activity by date descending
+        const sorted = [...studyActivity].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+        const todayStr = new Date().toISOString().split('T')[0];
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+        // If the latest activity is not today or yesterday, streak is broken
+        if (sorted[0].date !== todayStr && sorted[0].date !== yesterdayStr) return 0;
+
+        let streak = 0;
+        let currentDate = new Date(sorted[0].date);
+
+        for (const act of sorted) {
+            const actDate = new Date(act.date);
+            const diffDays = Math.floor((currentDate.getTime() - actDate.getTime()) / (1000 * 3600 * 24));
+
+            if (diffDays === 0 || diffDays === 1) {
+                streak++;
+                currentDate = actDate;
+            } else {
+                break;
+            }
+        }
+        return streak;
+    };
+
+    const streakCount = calculateStreak();
 
     const handleLogout = async () => {
         try {
@@ -41,15 +76,23 @@ const Header: React.FC = () => {
             <div className="flex gap-3 items-center">
                 {user ? (
                     <div className="flex items-center gap-4">
-                        {/* Credits Badge */}
-                        {mongoUser && (
-                            <div className="flex items-center gap-2 px-3 py-1 bg-gemini-green/10 border border-gemini-green/20 rounded-full">
-                                <span className="text-[10px] font-black tracking-widest text-gemini-green uppercase">Credits: {mongoUser.credits}</span>
-                                {mongoUser.tier === 'premium' && (
-                                    <span className="w-1.5 h-1.5 bg-gemini-green rounded-full shadow-[0_0_8px_rgba(0,255,136,0.8)]"></span>
-                                )}
-                            </div>
-                        )}
+                        {/* Credits & Streak Badge */}
+                        <div className="flex items-center gap-2">
+                            {streakCount > 0 && (
+                                <div className="flex items-center gap-1.5 px-3 py-1 bg-orange-500/10 border border-orange-500/20 rounded-full" title="Study Streak">
+                                    <span className="text-orange-500 animate-pulse text-xs">🔥</span>
+                                    <span className="text-[10px] font-black tracking-widest text-orange-500 uppercase">{streakCount} Day Streak</span>
+                                </div>
+                            )}
+                            {mongoUser && (
+                                <div className="flex items-center gap-2 px-3 py-1 bg-gemini-green/10 border border-gemini-green/20 rounded-full">
+                                    <span className="text-[10px] font-black tracking-widest text-gemini-green uppercase">Credits: {mongoUser.credits}</span>
+                                    {mongoUser.tier === 'premium' && (
+                                        <span className="w-1.5 h-1.5 bg-gemini-green rounded-full shadow-[0_0_8px_rgba(0,255,136,0.8)]"></span>
+                                    )}
+                                </div>
+                            )}
+                        </div>
 
                         <div className="flex items-center gap-3 px-3 py-1.5 bg-gemini-dark-300 border border-gemini-dark-500 rounded-full cursor-pointer transition-all ml-3 hover:border-gemini-green hover:bg-[#252525]">
                             <div className="relative">

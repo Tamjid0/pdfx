@@ -58,6 +58,11 @@ export interface InsightsData {
 export interface Flashcard {
     question: string;
     answer: string;
+    // SRS Fields
+    interval?: number;     // Days until next review
+    ease?: number;         // Difficulty multiplier (default ~2.5)
+    dueDate?: string;      // ISO string for when the card is next due
+    state?: 'new' | 'learning' | 'review' | 'relearning';
 }
 
 export interface FlashcardsData {
@@ -151,6 +156,11 @@ export interface Topic {
     pageRange?: [number, number];
 }
 
+export interface Activity {
+    date: string;
+    count: number;
+}
+
 export interface GenerationScope {
     type: 'all' | 'pages' | 'topics';
     value: null | [number, number] | string[];
@@ -222,6 +232,10 @@ interface AppState {
     isFlashcardsGenerated: boolean;
     isQuizGenerated: boolean;
     isMindmapGenerated: boolean;
+
+    // Gamification
+    studyActivity: Activity[];
+    logActivity: (count?: number) => void;
 
     // Toggles
     activeNotesToggles: Record<string, boolean>;
@@ -341,6 +355,18 @@ export const useStore = create<AppState>((set, get) => ({
     summaryRevisions: [],
     flashcardsRevisions: [],
     quizRevisions: [],
+    studyActivity: [],
+    logActivity: (count = 1) => {
+        const today = new Date().toISOString().split('T')[0];
+        const activity = [...get().studyActivity];
+        const index = activity.findIndex(a => a.date === today);
+        if (index !== -1) {
+            activity[index].count += count;
+        } else {
+            activity.push({ date: today, count });
+        }
+        set({ studyActivity: activity });
+    },
     activeRevisionIds: {
         summary: null,
         notes: null,

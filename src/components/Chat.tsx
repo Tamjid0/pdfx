@@ -18,6 +18,7 @@ interface ChatProps {
 
 const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
     const {
+        setActiveNodeId
     } = useStore();
     const [inputValue, setInputValue] = useState('');
     const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -121,7 +122,20 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                                                                 h3: ({ children }) => <h3 className="text-lg font-bold mt-4 mb-2 text-white/90">{children}</h3>,
                                                                 ul: ({ children }) => <ul className="list-disc pl-4 mb-4">{children}</ul>,
                                                                 li: ({ children }) => <li className="mb-1">{children}</li>,
-                                                                a: ({ href, children }) => <a href={href} className="text-gemini-green underline" target="_blank" rel="noreferrer">{children}</a>,
+                                                                a: ({ href, children }) => {
+                                                                    if (href?.startsWith('#')) {
+                                                                        const nodeId = href.slice(1);
+                                                                        return (
+                                                                            <button
+                                                                                onClick={() => setActiveNodeId(nodeId)}
+                                                                                className="text-[#00ff88] font-semibold border-b border-[#00ff88]/40 hover:bg-[#00ff88]/10 transition-colors cursor-pointer"
+                                                                            >
+                                                                                {children}
+                                                                            </button>
+                                                                        );
+                                                                    }
+                                                                    return <a href={href} className="text-gemini-green underline" target="_blank" rel="noreferrer">{children}</a>;
+                                                                },
                                                                 code: ({ node, inline, className, children, ...props }: any) => {
                                                                     const match = /language-(\w+)/.exec(className || '');
                                                                     return !inline && match ? (

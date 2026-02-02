@@ -41,9 +41,9 @@ export class StructuredChunker {
         const textNodes = page.nodes.filter(node => node.type === 'text');
         const imageNodes = page.nodes.filter(node => node.type === 'image');
 
-        // Concatenate all text content from the page
+        // Concatenate all text content from the page with IDs for Referential AI
         const content = textNodes
-            .map(node => node.content.text || '')
+            .map(node => `[[${node.id}]]: ${node.content.text || ''}`)
             .filter(text => text.trim())
             .join('\n');
 

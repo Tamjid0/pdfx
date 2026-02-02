@@ -248,6 +248,8 @@ interface AppState {
     // Smart Chunking & Scope
     topics: Topic[];
     setTopics: (topics: Topic[]) => void;
+    activeNodeId: string | null;
+    setActiveNodeId: (id: string | null) => void;
     generationScope: GenerationScope;
     setGenerationScope: (scope: GenerationScope) => void;
     isAppendMode: boolean;
@@ -443,6 +445,7 @@ export const useStore = create<AppState>((set, get) => ({
     prompt: '',
 
     topics: [],
+    activeNodeId: null,
     generationScope: { type: 'all', value: null },
     isAppendMode: false,
     setIsAppendMode: (val) => set({ isAppendMode: val }),
@@ -503,7 +506,7 @@ export const useStore = create<AppState>((set, get) => ({
 
     setPreviewPreset: (preset) => set({ previewPreset: preset }),
     setPrompt: (prompt) => set({ prompt }),
-
+    setActiveNodeId: (nodeId: string | null) => set({ activeNodeId: nodeId }),
     setTopics: (topics) => set({ topics }),
     setGenerationScope: (scope) => set({ generationScope: scope }),
 

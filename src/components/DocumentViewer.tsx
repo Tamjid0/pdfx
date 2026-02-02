@@ -51,7 +51,9 @@ const DocumentViewer: React.FC = () => {
         pdfSearchText,
         setPdfSearchText,
         isDocumentLoading,
-        setIsDocumentLoading
+        setIsDocumentLoading,
+        activeNodeId,
+        setActiveNodeId
     } = useStore();
 
     const [numPages, setNumPages] = useState<number | null>(null);
@@ -64,6 +66,8 @@ const DocumentViewer: React.FC = () => {
     const [highlightedText, setHighlightedText] = useState<string | null>(null);
     const [authHeaders, setAuthHeaders] = useState<Record<string, string>>({});
     const [headersLoaded, setHeadersLoaded] = useState(false);
+    const [documentStructure, setDocumentStructure] = useState<any>(null);
+    const [activeNodeBox, setActiveNodeBox] = useState<{ x: number, y: number, width: number, height: number, pageIndex: number } | null>(null);
 
     // Fetch auth headers for PDF retrieval
     useEffect(() => {
@@ -135,6 +139,67 @@ const DocumentViewer: React.FC = () => {
             return () => clearTimeout(timer);
         }
     }, [pdfSearchText]);
+
+    // Fetch document structure for coordinate-based highlighting
+    useEffect(() => {
+        if (!fileId) return;
+
+        const fetchStructure = async () => {
+            try {
+                const response = await fetch(`/api/v1/documents/${fileId}`, {
+                    headers: authHeaders
+                });
+                const data = await response.json();
+                setDocumentStructure(data.structure);
+            } catch (error) {
+                console.error('[DocumentViewer] Failed to fetch document structure:', error);
+            }
+        };
+
+        if (headersLoaded) {
+            fetchStructure();
+        }
+    }, [fileId, headersLoaded, authHeaders]);
+
+    // Handle activeNodeId changes - find node and navigate to it
+    useEffect(() => {
+        if (!activeNodeId || !documentStructure) return;
+
+        // Find the node in the document structure
+        let foundNode: any = null;
+        let foundPageIndex = -1;
+
+        for (const page of documentStructure.pages || []) {
+            const node = page.nodes?.find((n: any) => n.id === activeNodeId);
+            if (node) {
+                foundNode = node;
+                foundPageIndex = page.index;
+                break;
+            }
+        }
+
+        if (foundNode && foundPageIndex >= 0) {
+            // Navigate to the page
+            setPageNumber(foundPageIndex + 1);
+
+            // Set the highlight box coordinates
+            setActiveNodeBox({
+                x: foundNode.position.x,
+                y: foundNode.position.y,
+                width: foundNode.position.width,
+                height: foundNode.position.height,
+                pageIndex: foundPageIndex
+            });
+
+            // Clear after 5 seconds
+            const timer = setTimeout(() => {
+                setActiveNodeBox(null);
+                setActiveNodeId(null);
+            }, 5000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [activeNodeId, documentStructure]);
 
     const onPageRenderSuccess = () => {
         if (pdfSearchText) {
@@ -479,14 +544,34 @@ const DocumentViewer: React.FC = () => {
                             }
                         >
                             {numPages && pageNumber >= 1 && pageNumber <= numPages && (
-                                <Page
-                                    pageNumber={pageNumber}
-                                    scale={scale}
-                                    renderTextLayer={true}
-                                    renderAnnotationLayer={true}
-                                    onRenderSuccess={onPageRenderSuccess}
-                                    className="shadow-2xl border border-[#222] transition-transform duration-200"
-                                />
+                                <div className="relative inline-block">
+                                    <Page
+                                        pageNumber={pageNumber}
+                                        scale={scale}
+                                        renderTextLayer={true}
+                                        renderAnnotationLayer={true}
+                                        onRenderSuccess={onPageRenderSuccess}
+                                        className="shadow-2xl border border-[#222] transition-transform duration-200"
+                                    />
+
+                                    {/* Coordinate-based Highlight Overlay */}
+                                    {activeNodeBox && activeNodeBox.pageIndex === pageNumber - 1 && (
+                                        <div
+                                            className="absolute pointer-events-none animate-pulse"
+                                            style={{
+                                                left: `${activeNodeBox.x}%`,
+                                                top: `${activeNodeBox.y}%`,
+                                                width: `${activeNodeBox.width}%`,
+                                                height: `${activeNodeBox.height}%`,
+                                                backgroundColor: 'rgba(0, 255, 136, 0.3)',
+                                                border: '2px solid #00ff88',
+                                                borderRadius: '4px',
+                                                boxShadow: '0 0 20px rgba(0, 255, 136, 0.6)',
+                                                zIndex: 1000
+                                            }}
+                                        />
+                                    )}
+                                </div>
                             )}
                         </Document>
                     )}

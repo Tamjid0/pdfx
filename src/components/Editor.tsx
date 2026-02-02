@@ -22,7 +22,9 @@ interface EditorProps {
 }
 
 const Editor: React.FC<EditorProps> = ({ htmlContent, onEditorChange, onFileUpload, onPasteContent }) => {
-    const { setFileId, fileType, fileId } = useStore();
+    const fileId = useStore(state => state.fileId);
+    const fileType = useStore(state => state.fileType);
+    const setFileId = useStore(state => state.setFileId);
     const [editor, setEditor] = useState<TiptapEditorClass | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
     const [isMounted, setIsMounted] = useState(false);

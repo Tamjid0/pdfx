@@ -18,7 +18,7 @@ interface ChatProps {
 
 const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
     const {
-        setActiveNodeId
+        setActiveNodeIds
     } = useStore();
     const [inputValue, setInputValue] = useState('');
     const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -117,18 +117,20 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                                                         <ReactMarkdown
                                                             remarkPlugins={[remarkGfm]}
                                                             components={{
-                                                                p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                                                                // Pre-process text nodes to catch [[UUID]] patterns if the AI fails to format them
+                                                                p: ({ children }) => {
+                                                                    return <p className="mb-2 last:mb-0">{children}</p>;
+                                                                },
                                                                 h2: ({ children }) => <h2 className="text-xl font-bold mt-6 mb-3 text-white">{children}</h2>,
                                                                 h3: ({ children }) => <h3 className="text-lg font-bold mt-4 mb-2 text-white/90">{children}</h3>,
                                                                 ul: ({ children }) => <ul className="list-disc pl-4 mb-4">{children}</ul>,
                                                                 li: ({ children }) => <li className="mb-1">{children}</li>,
                                                                 a: ({ href, children }) => {
                                                                     if (href?.startsWith('#')) {
-                                                                        const nodeId = href.slice(1);
-                                                                        console.log('[Chat] Clicking citation:', nodeId);
+                                                                        const nodeIds = href.slice(1).split(',');
                                                                         return (
                                                                             <button
-                                                                                onClick={() => setActiveNodeId(nodeId)}
+                                                                                onClick={() => setActiveNodeIds(nodeIds)}
                                                                                 className="text-[#00ff88] font-semibold border-b border-[#00ff88]/40 hover:bg-[#00ff88]/10 transition-colors cursor-pointer"
                                                                             >
                                                                                 {children}
@@ -157,7 +159,11 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                                                                 }
                                                             }}
                                                         >
-                                                            {msg.content}
+                                                            {/* Pre-process regex: Group adjacent [[UUID]] or [UUID] into one [📌] link */}
+                                                            {msg.content.replace(/((?:\[{1,2}[a-f0-9-]{36}\]{1,2}\s*[,]?\s*)+)/g, (match) => {
+                                                                const ids = Array.from(match.matchAll(/([a-f0-9-]{36})/g)).map(m => m[1]);
+                                                                return ids.length > 0 ? ` [📌](#${ids.join(',')}) ` : match;
+                                                            })}
                                                         </ReactMarkdown>
                                                     </div>
                                                 ) : (

@@ -41,20 +41,22 @@ const HIGHLIGHT_STYLE = `
 `;
 
 const DocumentViewer: React.FC = () => {
-    const {
-        fileId,
-        setFileId,
-        setFileType,
-        setSlides,
-        setCurrentSlideIndex,
-        currentSlideIndex,
-        pdfSearchText,
-        setPdfSearchText,
-        isDocumentLoading,
-        setIsDocumentLoading,
-        activeNodeId,
-        setActiveNodeId
-    } = useStore();
+    const fileId = useStore(state => state.fileId);
+    const setFileId = useStore(state => state.setFileId);
+    const setFileType = useStore(state => state.setFileType);
+    const setSlides = useStore(state => state.setSlides);
+    const setCurrentSlideIndex = useStore(state => state.setCurrentSlideIndex);
+    const currentSlideIndex = useStore(state => state.currentSlideIndex);
+    const pdfSearchText = useStore(state => state.pdfSearchText);
+    const setPdfSearchText = useStore(state => state.setPdfSearchText);
+    const isDocumentLoading = useStore(state => state.isDocumentLoading);
+    const setIsDocumentLoading = useStore(state => state.setIsDocumentLoading);
+    const activeNodeIds = useStore(state => state.activeNodeIds);
+    const setActiveNodeIds = useStore(state => state.setActiveNodeIds);
+    const headersLoaded = useStore(state => state.headersLoaded);
+    const setHeadersLoaded = useStore(state => state.setHeadersLoaded);
+    const authHeaders = useStore(state => state.authHeaders);
+    const setAuthHeaders = useStore(state => state.setAuthHeaders);
 
     const [numPages, setNumPages] = useState<number | null>(null);
     const [pageNumber, setPageNumber] = useState<number>(1);
@@ -64,10 +66,8 @@ const DocumentViewer: React.FC = () => {
     const [showSearchBox, setShowSearchBox] = useState(false);
     const [isSearchMinimized, setIsSearchMinimized] = useState(false);
     const [highlightedText, setHighlightedText] = useState<string | null>(null);
-    const [authHeaders, setAuthHeaders] = useState<Record<string, string>>({});
-    const [headersLoaded, setHeadersLoaded] = useState(false);
     const [documentStructure, setDocumentStructure] = useState<any>(null);
-    const [activeNodeBox, setActiveNodeBox] = useState<{ x: number, y: number, width: number, height: number, pageIndex: number } | null>(null);
+    const [activeNodeBoxes, setActiveNodeBoxes] = useState<any[] | null>(null);
 
     // Fetch auth headers for PDF retrieval
     useEffect(() => {
@@ -89,7 +89,7 @@ const DocumentViewer: React.FC = () => {
             url: `/api/v1/documents/${fileId}/pdf`,
             httpHeaders: authHeaders
         };
-    }, [fileId, JSON.stringify(authHeaders), headersLoaded]);
+    }, [fileId, authHeaders, headersLoaded]);
 
     useEffect(() => {
         if (!containerRef) return;
@@ -171,95 +171,54 @@ const DocumentViewer: React.FC = () => {
         }
     }, [fileId, headersLoaded, authHeaders]);
 
-    // Handle activeNodeId changes - find node and navigate to it
+    // Handle activeNodeIds changes - find nodes and navigate to them
     useEffect(() => {
-        console.log('[Citation] Effect triggered. activeNodeId:', activeNodeId, 'hasStructure:', !!documentStructure);
+        if (!activeNodeIds || activeNodeIds.length === 0 || !documentStructure) return;
 
-        if (!activeNodeId || !documentStructure) {
-            if (activeNodeId) console.log('[Citation] Have ID but no structure - processing deferred.');
-            return;
-        }
-
-        console.log('[Citation] Processing activeNodeId:', activeNodeId);
-
-        // Find the node in the document structure
-        let foundNode: any = null;
-        let foundPageIndex = -1;
+        // Find the nodes in the document structure
+        const foundNodes: { node: any, pageIndex: number }[] = [];
 
         // Handle potentially nested structure (Accessing document.structure.pages instead of document.pages)
         const pages = documentStructure.structure?.pages || documentStructure.pages || [];
 
         for (const page of pages) {
-            const node = page.nodes?.find((n: any) => n.id === activeNodeId);
-            if (node) {
-                foundNode = node;
-                foundPageIndex = page.index;
-                console.log('[Citation] Found node on page:', foundPageIndex, node);
-                break;
+            // Find all nodes on this page that are in the active list
+            const nodesOnPage = page.nodes?.filter((n: any) => activeNodeIds.includes(n.id));
+            if (nodesOnPage && nodesOnPage.length > 0) {
+                nodesOnPage.forEach((node: any) => {
+                    foundNodes.push({ node, pageIndex: page.index });
+                });
             }
         }
 
-        if (foundNode && foundPageIndex >= 0) {
-            console.log('[Citation] Success! Found node:', foundNode.id, 'on page:', foundPageIndex + 1);
-            console.log('[Citation] Coordinates:', foundNode.position);
-            console.log('[Citation] Navigating to page:', foundPageIndex + 1);
+        if (foundNodes.length > 0) {
+            // Navigate to the first node's page
+            const firstNode = foundNodes[0];
+            setPageNumber(firstNode.pageIndex + 1);
+            setCurrentSlideIndex(firstNode.pageIndex);
 
-            // Navigate to the page (both pageNumber and currentSlideIndex for consistency)
-            setPageNumber(foundPageIndex + 1);
-            setCurrentSlideIndex(foundPageIndex);
+            // Set the highlight box coordinates for ALL found nodes
+            const boxes = foundNodes.map(item => ({
+                x: item.node.position.x,
+                y: item.node.position.y,
+                width: item.node.position.width,
+                height: item.node.position.height,
+                pageIndex: item.pageIndex
+            }));
 
-            // Set the highlight box coordinates
-            const box = {
-                x: foundNode.position.x,
-                y: foundNode.position.y,
-                width: foundNode.position.width,
-                height: foundNode.position.height,
-                pageIndex: foundPageIndex
-            };
-            console.log('[Citation] Setting highlight box:', box);
-            setActiveNodeBox(box);
+            setActiveNodeBoxes(boxes);
 
             // Clear after 5 seconds
             const timer = setTimeout(() => {
-                console.log('[Citation] Clearing highlight');
-                setActiveNodeBox(null);
-                setActiveNodeId(null);
+                setActiveNodeBoxes(null);
+                setActiveNodeIds(null);
             }, 5000);
 
             return () => clearTimeout(timer);
         } else {
-            console.warn('[Citation] Node not found:', activeNodeId);
-
-            // Diagnostic: Check if ID exists anywhere in the structure
-            const pages = documentStructure.structure?.pages || documentStructure.pages;
-
-            if (pages) {
-                let foundAnywhere = false;
-                let totalNodes = 0;
-                const sampleIds: string[] = [];
-
-                pages.forEach((p: any) => {
-                    p.nodes?.forEach((n: any) => {
-                        totalNodes++;
-                        if (totalNodes <= 3) sampleIds.push(n.id);
-                        if (n.id === activeNodeId) foundAnywhere = true;
-                    });
-                });
-
-                console.log(`[Citation] Diagnostic: Structure has ${totalNodes} nodes.`);
-                console.log(`[Citation] Diagnostic: Sample IDs: ${sampleIds.join(', ')}`);
-                console.log(`[Citation] Diagnostic: ID ${activeNodeId} exists in structure? ${foundAnywhere}`);
-
-                if (foundAnywhere) {
-                    console.error('[Citation] CRITICAL: ID exists but lookup failed! Check logic.');
-                } else {
-                    console.warn('[Citation] ID truly missing from structure. AI might be hallucinating or structure is stale.');
-                }
-            } else {
-                console.warn('[Citation] documentStructure is missing or has no pages:', documentStructure);
-            }
+            console.warn('[Citation] Nodes not found:', activeNodeIds);
         }
-    }, [activeNodeId, documentStructure, setCurrentSlideIndex, setActiveNodeId]);
+    }, [activeNodeIds, documentStructure, setCurrentSlideIndex, setActiveNodeIds]);
 
     const onPageRenderSuccess = () => {
         if (pdfSearchText) {
@@ -615,17 +574,17 @@ const DocumentViewer: React.FC = () => {
                                     />
 
 
-                                    {/* Coordinate-based Highlight Overlay */}
-                                    {activeNodeBox && activeNodeBox.pageIndex === pageNumber - 1 && (() => {
-                                        console.log('[Citation] Rendering overlay on page', pageNumber, 'with box:', activeNodeBox);
-                                        return (
+                                    {/* Coordinate-based Highlight Overlay (Multiple Boxes) */}
+                                    {activeNodeBoxes && activeNodeBoxes.map((box, idx) => (
+                                        box.pageIndex === pageNumber - 1 && (
                                             <div
+                                                key={`highlight-${idx}`}
                                                 className="absolute pointer-events-none"
                                                 style={{
-                                                    left: `${activeNodeBox.x}%`,
-                                                    top: `${activeNodeBox.y - 1.8}%`, // Shift up more (was -1%)
-                                                    width: `${activeNodeBox.width}%`,
-                                                    height: `${activeNodeBox.height + 0.8}%`, // Expand height slightly more
+                                                    left: `${box.x}%`,
+                                                    top: `${box.y - 1.8}%`, // Shift up more (was -1%)
+                                                    width: `${box.width}%`,
+                                                    height: `${box.height + 1.5}%`, // Expand height downwards (was +0.8%)
                                                     backgroundColor: 'rgba(0, 255, 136, 0.4)',
                                                     border: '3px solid #00ff88',
                                                     borderRadius: '4px',
@@ -634,8 +593,8 @@ const DocumentViewer: React.FC = () => {
                                                     animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
                                                 }}
                                             />
-                                        );
-                                    })()}
+                                        )
+                                    ))}
                                 </div>
                             )}
                         </Document>

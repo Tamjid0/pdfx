@@ -128,6 +128,7 @@ REFERENTIAL CITATIONS:
 - Format: [keyword](#UUID) - Copy the EXACT UUID from between [[ and ]].
 - Example: If context shows "[[a1b2-c3d4-5678]]: Revenue increased"
   Then cite as: "The [revenue increased](#a1b2-c3d4-5678)"
+- CRITICAL: DO NOT OUTPUT THE RAW "[[UUID]]" FORMAT. ALWAYS USE THE MARKDOWN LINK FORMAT.
 - CRITICAL: Use the EXACT UUID - do NOT make up IDs like "node_1".
 - DO NOT use footnotes or citation bubbles.
 - DO NOT mention "UUID" in the visible text.
@@ -217,6 +218,7 @@ REFERENTIAL CITATIONS:
 - Format: [keyword](#UUID) - Copy the EXACT UUID from between [[ and ]].
 - Example: If context shows "[[a1b2-c3d4-5678]]: Revenue increased"
   Then cite as: "The [revenue increased](#a1b2-c3d4-5678)"
+- CRITICAL: DO NOT OUTPUT THE RAW "[[UUID]]" FORMAT. ALWAYS USE THE MARKDOWN LINK FORMAT.
 - CRITICAL: Use the EXACT UUID - do NOT make up IDs like "node_1".
 - DO NOT use footnotes or citation bubbles.
 - DO NOT mention "UUID" in the visible text.

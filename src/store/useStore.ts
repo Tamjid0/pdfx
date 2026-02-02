@@ -248,8 +248,15 @@ interface AppState {
     // Smart Chunking & Scope
     topics: Topic[];
     setTopics: (topics: Topic[]) => void;
-    activeNodeId: string | null;
-    setActiveNodeId: (id: string | null) => void;
+    activeNodeIds: string[] | null;
+    setActiveNodeIds: (ids: string[] | null) => void;
+
+    // Auth Headers
+    headersLoaded: boolean;
+    setHeadersLoaded: (loaded: boolean) => void;
+    authHeaders: Record<string, string>;
+    setAuthHeaders: (headers: Record<string, string>) => void;
+
     generationScope: GenerationScope;
     setGenerationScope: (scope: GenerationScope) => void;
     isAppendMode: boolean;
@@ -445,7 +452,15 @@ export const useStore = create<AppState>((set, get) => ({
     prompt: '',
 
     topics: [],
-    activeNodeId: null,
+    activeNodeIds: null,
+    setActiveNodeIds: (ids) => set({ activeNodeIds: ids }),
+
+    // Auth Headers
+    headersLoaded: false,
+    setHeadersLoaded: (loaded) => set({ headersLoaded: loaded }),
+    authHeaders: {},
+    setAuthHeaders: (headers) => set({ authHeaders: headers }),
+
     generationScope: { type: 'all', value: null },
     isAppendMode: false,
     setIsAppendMode: (val) => set({ isAppendMode: val }),
@@ -506,7 +521,6 @@ export const useStore = create<AppState>((set, get) => ({
 
     setPreviewPreset: (preset) => set({ previewPreset: preset }),
     setPrompt: (prompt) => set({ prompt }),
-    setActiveNodeId: (nodeId: string | null) => set({ activeNodeId: nodeId }),
     setTopics: (topics) => set({ topics }),
     setGenerationScope: (scope) => set({ generationScope: scope }),
 

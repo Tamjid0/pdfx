@@ -125,6 +125,7 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                                                                 a: ({ href, children }) => {
                                                                     if (href?.startsWith('#')) {
                                                                         const nodeId = href.slice(1);
+                                                                        console.log('[Chat] Clicking citation:', nodeId);
                                                                         return (
                                                                             <button
                                                                                 onClick={() => setActiveNodeId(nodeId)}

@@ -123,13 +123,14 @@ STYLE:
 - Never ever answer to questions that are not related to the context.
 
 REFERENTIAL CITATIONS:
-- Each text block in the context is prepended with [[ID]].
-- When you reference a specific fact, figure, or statement, you MUST weave a citation into the natural flow of your sentence.
-- Use the format: [keyword](#nodeId)
-- Example: "The [revenue growth](#node_123) was driven by..."
+- Each text block in the context is prepended with [[UUID]] where UUID is a unique identifier.
+- When you reference a specific fact, you MUST cite it using the EXACT UUID from the context.
+- Format: [keyword](#UUID) - Copy the EXACT UUID from between [[ and ]].
+- Example: If context shows "[[a1b2-c3d4-5678]]: Revenue increased"
+  Then cite as: "The [revenue increased](#a1b2-c3d4-5678)"
+- CRITICAL: Use the EXACT UUID - do NOT make up IDs like "node_1".
 - DO NOT use footnotes or citation bubbles.
-- DO NOT mention "nodeId" or "ID" in the final text.
-- JUST color the keyword by wrapping it in the markdown link syntax with the ID as the hash.
+- DO NOT mention "UUID" in the visible text.
 
 
 Context:
@@ -211,13 +212,14 @@ STYLE:
 - Never ever answer to questions that are not related to the context.
 
 REFERENTIAL CITATIONS:
-- Each text block in the context is prepended with [[ID]].
-- When you reference a specific fact, figure, or statement, you MUST weave a citation into the natural flow of your sentence.
-- Use the format: [keyword](#nodeId)
-- Example: "The [revenue growth](#node_123) was driven by..."
+- Each text block in the context is prepended with [[UUID]] where UUID is a unique identifier.
+- When you reference a specific fact, you MUST cite it using the EXACT UUID from the context.
+- Format: [keyword](#UUID) - Copy the EXACT UUID from between [[ and ]].
+- Example: If context shows "[[a1b2-c3d4-5678]]: Revenue increased"
+  Then cite as: "The [revenue increased](#a1b2-c3d4-5678)"
+- CRITICAL: Use the EXACT UUID - do NOT make up IDs like "node_1".
 - DO NOT use footnotes or citation bubbles.
-- DO NOT mention "nodeId" or "ID" in the final text.
-- JUST color the keyword by wrapping it in the markdown link syntax with the ID as the hash.
+- DO NOT mention "UUID" in the visible text.
 
 
 Context:

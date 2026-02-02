@@ -142,15 +142,23 @@ const DocumentViewer: React.FC = () => {
 
     // Fetch document structure for coordinate-based highlighting
     useEffect(() => {
+        console.log('[DocumentViewer] Structure effect triggered. fileId:', fileId, 'headersLoaded:', headersLoaded);
         if (!fileId) return;
 
         const fetchStructure = async () => {
+            console.log('[DocumentViewer] Fetching structure for file:', fileId);
             try {
                 const response = await fetch(`/api/v1/documents/${fileId}`, {
                     headers: authHeaders
                 });
                 const data = await response.json();
-                setDocumentStructure(data.structure);
+                console.log('[DocumentViewer] Fetched structure response:', data);
+                if (data.structure) {
+                    console.log('[DocumentViewer] Setting document structure with', data.structure.pages?.length, 'pages');
+                    setDocumentStructure(data.structure);
+                } else {
+                    console.error('[DocumentViewer] Response missing structure property:', data);
+                }
             } catch (error) {
                 console.error('[DocumentViewer] Failed to fetch document structure:', error);
             }
@@ -158,48 +166,100 @@ const DocumentViewer: React.FC = () => {
 
         if (headersLoaded) {
             fetchStructure();
+        } else {
+            console.log('[DocumentViewer] Waiting for headers to load...');
         }
     }, [fileId, headersLoaded, authHeaders]);
 
     // Handle activeNodeId changes - find node and navigate to it
     useEffect(() => {
-        if (!activeNodeId || !documentStructure) return;
+        console.log('[Citation] Effect triggered. activeNodeId:', activeNodeId, 'hasStructure:', !!documentStructure);
+
+        if (!activeNodeId || !documentStructure) {
+            if (activeNodeId) console.log('[Citation] Have ID but no structure - processing deferred.');
+            return;
+        }
+
+        console.log('[Citation] Processing activeNodeId:', activeNodeId);
 
         // Find the node in the document structure
         let foundNode: any = null;
         let foundPageIndex = -1;
 
-        for (const page of documentStructure.pages || []) {
+        // Handle potentially nested structure (Accessing document.structure.pages instead of document.pages)
+        const pages = documentStructure.structure?.pages || documentStructure.pages || [];
+
+        for (const page of pages) {
             const node = page.nodes?.find((n: any) => n.id === activeNodeId);
             if (node) {
                 foundNode = node;
                 foundPageIndex = page.index;
+                console.log('[Citation] Found node on page:', foundPageIndex, node);
                 break;
             }
         }
 
         if (foundNode && foundPageIndex >= 0) {
-            // Navigate to the page
+            console.log('[Citation] Success! Found node:', foundNode.id, 'on page:', foundPageIndex + 1);
+            console.log('[Citation] Coordinates:', foundNode.position);
+            console.log('[Citation] Navigating to page:', foundPageIndex + 1);
+
+            // Navigate to the page (both pageNumber and currentSlideIndex for consistency)
             setPageNumber(foundPageIndex + 1);
+            setCurrentSlideIndex(foundPageIndex);
 
             // Set the highlight box coordinates
-            setActiveNodeBox({
+            const box = {
                 x: foundNode.position.x,
                 y: foundNode.position.y,
                 width: foundNode.position.width,
                 height: foundNode.position.height,
                 pageIndex: foundPageIndex
-            });
+            };
+            console.log('[Citation] Setting highlight box:', box);
+            setActiveNodeBox(box);
 
             // Clear after 5 seconds
             const timer = setTimeout(() => {
+                console.log('[Citation] Clearing highlight');
                 setActiveNodeBox(null);
                 setActiveNodeId(null);
             }, 5000);
 
             return () => clearTimeout(timer);
+        } else {
+            console.warn('[Citation] Node not found:', activeNodeId);
+
+            // Diagnostic: Check if ID exists anywhere in the structure
+            const pages = documentStructure.structure?.pages || documentStructure.pages;
+
+            if (pages) {
+                let foundAnywhere = false;
+                let totalNodes = 0;
+                const sampleIds: string[] = [];
+
+                pages.forEach((p: any) => {
+                    p.nodes?.forEach((n: any) => {
+                        totalNodes++;
+                        if (totalNodes <= 3) sampleIds.push(n.id);
+                        if (n.id === activeNodeId) foundAnywhere = true;
+                    });
+                });
+
+                console.log(`[Citation] Diagnostic: Structure has ${totalNodes} nodes.`);
+                console.log(`[Citation] Diagnostic: Sample IDs: ${sampleIds.join(', ')}`);
+                console.log(`[Citation] Diagnostic: ID ${activeNodeId} exists in structure? ${foundAnywhere}`);
+
+                if (foundAnywhere) {
+                    console.error('[Citation] CRITICAL: ID exists but lookup failed! Check logic.');
+                } else {
+                    console.warn('[Citation] ID truly missing from structure. AI might be hallucinating or structure is stale.');
+                }
+            } else {
+                console.warn('[Citation] documentStructure is missing or has no pages:', documentStructure);
+            }
         }
-    }, [activeNodeId, documentStructure]);
+    }, [activeNodeId, documentStructure, setCurrentSlideIndex, setActiveNodeId]);
 
     const onPageRenderSuccess = () => {
         if (pdfSearchText) {
@@ -554,23 +614,28 @@ const DocumentViewer: React.FC = () => {
                                         className="shadow-2xl border border-[#222] transition-transform duration-200"
                                     />
 
+
                                     {/* Coordinate-based Highlight Overlay */}
-                                    {activeNodeBox && activeNodeBox.pageIndex === pageNumber - 1 && (
-                                        <div
-                                            className="absolute pointer-events-none animate-pulse"
-                                            style={{
-                                                left: `${activeNodeBox.x}%`,
-                                                top: `${activeNodeBox.y}%`,
-                                                width: `${activeNodeBox.width}%`,
-                                                height: `${activeNodeBox.height}%`,
-                                                backgroundColor: 'rgba(0, 255, 136, 0.3)',
-                                                border: '2px solid #00ff88',
-                                                borderRadius: '4px',
-                                                boxShadow: '0 0 20px rgba(0, 255, 136, 0.6)',
-                                                zIndex: 1000
-                                            }}
-                                        />
-                                    )}
+                                    {activeNodeBox && activeNodeBox.pageIndex === pageNumber - 1 && (() => {
+                                        console.log('[Citation] Rendering overlay on page', pageNumber, 'with box:', activeNodeBox);
+                                        return (
+                                            <div
+                                                className="absolute pointer-events-none"
+                                                style={{
+                                                    left: `${activeNodeBox.x}%`,
+                                                    top: `${activeNodeBox.y - 1.8}%`, // Shift up more (was -1%)
+                                                    width: `${activeNodeBox.width}%`,
+                                                    height: `${activeNodeBox.height + 0.8}%`, // Expand height slightly more
+                                                    backgroundColor: 'rgba(0, 255, 136, 0.4)',
+                                                    border: '3px solid #00ff88',
+                                                    borderRadius: '4px',
+                                                    boxShadow: '0 0 30px rgba(0, 255, 136, 0.8), inset 0 0 20px rgba(0, 255, 136, 0.3)',
+                                                    zIndex: 9999,
+                                                    animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                                                }}
+                                            />
+                                        );
+                                    })()}
                                 </div>
                             )}
                         </Document>

@@ -1,4 +1,5 @@
 import fs from 'fs';
+import logger from '../utils/logger.js';
 import path from 'path';
 
 /**
@@ -52,7 +53,7 @@ export class ImageExtractor {
                         imagePaths.push(result.absolutePath);
                         extractedCount++;
                     } catch (error) {
-                        console.error(`[ImageExtractor] Failed to extract image from page ${page.index}:`, error);
+                        logger.error(`[ImageExtractor] Failed to extract image from page ${page.index}: ${error.message}`);
                     }
                 }
             }
@@ -62,7 +63,6 @@ export class ImageExtractor {
         if (extractedCount > 0) {
             const docPath = path.join(docDir, `metadata.json`);
             fs.writeFileSync(docPath, JSON.stringify(docGraph, null, 2));
-            console.log(`[ImageExtractor] Updated metadata.json in ${docDir} with ${extractedCount} file paths`);
         }
 
         return { extractedCount, imagePaths };

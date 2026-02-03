@@ -32,7 +32,6 @@ export class DocumentProcessor {
         const documentId = forcedDocumentId || crypto.randomUUID();
         const docDir = storageService.getDocDir(userId, documentId);
 
-        console.log(`[DocumentProcessor] Fast JSON Extraction: ${originalName} (User: ${userId})`);
 
         if (mime === 'application/pdf') {
             documentGraph = await this.pdfExtractor.extract(filePath, originalName);
@@ -92,9 +91,8 @@ export class DocumentProcessor {
                 documentData,
                 { upsert: true, new: true }
             );
-            console.log(`[DocumentProcessor] Document ${documentId} synced to MongoDB for User ${userId}.`);
         } catch (mongoError) {
-            console.error(`[DocumentProcessor] Failed to save to MongoDB: ${mongoError.message}`);
+            logger.error(`[DocumentProcessor] Failed to save to MongoDB: ${mongoError.message}`);
         }
 
         // Save JSON to disk (Temporary metadata backup)
@@ -140,7 +138,6 @@ export class DocumentProcessor {
 
             // B. PDF to Static Images (for Flicker-Free Source)
             if (onProgress) await onProgress(40);
-            console.log(`[DocumentProcessor] Generating static images for: ${documentId} (User: ${userId})`);
 
             const totalPages = await PdfImageRenderer.renderToImages(
                 pdfPath,
@@ -150,12 +147,11 @@ export class DocumentProcessor {
                 }
             );
 
-            console.log(`[DocumentProcessor] Static rendering complete. Generated ${totalPages} images.`);
             if (onProgress) await onProgress(100);
 
             return data.convertedPdfPath || filePath;
         } catch (e) {
-            console.warn("[DocumentProcessor] Conversion/Rendering failed", e);
+            logger.warn(`[DocumentProcessor] Conversion/Rendering failed: ${e.message}`);
             throw e;
         }
     }

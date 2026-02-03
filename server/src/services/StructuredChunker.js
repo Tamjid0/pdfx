@@ -17,7 +17,6 @@ export class StructuredChunker {
         const chunks = [];
 
         if (!docGraph.structure || !docGraph.structure.pages) {
-            console.warn('[StructuredChunker] No pages found in document structure');
             return chunks;
         }
 

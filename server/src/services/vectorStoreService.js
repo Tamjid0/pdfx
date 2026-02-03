@@ -17,7 +17,6 @@ export const getVectorStore = async (fileId) => {
     if (vectorStoreCache.has(fileId)) {
         const cached = vectorStoreCache.get(fileId);
         if (Date.now() - cached.timestamp < CACHE_TTL) {
-            console.log(`[Cache] Hit for fileId: ${fileId}`);
             cached.timestamp = Date.now(); // Refresh TTL
             return cached.instance;
         }
@@ -26,7 +25,6 @@ export const getVectorStore = async (fileId) => {
 
     const vectorStorePath = storageService.getIndexPath(fileId);
     if (fs.existsSync(vectorStorePath)) {
-        console.log(`[+] [Disk] Loading vector store for fileId: ${fileId}`);
         const instance = await FaissStore.load(vectorStorePath, hfEmbeddings);
 
         // 2. Update Cache

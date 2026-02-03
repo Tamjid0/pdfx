@@ -119,7 +119,7 @@ router.get('/:documentId/pdf', optionalVerifyToken, checkDocumentOwnership(Docum
         }
 
         if (!pdfPath || !fs.existsSync(pdfPath)) {
-            console.error(`[DocumentRoutes] PDF not found at: ${pdfPath}`);
+            logger.error(`[DocumentRoutes] PDF not found at: ${pdfPath}`);
             return res.status(404).json({ error: 'PDF file missing on disk' });
         }
 
@@ -127,7 +127,7 @@ router.get('/:documentId/pdf', optionalVerifyToken, checkDocumentOwnership(Docum
         res.setHeader('Content-Type', 'application/pdf');
         res.sendFile(pdfPath);
     } catch (error) {
-        console.error('[DocumentRoutes] Error serving PDF:', error);
+        logger.error(`[DocumentRoutes] Error serving PDF: ${error.message}`);
         res.status(500).json({ error: 'Failed to serve PDF' });
     }
 });
@@ -328,7 +328,7 @@ router.patch('/:documentId/revisions/:revisionId', verifyToken, checkDocumentOwn
 
         res.json({ success: true, message: 'Revision renamed successfully' });
     } catch (error) {
-        console.error('[DocumentRoutes] Error renaming revision:', error);
+        logger.error(`[DocumentRoutes] Error renaming revision: ${error.message}`);
         res.status(500).json({ error: 'Failed to rename revision' });
     }
 });
@@ -349,7 +349,7 @@ router.delete('/:documentId', verifyToken, checkDocumentOwnership(Document), asy
 
         res.json({ success: true, message: 'Project deleted successfully' });
     } catch (error) {
-        console.error('[DocumentRoutes] Error deleting document:', error);
+        logger.error(`[DocumentRoutes] Error deleting document: ${error.message}`);
         res.status(500).json({ error: 'Failed to delete project' });
     }
 });

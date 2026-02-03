@@ -8,7 +8,6 @@ export const initSentry = (app) => {
     const dsn = process.env.SENTRY_DSN;
 
     if (!dsn) {
-        console.warn("[Sentry] No DSN found. Error tracking is disabled.");
         return;
     }
 
@@ -29,7 +28,6 @@ export const initSentry = (app) => {
     // TracingHandler creates a trace for every incoming request
     app.use(Sentry.Handlers.tracingHandler());
 
-    console.log("[Sentry] Initialized successfully");
 };
 
 /**

@@ -82,9 +82,6 @@ export class PdfExtractor {
                 docPage.addNode(node);
             }
 
-            if (docPage.nodes.length === 0) {
-                console.warn(`[PdfExtractor] Page ${i} appears to be an image or empty (0 text nodes extracted).`);
-            }
 
             docGraph.addPage(docPage);
         }

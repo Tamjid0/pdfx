@@ -5,6 +5,7 @@ import { aiGenerationLimiter } from '../../middleware/rateLimitMiddleware.js';
 import validate from '../../middleware/validate.js';
 import { optionalVerifyToken } from '../../middleware/authMiddleware.js';
 import { insightsSchema } from '../../validations/insights.validation.js';
+import logger from '../../utils/logger.js';
 import ApiError from '../../utils/ApiError.js';
 
 import { resolveScopedText } from '../../utils/scoping.js';
@@ -48,12 +49,11 @@ Do NOT include markdown formatting, code fences, or explanations outside the JSO
 
         const aiResponse = await generateFullDocumentTransformation(fullText, promptInstruction, { outputFormat: 'json' });
 
-        console.log("Raw AI Response for Insights:", aiResponse); // Debugging Log
 
         const jsonResponse = safeParseAiJson(aiResponse, 'Insights');
 
         if (!jsonResponse || !Array.isArray(jsonResponse.blocks)) {
-            console.error("Invalid Adaptive JSON Structure:", jsonResponse);
+            logger.error(`Invalid Adaptive JSON Structure: ${JSON.stringify(jsonResponse)}`);
             throw new Error("Invalid adaptive JSON structure received from AI.");
         }
 

@@ -1,6 +1,7 @@
 import JSZip from 'jszip';
 import { parseStringPromise } from 'xml2js';
 import path from 'path';
+import logger from '../../utils/logger.js';
 import { DocumentRoot, DocumentPage, TextNode, ImageNode } from '../../models/DocumentGraph.js';
 
 const stripPrefix = (name) => name.split(':').pop();
@@ -36,7 +37,7 @@ export class PptxExtractor {
                 }
             }
         } catch (e) {
-            console.warn("Failed to parse dimensions", e);
+            // Failed to parse dimensions
         }
 
         // 2. Find Slides
@@ -86,7 +87,7 @@ export class PptxExtractor {
                 slideIndex++;
 
             } catch (err) {
-                console.error(`Error parsing slide ${fileName}`, err);
+                logger.error(`Error parsing slide ${fileName}: ${err.message}`);
                 // Add empty page on error to maintain count
                 docGraph.addPage(new DocumentPage(slideIndex, { width: slideWidth, height: slideHeight }, 'slide'));
                 slideIndex++;

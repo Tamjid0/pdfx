@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 import { parseStringPromise } from 'xml2js';
+import logger from '../utils/logger.js';
 import fs from 'fs';
 
 // Helper to strip XML namespaces (e.g. p:presentation -> presentation)
@@ -17,12 +18,10 @@ export async function extractSlides(buffer) {
     // 1. Try Parse presentation.xml to get slide order (rels)
     try {
         const presentationXml = await zip.file("ppt/presentation.xml").async("text");
-        console.log("Found presentation.xml"); // DEBUG
         const presentation = await parseStringPromise(presentationXml, { tagNameProcessors: [stripPrefix] });
 
         // Safety check for empty or malformed presentation
         const slideIdList = presentation?.presentation?.slideIdLst?.[0]?.slideId || [];
-        console.log("Slide ID List length:", slideIdList.length); // DEBUG
 
         // We need the rels to map rId to filename.
         const relsFile = zip.file("ppt/_rels/presentation.xml.rels");
@@ -61,12 +60,11 @@ export async function extractSlides(buffer) {
             }
         }
     } catch (e) {
-        console.error("Error parsing presentation relationship structure:", e);
+        logger.error(`Error parsing presentation relationship structure: ${e.message}`);
     }
 
     // FALLBACK: If standard parsing found nothing, just scan for slideN.xml files
     if (slides.length === 0) {
-        console.log("Using fallback: scanning for slide files directly..."); // DEBUG
 
         // Find all files that look like slides/slide123.xml
         // Note: zip.files contains raw paths like "ppt/slides/slide1.xml"
@@ -83,7 +81,6 @@ export async function extractSlides(buffer) {
             return numA - numB;
         });
 
-        console.log("Found slide files via scan:", slideFiles); // DEBUG
 
         for (const fileName of slideFiles) {
             const slideXml = await zip.file(fileName).async("text");

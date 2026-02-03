@@ -125,9 +125,7 @@ const DocumentViewer: React.FC = () => {
 
             // Copy to clipboard for easy Ctrl+F search
             if (navigator.clipboard) {
-                navigator.clipboard.writeText(pdfSearchText).catch(err => {
-                    console.warn('Failed to copy to clipboard:', err);
-                });
+                navigator.clipboard.writeText(pdfSearchText);
             }
 
             // Highlighting triggers:
@@ -142,32 +140,24 @@ const DocumentViewer: React.FC = () => {
 
     // Fetch document structure for coordinate-based highlighting
     useEffect(() => {
-        console.log('[DocumentViewer] Structure effect triggered. fileId:', fileId, 'headersLoaded:', headersLoaded);
         if (!fileId) return;
 
         const fetchStructure = async () => {
-            console.log('[DocumentViewer] Fetching structure for file:', fileId);
             try {
                 const response = await fetch(`/api/v1/documents/${fileId}`, {
                     headers: authHeaders
                 });
                 const data = await response.json();
-                console.log('[DocumentViewer] Fetched structure response:', data);
                 if (data.structure) {
-                    console.log('[DocumentViewer] Setting document structure with', data.structure.pages?.length, 'pages');
                     setDocumentStructure(data.structure);
-                } else {
-                    console.error('[DocumentViewer] Response missing structure property:', data);
                 }
             } catch (error) {
-                console.error('[DocumentViewer] Failed to fetch document structure:', error);
+                // Silent error in production
             }
         };
 
         if (headersLoaded) {
             fetchStructure();
-        } else {
-            console.log('[DocumentViewer] Waiting for headers to load...');
         }
     }, [fileId, headersLoaded, authHeaders]);
 
@@ -215,8 +205,6 @@ const DocumentViewer: React.FC = () => {
             }, 5000);
 
             return () => clearTimeout(timer);
-        } else {
-            console.warn('[Citation] Nodes not found:', activeNodeIds);
         }
     }, [activeNodeIds, documentStructure, setCurrentSlideIndex, setActiveNodeIds]);
 

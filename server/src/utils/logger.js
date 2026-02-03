@@ -17,7 +17,6 @@ const transports = [
 ];
 
 if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY && process.env.CLOUDWATCH_GROUP_NAME) {
-    console.log('[Logger] Initializing CloudWatch Transport...');
     transports.push(new WinstonCloudWatch({
         logGroupName: process.env.CLOUDWATCH_GROUP_NAME,
         logStreamName: process.env.CLOUDWATCH_STREAM_NAME || `server-${new Date().toISOString().split('T')[0]}`,

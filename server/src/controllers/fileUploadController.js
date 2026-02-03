@@ -179,7 +179,6 @@ export const embedText = async (req, res) => {
         const indexPath = storageService.getIndexPath(fileId);
         await vectorStore.save(indexPath);
 
-        console.log(`[+] FAISS index created successfully for pasted text, fileId: ${fileId}`);
 
         res.json({
             fileId: fileId,
@@ -189,7 +188,7 @@ export const embedText = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Text embedding failed:', error);
+        logger.error(`[embedText] Failed: ${error.message}`);
         res.status(500).send({ error: error.message || 'Failed to embed text.' });
     }
 };

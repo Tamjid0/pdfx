@@ -1,4 +1,5 @@
 import puppeteer from "puppeteer";
+import logger from "../utils/logger.js";
 
 export async function scrapeHtml(url) {
   const browser = await puppeteer.launch({
@@ -29,7 +30,6 @@ export async function scrapeHtml(url) {
       Object.defineProperty(navigator, "webdriver", { get: () => false });
     });
 
-    console.log("Navigating to URL...");
     await page.goto(url, {
       waitUntil: "networkidle2",
       timeout: 120000,
@@ -38,12 +38,10 @@ export async function scrapeHtml(url) {
     // ⭐ Auto-scroll to load all dynamic content
     await autoScroll(page);
 
-    console.log("Waiting for chat content...");
     await page.waitForSelector(".prose, .markdown, article, main", {
       timeout: 120000,
     });
 
-    console.log("Extracting content...");
 
     // ⭐ Extract the BEST relevant rich-text content
     const chatHtml = await page.evaluate(() => {
@@ -57,7 +55,7 @@ export async function scrapeHtml(url) {
         if (el.closest('header, footer, nav, aside') || text.trim().split(/\s+/).length < 20) { // Added min word count
           return;
         }
-        
+
         let score = text.length;
 
         // Boost score for semantic tags and roles
@@ -73,7 +71,7 @@ export async function scrapeHtml(url) {
           score *= 0.1; // Heavy penalty
         }
         if (lowerText.includes('button') || lowerText.includes('attach') || lowerText.includes('search') || lowerText.includes('study') || lowerText.includes('voice')) {
-            score *= 0.5; // Moderate penalty for UI words
+          score *= 0.5; // Moderate penalty for UI words
         }
 
 
@@ -82,13 +80,13 @@ export async function scrapeHtml(url) {
           bestElement = el;
         }
       });
-      
+
       return bestElement ? bestElement.outerHTML : '<p>No suitable content found.</p>';
     });
 
     return chatHtml || "<p>No content found.</p>";
   } catch (err) {
-    console.error("Scrape error:", err);
+    logger.error(`Scrape error: ${err.message}`);
     throw err;
   } finally {
     await browser.close();

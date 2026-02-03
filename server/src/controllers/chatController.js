@@ -1,4 +1,5 @@
 import { generateChunkBasedTransformation, generateChunkBasedStreamingTransformation } from '../services/aiGenerationService.js';
+import logger from '../utils/logger.js';
 
 export const chatWithDocument = async (req, res) => {
     const { fileId, message } = req.body;
@@ -15,7 +16,7 @@ export const chatWithDocument = async (req, res) => {
             timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
         });
     } catch (error) {
-        console.error('Error during chat with document:', error);
+        logger.error(`[ChatController] Error during chat with document: ${error.message}`);
         res.status(500).json({ error: error.message || 'Failed to get a response from the document.' });
     }
 };
@@ -37,7 +38,7 @@ export const chatWithDocumentStream = async (req, res) => {
 
     try {
         const stream = generateChunkBasedStreamingTransformation(fileId, message);
-        
+
         for await (const chunk of stream) {
             res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
         }
@@ -45,7 +46,7 @@ export const chatWithDocumentStream = async (req, res) => {
         res.write('event: end\ndata: {}\n\n');
         res.end();
     } catch (error) {
-        console.error('Error during streaming chat:', error);
+        logger.error(`[ChatController] Error during streaming chat: ${error.message}`);
         res.write(`data: ${JSON.stringify({ error: 'Failed to stream response' })}\n\n`);
         res.end();
     }

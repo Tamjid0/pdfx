@@ -3,6 +3,7 @@ import { FaissStore } from '@langchain/community/vectorstores/faiss';
 import { hfEmbeddings } from './embeddingService.js';
 import path from 'path';
 import fs from 'fs';
+import logger from '../utils/logger.js';
 
 const aiModel = genAI.getGenerativeModel({
     model: "gemini-2.5-flash",
@@ -20,7 +21,7 @@ async function retryOperation(operation, maxRetries = 3, delayMs = 1000) {
         } catch (error) {
             lastError = error;
             // Check for specific error types if needed (e.g. Rate Limit)
-            console.warn(`[AI-Service] Attempt ${i + 1} failed. Retrying in ${delayMs * Math.pow(2, i)}ms... Error: ${error.message}`);
+            logger.warn(`[AI-Service] Attempt ${i + 1} failed. Retrying... Error: ${error.message}`);
             if (i < maxRetries - 1) {
                 await new Promise(resolve => setTimeout(resolve, delayMs * Math.pow(2, i)));
             }
@@ -59,14 +60,11 @@ User's specific instruction: "${promptInstruction}"
         const result = await retryOperation(() => aiModel.generateContent(systemPrompt));
         return result?.response?.text()?.trim() || "No content generated.";
     } catch (error) {
-        console.error('Error in full document transformation:', error);
+        logger.error(`[AI-Service] FullDoc transformation failed: ${error.message}`);
         throw new Error('Failed to generate full document transformation.');
     }
 }
 
-/**
- * Performs chunk-based RAG generation using a FAISS vector index.
- */
 export async function generateChunkBasedTransformation(fileId, query, topN = 10) {
     const indexesDir = path.join(process.cwd(), 'src', 'database', 'indexes');
     const indexPath = path.join(indexesDir, fileId);
@@ -76,7 +74,6 @@ export async function generateChunkBasedTransformation(fileId, query, topN = 10)
     }
 
     const vectorStore = await FaissStore.load(indexPath, hfEmbeddings);
-    console.log(`[AI-Service] Index loaded from disk for fileId: ${fileId}. Encoding user query...`);
     const searchResults = await vectorStore.similaritySearch(query, topN);
 
     if (searchResults.length === 0) {
@@ -146,14 +143,11 @@ User Query: "${query}"
         const result = await retryOperation(() => aiModel.generateContent(systemPrompt));
         return result?.response?.text()?.trim() || "No content generated.";
     } catch (error) {
-        console.error('Error in transformation:', error);
+        logger.error(`[AI-Service] Chunk transformation failed: ${error.message}`);
         throw new Error('Failed to generate response.');
     }
 }
 
-/**
- * Performs periodic RAG streaming generation using a FAISS vector index.
- */
 export async function* generateChunkBasedStreamingTransformation(fileId, query, topN = 10) {
     const indexesDir = path.join(process.cwd(), 'src', 'database', 'indexes');
     const indexPath = path.join(indexesDir, fileId);
@@ -163,7 +157,6 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
     }
 
     const vectorStore = await FaissStore.load(indexPath, hfEmbeddings);
-    console.log(`[AI-Streaming-Service] Index loaded from disk for fileId: ${fileId}. Encoding user query...`);
     const searchResults = await vectorStore.similaritySearch(query, topN);
 
     if (searchResults.length === 0) {
@@ -243,7 +236,7 @@ User Query: "${query}"
             }
         }
     } catch (error) {
-        console.error('Error in streaming transformation:', error);
+        logger.error(`[AI-Service] Streaming transformation failed: ${error.message}`);
         throw new Error('Failed to generate streaming response.');
     }
 }

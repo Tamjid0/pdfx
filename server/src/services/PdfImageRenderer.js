@@ -1,4 +1,5 @@
 import { spawn } from 'child_process';
+import logger from '../utils/logger.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -23,7 +24,6 @@ class PdfImageRenderer {
             fs.mkdirSync(pagesDir, { recursive: true });
         }
 
-        console.log(`[PdfImageRenderer] Starting Native Poppler Rendering: ${pdfPath}`);
 
         // Output prefix for pdftoppm. It will generate files like {prefix}-1.png, {prefix}-2.png
         // We use 'page' as prefix, so we get page-1.png, page-2.png
@@ -48,16 +48,17 @@ class PdfImageRenderer {
 
             process.stderr.on('data', (data) => {
                 // Poppler logs warnings to stderr, not necessarily fatal
-                console.log(`[PdfImageRenderer] Poppler Log: ${data}`);
+                if (data.toString().toLowerCase().includes('error')) {
+                    logger.error(`[PdfImageRenderer] Poppler Error: ${data}`);
+                }
             });
 
             process.on('close', (code) => {
                 if (code !== 0) {
-                    console.error(`[PdfImageRenderer] pdftoppm process exited with code ${code}`);
+                    logger.error(`[PdfImageRenderer] pdftoppm process exited with code ${code}`);
                     return reject(new Error(`pdftoppm failed with code ${code}`));
                 }
 
-                console.log(`[PdfImageRenderer] Native rendering completed. Found files:`);
 
                 // Normalization Step:
                 try {
@@ -79,19 +80,18 @@ class PdfImageRenderer {
 
                     // Count total pages
                     const finalFiles = fs.readdirSync(pagesDir).filter(f => f.endsWith('.png'));
-                    console.log(`[PdfImageRenderer] Renamed and verified ${finalFiles.length} images.`);
 
                     if (onProgress) onProgress(100);
                     resolve(finalFiles.length);
 
                 } catch (err) {
-                    console.error("[PdfImageRenderer] Error renaming files:", err);
+                    logger.error(`[PdfImageRenderer] Error renaming files: ${err.message}`);
                     reject(err);
                 }
             });
 
             process.on('error', (err) => {
-                console.error("[PdfImageRenderer] Failed to start pdftoppm. Is poppler-utils installed?", err);
+                logger.error(`[PdfImageRenderer] Failed to start pdftoppm: ${err.message}`);
                 reject(err);
             });
         });

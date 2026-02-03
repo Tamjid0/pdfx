@@ -48,7 +48,7 @@ export const initDocumentWorker = async () => {
                 }
 
                 // 3. Conversion/Rendering (Always run for PPTX or for full process)
-                console.log(`[Worker] Starting conversion/rendering for ${documentId} (${mimeType})`);
+                logger.info(`[Worker] Starting conversion/rendering for ${documentId} (${mimeType})`);
 
                 await documentProcessor.convert(
                     documentId,

@@ -16,11 +16,6 @@ import sanitizeRequest from './middleware/sanitize.js';
 import { initBackupSchedule } from './services/backupService.js';
 import { initSentry, registerSentryErrorHandler } from './config/sentry.js';
 
-// --- Debug Env Mapping ---
-console.log('--- ENV DEBUG ---');
-console.log('FIREBASE_PROJECT_ID:', process.env.FIREBASE_PROJECT_ID);
-console.log('NEXT_PUBLIC_FIREBASE_PROJECT_ID:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
-console.log('------------------');
 
 // --- Environment Validation (Production Readiness) ---
 const envSchema = z.object({
@@ -36,7 +31,7 @@ const envSchema = z.object({
 
 const envResult = envSchema.safeParse(process.env);
 if (!envResult.success) {
-    console.error('❌ Invalid environment variables:', envResult.error.format());
+    logger.error(`❌ Invalid environment variables: ${JSON.stringify(envResult.error.format())}`);
     process.exit(1);
 }
 

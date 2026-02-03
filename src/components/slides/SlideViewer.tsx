@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import StaticSlideRenderer from './StaticSlideRenderer';
+import { getAuthHeaders } from '../../services/apiService';
 
 const IconChevronLeft = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -24,9 +25,91 @@ const SlideViewer: React.FC = () => {
         renderingProgress,
         nextSlide,
         prevSlide,
-        isSlideMode
+        isSlideMode,
+        activeNodeIds,
+        setActiveNodeIds
     } = useStore();
     const currentSlide = slides[currentSlideIndex];
+
+    const [authHeaders, setAuthHeaders] = useState<Record<string, string>>({});
+    const [documentStructure, setDocumentStructure] = useState<any>(null);
+    const [activeNodeBoxes, setActiveNodeBoxes] = useState<any[] | null>(null);
+
+    // 1. Fetch Auth Headers
+    useEffect(() => {
+        const fetchHeaders = async () => {
+            try {
+                const headers = await getAuthHeaders();
+                setAuthHeaders(headers);
+            } catch (err) {
+                console.error("Failed to fetch auth headers for slides");
+            }
+        };
+        fetchHeaders();
+    }, [fileId]);
+
+    // 2. Fetch Document Structure for Coordinates
+    useEffect(() => {
+        if (!fileId || !authHeaders['Authorization']) return;
+
+        const fetchStructure = async () => {
+            try {
+                const response = await fetch(`/api/v1/documents/${fileId}`, {
+                    headers: authHeaders
+                });
+                const data = await response.json();
+                if (data.structure) {
+                    setDocumentStructure(data.structure);
+                }
+            } catch (error) {
+                console.error("Failed to fetch document structure for highlights", error);
+            }
+        };
+        fetchStructure();
+    }, [fileId, authHeaders]);
+
+    // 3. Map activeNodeIds to Bounding Boxes
+    useEffect(() => {
+        if (!activeNodeIds || activeNodeIds.length === 0 || !documentStructure) return;
+
+        const foundNodes: { node: any, pageIndex: number }[] = [];
+        // Handle potentially nested structure
+        const pages = documentStructure.structure?.pages || documentStructure.pages || [];
+
+        for (const page of pages) {
+            const nodesOnPage = page.nodes?.filter((n: any) => activeNodeIds.includes(n.id));
+            if (nodesOnPage && nodesOnPage.length > 0) {
+                nodesOnPage.forEach((node: any) => {
+                    foundNodes.push({ node, pageIndex: page.index });
+                });
+            }
+        }
+
+        if (foundNodes.length > 0) {
+            // Auto-navigate to first found slide
+            const firstNode = foundNodes[0];
+            setCurrentSlideIndex(firstNode.pageIndex);
+
+            // Create boxes
+            const boxes = foundNodes.map(item => ({
+                x: item.node.position.x,
+                y: item.node.position.y,
+                width: item.node.position.width,
+                height: item.node.position.height,
+                pageIndex: item.pageIndex
+            }));
+
+            setActiveNodeBoxes(boxes);
+
+            // Auto-clear
+            const timer = setTimeout(() => {
+                setActiveNodeBoxes(null);
+                setActiveNodeIds(null);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [activeNodeIds, documentStructure, setCurrentSlideIndex, setActiveNodeIds]);
+
 
     if (!currentSlide && !isSlideMode && !isProcessingSlides) {
         return (
@@ -100,7 +183,7 @@ const SlideViewer: React.FC = () => {
                 <div className="slide-content-container aspect-[16/9] w-full max-w-[950px] bg-[#1a1a1a] rounded-xl border border-[#333] shadow-2xl relative flex flex-col items-center justify-center overflow-hidden transition-all duration-300 hover:border-[#00ff88]/30">
 
                     {fileId && !isProcessingSlides ? (
-                        // HIGH FIDELITY STATIC PAGE (Pre-rendered on Server)
+                        // HIGH FIDELITY STATIC PAGE
                         <div className="w-full h-full relative group/pdf overflow-hidden flex items-center justify-center">
                             <StaticSlideRenderer
                                 documentId={fileId}
@@ -108,6 +191,31 @@ const SlideViewer: React.FC = () => {
                                 priority={true}
                                 className="shadow-lg"
                             />
+
+                            {/* HIGHLIGHT OVERLAY LAYER */}
+                            {activeNodeBoxes && activeNodeBoxes.map((box, idx) => (
+                                box.pageIndex === currentSlideIndex && (
+                                    <div
+                                        key={`slide-highlight-${idx}`}
+                                        className="absolute pointer-events-none"
+                                        style={{
+                                            left: `${box.x}%`,
+                                            top: `${box.y}%`,
+                                            width: `${box.width}%`,
+                                            height: `${box.height}%`,
+                                            backgroundColor: 'rgba(0, 255, 136, 0.4)',
+                                            border: '2px solid #00ff88',
+                                            borderRadius: '2px', // Sharper corners for text
+                                            boxShadow: '0 0 15px rgba(0, 255, 136, 0.6), inset 0 0 10px rgba(0, 255, 136, 0.2)',
+                                            zIndex: 50, // Above image, below controls
+                                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                            animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                                        }}
+                                    />
+                                )
+                            ))}
+
+
                             {/* Preload Next Slide */}
                             {currentSlideIndex < slides.length - 1 && (
                                 <div style={{ display: 'none' }}>

@@ -1,0 +1,9 @@
+{"level":"info","message":"[PdfImageRenderer] Starting rendering of 1 pages...","timestamp":"2026-02-03T11:48:22.460Z"}
+{"level":"info","message":"[PdfImageRenderer] Completed rendering process for uploads/03fad334d5acf6a5ed6d9d1353e8f30c.pdf","timestamp":"2026-02-03T11:48:25.665Z"}
+{"level":"info","message":"[PdfImageRenderer] Starting rendering of 1 pages...","timestamp":"2026-02-03T12:34:16.785Z"}
+{"level":"info","message":"[PdfImageRenderer] Completed rendering process for uploads\\guest\\5819382784aac2247cc8ee7cb17c3ba0.pdf","timestamp":"2026-02-03T12:34:18.993Z"}
+{"level":"info","message":"[PdfImageRenderer] Starting rendering of 1 pages...","timestamp":"2026-02-03T12:36:34.225Z"}
+{"level":"info","message":"[PdfImageRenderer] Completed rendering process for uploads\\guest\\5819382784aac2247cc8ee7cb17c3ba0.pdf","timestamp":"2026-02-03T12:36:39.919Z"}
+{"level":"info","message":"[PdfImageRenderer] Starting rendering of 1 pages...","timestamp":"2026-02-03T12:42:08.767Z"}
+{"level":"info","message":"[PdfImageRenderer] Completed rendering process for uploads\\guest\\5819382784aac2247cc8ee7cb17c3ba0.pdf","timestamp":"2026-02-03T12:42:10.871Z"}
+{"level":"error","message":"[PdfImageRenderer] Fatal failure: Invalid PDF structure.","timestamp":"2026-02-03T12:44:08.919Z"}

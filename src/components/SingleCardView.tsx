@@ -29,17 +29,17 @@ const SingleCardView: React.FC<SingleCardViewProps> = ({
     return (
         <div className="flex flex-col h-full items-center justify-between p-4 md:p-8 bg-[#0a0a0a] overflow-hidden">
             {/* Progress Indicator */}
-            <div className="w-full max-w-2xl flex flex-col items-center gap-4 mb-4">
-                <div className="flex items-center gap-4">
-                    <div className="px-4 py-1.5 bg-white/5 rounded-full border border-white/10">
-                        <span className="text-[10px] md:text-xs font-black text-white uppercase tracking-widest">
-                            Card {cardIndex + 1} of {totalCards}
+            <div className="w-full max-w-4xl flex flex-col items-center gap-2 mb-2">
+                <div className="flex items-center gap-3">
+                    <div className="px-3 py-1 bg-white/5 rounded-full border border-white/10">
+                        <span className="text-[9px] md:text-[10px] font-black text-white uppercase tracking-[0.2em]">
+                            Matrix Position: {cardIndex + 1} / {totalCards}
                         </span>
                     </div>
                 </div>
-                <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                <div className="h-0.5 w-full bg-white/5 rounded-full overflow-hidden">
                     <div
-                        className="h-full bg-[#00ff88] transition-all duration-500 shadow-[0_0_10px_rgba(0,255,136,0.5)]"
+                        className="h-full bg-[#00ff88] transition-all duration-500 shadow-[0_0_10px_rgba(0,255,136,0.3)]"
                         style={{ width: `${((cardIndex + 1) / totalCards) * 100}%` }}
                     />
                 </div>
@@ -47,7 +47,7 @@ const SingleCardView: React.FC<SingleCardViewProps> = ({
 
             {/* Card Container */}
             <div
-                className="w-full max-w-4xl flex-1 cursor-pointer mb-6 group relative"
+                className="w-full max-w-4xl flex-1 cursor-pointer mb-4 group relative min-h-0"
                 style={{ perspective: '2000px' }}
                 onClick={onFlip}
             >
@@ -68,14 +68,14 @@ const SingleCardView: React.FC<SingleCardViewProps> = ({
                             </div>
                         </div>
 
-                        <div className="flex-1 flex flex-col items-center justify-center text-center">
-                            <h2 className="text-white font-bold leading-[1.4] tracking-tight selection:bg-[#00ff88]/30"
-                                style={{ fontSize: 'clamp(1.125rem, 3.5vh, 2.25rem)' }}>
+                        <div className="flex-1 flex flex-col items-center justify-center text-center overflow-hidden w-full px-2">
+                            <h2 className="text-white font-bold leading-[1.3] tracking-tight selection:bg-[#00ff88]/30 w-full"
+                                style={{ fontSize: 'clamp(1rem, 3.5vh, 2.25rem)' }}>
                                 {card.question}
                             </h2>
                             {card.hint && (
-                                <div className="mt-8 p-4 bg-white/[0.03] rounded-2xl border border-dashed border-white/10 w-full max-w-md animate-in fade-in slide-in-from-bottom-2 duration-700">
-                                    <p className="text-[11px] italic text-gray-500 leading-relaxed">"{card.hint}"</p>
+                                <div className="mt-4 p-3 bg-white/[0.03] rounded-2xl border border-dashed border-white/10 w-full max-w-md animate-in fade-in slide-in-from-bottom-2 duration-700">
+                                    <p className="text-[10px] italic text-gray-500 leading-relaxed">"{card.hint}"</p>
                                 </div>
                             )}
                         </div>
@@ -123,17 +123,17 @@ const SingleCardView: React.FC<SingleCardViewProps> = ({
                             </button>
                         </div>
 
-                        <div className="flex-1 flex flex-col items-center justify-center text-center">
-                            <p className="text-white font-black leading-[1.3] selection:bg-[#00ff88]/30"
-                                style={{ fontSize: 'clamp(1.25rem, 4vh, 2.75rem)' }}>
+                        <div className="flex-1 flex flex-col items-center justify-center text-center overflow-hidden w-full px-2">
+                            <p className="text-white font-black leading-[1.2] selection:bg-[#00ff88]/30 w-full"
+                                style={{ fontSize: 'clamp(1.125rem, 4.5vh, 2.75rem)' }}>
                                 {card.answer}
                             </p>
                         </div>
 
                         {/* Rating Hub */}
-                        <div className="mt-8 pt-8 border-t border-white/5">
-                            <div className="text-[9px] font-black text-gray-600 uppercase tracking-[0.3em] mb-4 text-center">Recall difficulty Assessment</div>
-                            <div className="grid grid-cols-4 gap-3">
+                        <div className="mt-4 pt-4 border-t border-white/5">
+                            <div className="text-[8px] font-black text-gray-600 uppercase tracking-[0.3em] mb-3 text-center">Recall difficulty Assessment</div>
+                            <div className="grid grid-cols-4 gap-2">
                                 {[
                                     { label: 'Again', key: 'again', color: 'red-500' },
                                     { label: 'Hard', key: 'hard', color: 'orange-500' },
@@ -143,10 +143,10 @@ const SingleCardView: React.FC<SingleCardViewProps> = ({
                                     <button
                                         key={r.key}
                                         onClick={(e) => { e.stopPropagation(); onRate(r.key as any); }}
-                                        className={`flex flex-col items-center gap-2 p-3 rounded-2xl hover:bg-${r.color}/10 transition-all group border border-transparent hover:border-${r.color}/20`}
+                                        className={`flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-${r.color}/10 transition-all group border border-transparent hover:border-${r.color}/20`}
                                     >
-                                        <span className={`text-[9px] font-black text-${r.color} uppercase tracking-widest`}>{r.label}</span>
-                                        <div className={`w-full h-1 bg-${r.color}/20 rounded-full group-hover:bg-${r.color}/40 transition-colors`}></div>
+                                        <span className={`text-[8px] font-black text-${r.color} uppercase tracking-widest`}>{r.label}</span>
+                                        <div className={`w-full h-0.5 bg-${r.color}/20 rounded-full group-hover:bg-${r.color}/40 transition-colors`}></div>
                                     </button>
                                 ))}
                             </div>

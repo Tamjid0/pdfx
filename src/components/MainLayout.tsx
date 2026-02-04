@@ -82,7 +82,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 
     const handleBackClick = () => {
         if (isDocumentMode) {
-            setShowExitConfirm(true);
+            if (mode !== 'editor') {
+                // If in a study/mode view, go back to editor mode first
+                setMode('editor');
+            } else {
+                // If already in editor mode, show exit confirmation
+                setShowExitConfirm(true);
+            }
         } else {
             backToImport();
         }

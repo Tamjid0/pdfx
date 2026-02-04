@@ -353,6 +353,12 @@ interface AppState {
     refreshCurrentProject: (documentId?: string) => Promise<void>;
     loadProjectModule: (moduleKey: string) => Promise<void>;
     deleteDocument: (documentId: string) => Promise<void>;
+
+    // Local Draft Management
+    localDrafts: Record<string, { id: string; name: string; data: any | null }[]>;
+    addLocalDraft: (module: string) => string;
+    closeLocalDraft: (module: string, draftId: string) => void;
+    renameLocalDraft: (module: string, draftId: string, name: string) => void;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -464,6 +470,69 @@ export const useStore = create<AppState>((set, get) => ({
     activeNotesToggles: {},
     activeInsightsToggles: {},
 
+    localDrafts: {
+        summary: [],
+        notes: [],
+        insights: [],
+        flashcards: [],
+        quiz: []
+    },
+
+    addLocalDraft: (module) => {
+        const id = `draft-${Date.now()}`;
+        const existing = get().localDrafts[module] || [];
+        const draftNumber = existing.length + 1;
+        const newDraft = { id, name: `Draft ${draftNumber}`, data: null };
+
+        set((state) => ({
+            localDrafts: {
+                ...state.localDrafts,
+                [module]: [...existing, newDraft]
+            }
+        }));
+        return id;
+    },
+
+    closeLocalDraft: (module, draftId) => {
+        set((state) => {
+            const existing = state.localDrafts[module] || [];
+            const filtered = existing.filter(d => d.id !== draftId);
+            const newState: any = {
+                localDrafts: {
+                    ...state.localDrafts,
+                    [module]: filtered
+                }
+            };
+
+            // If we closed the active draft, switch to the 'main' session (null)
+            if (state.activeRevisionIds[module] === draftId) {
+                newState.activeRevisionIds = {
+                    ...state.activeRevisionIds,
+                    [module]: null
+                };
+
+                // Also clear the 'data' for that module if it was showing the draft data
+                const dataKey = `${module}Data`;
+                newState[dataKey] = null; // Revert to empty state for that module
+            }
+
+            return newState;
+        });
+    },
+
+    renameLocalDraft: (module, draftId, name) => {
+        set((state) => {
+            const existing = state.localDrafts[module] || [];
+            const updated = existing.map(d => d.id === draftId ? { ...d, name } : d);
+            return {
+                localDrafts: {
+                    ...state.localDrafts,
+                    [module]: updated
+                }
+            };
+        });
+    },
+
     previewPreset: 'professional',
     prompt: '',
 
@@ -514,11 +583,76 @@ export const useStore = create<AppState>((set, get) => ({
     setMode: (mode) => set({ mode: mode }),
     setLeftPanelView: (view) => set({ leftPanelView: view }),
     setMindmapData: (data) => set({ mindmapData: data }),
-    setInsightsData: (data) => set({ insightsData: data }),
-    setNotesData: (data) => set({ notesData: data }),
-    setQuizData: (data) => set({ quizData: data }),
-    setFlashcardsData: (data) => set({ flashcardsData: data }),
-    setSummaryData: (data) => set({ summaryData: data }),
+    setInsightsData: (data) => {
+        const activeId = get().activeRevisionIds.insights;
+        if (activeId?.startsWith('draft-')) {
+            set((state) => ({
+                localDrafts: {
+                    ...state.localDrafts,
+                    insights: state.localDrafts.insights.map(d => d.id === activeId ? { ...d, data } : d)
+                },
+                insightsData: data
+            }));
+        } else {
+            set({ insightsData: data });
+        }
+    },
+    setNotesData: (data) => {
+        const activeId = get().activeRevisionIds.notes;
+        if (activeId?.startsWith('draft-')) {
+            set((state) => ({
+                localDrafts: {
+                    ...state.localDrafts,
+                    notes: state.localDrafts.notes.map(d => d.id === activeId ? { ...d, data } : d)
+                },
+                notesData: data
+            }));
+        } else {
+            set({ notesData: data });
+        }
+    },
+    setQuizData: (data) => {
+        const activeId = get().activeRevisionIds.quiz;
+        if (activeId?.startsWith('draft-')) {
+            set((state) => ({
+                localDrafts: {
+                    ...state.localDrafts,
+                    quiz: state.localDrafts.quiz.map(d => d.id === activeId ? { ...d, data } : d)
+                },
+                quizData: data
+            }));
+        } else {
+            set({ quizData: data });
+        }
+    },
+    setFlashcardsData: (data) => {
+        const activeId = get().activeRevisionIds.flashcards;
+        if (activeId?.startsWith('draft-')) {
+            set((state) => ({
+                localDrafts: {
+                    ...state.localDrafts,
+                    flashcards: state.localDrafts.flashcards.map(d => d.id === activeId ? { ...d, data } : d)
+                },
+                flashcardsData: data
+            }));
+        } else {
+            set({ flashcardsData: data });
+        }
+    },
+    setSummaryData: (data) => {
+        const activeId = get().activeRevisionIds.summary;
+        if (activeId?.startsWith('draft-')) {
+            set((state) => ({
+                localDrafts: {
+                    ...state.localDrafts,
+                    summary: state.localDrafts.summary.map(d => d.id === activeId ? { ...d, data } : d)
+                },
+                summaryData: data
+            }));
+        } else {
+            set({ summaryData: data });
+        }
+    },
     setChatHistory: (history) => set((state) => ({
         chatHistory: typeof history === 'function' ? history(state.chatHistory) : history
     })),
@@ -577,6 +711,18 @@ export const useStore = create<AppState>((set, get) => ({
             return {
                 activeRevisionIds: newActiveRevisionIds
             } as Partial<AppState>;
+        }
+
+        if (revisionId && revisionId.startsWith('draft-')) {
+            const drafts = state.localDrafts[module] || [];
+            const draft = drafts.find(d => d.id === revisionId);
+            if (draft) {
+                return {
+                    [dataKey]: draft.data,
+                    [genKey]: !!draft.data,
+                    activeRevisionIds: newActiveRevisionIds
+                } as Partial<AppState>;
+            }
         }
 
         const revisions = state[revKey] as Revision<any>[];

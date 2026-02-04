@@ -19,7 +19,7 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
         quizData, setQuizData, openExportModal, isGeneratingQuiz,
         switchRevision, deleteRevision, renameRevision, quizRevisions, loadProjectModule,
         activeRevisionIds, stats, quizSettings, setQuizSettings, generationScope, fileId,
-        embeddedChats, openEmbeddedChat, closeEmbeddedChat, setActiveNodeIds
+        embeddedChats, openEmbeddedChat, closeEmbeddedChat, setActiveNodeIds, addLocalDraft
     } = useStore();
 
     const activeRevisionId = activeRevisionIds['quiz'];
@@ -223,7 +223,8 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
                                 }
                             }}
                             onNew={() => {
-                                setQuizData(null);
+                                const draftId = addLocalDraft('quiz');
+                                switchRevision('quiz', draftId);
                                 setPhase('initial');
                             }}
                             onRename={async (revId, name) => renameRevision('quiz', revId, name)}
@@ -296,7 +297,8 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
                                 }
                             }}
                             onNew={() => {
-                                setQuizData(null);
+                                const draftId = addLocalDraft('quiz');
+                                switchRevision('quiz', draftId);
                                 setPhase('initial');
                             }}
                             onRename={async (revId, name) => renameRevision('quiz', revId, name)}
@@ -408,7 +410,8 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
                                 }
                             }}
                             onNew={() => {
-                                setQuizData(null);
+                                const draftId = addLocalDraft('quiz');
+                                switchRevision('quiz', draftId);
                                 setPhase('initial');
                             }}
                             onRename={async (revId, name) => renameRevision('quiz', revId, name)}

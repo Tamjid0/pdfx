@@ -27,7 +27,7 @@ const SingleCardView: React.FC<SingleCardViewProps> = ({
     onShowHint
 }) => {
     return (
-        <div className="flex flex-col h-full items-center justify-between p-2 md:p-4 bg-[#0a0a0a] overflow-hidden">
+        <div className="flex flex-col h-full items-center justify-between p-2 md:p-1 bg-[#0a0a0a] overflow-hidden">
             {/* Progress Indicator - Slimmed Down */}
             <div className="w-full max-w-5xl flex flex-col items-center gap-1.5 mb-1.5 px-4">
                 <div className="flex items-center gap-2">
@@ -57,7 +57,7 @@ const SingleCardView: React.FC<SingleCardViewProps> = ({
                 >
                     {/* Front Side */}
                     <div
-                        className="absolute inset-0 w-full h-full rounded-[2rem] flex flex-col p-6 md:p-8 bg-[#111] border border-white/10 group-hover:border-[#00ff88]/30 transition-all duration-500 shadow-2xl overflow-hidden"
+                        className="absolute inset-0 w-full h-full rounded-[2rem] flex flex-col p-5 md:p-6 bg-[#111] border border-white/10 group-hover:border-[#00ff88]/30 transition-all duration-500 shadow-2xl overflow-hidden"
                         style={{ backfaceVisibility: 'hidden' }}
                     >
                         <div className="flex justify-between items-center mb-4">
@@ -69,10 +69,10 @@ const SingleCardView: React.FC<SingleCardViewProps> = ({
                         </div>
 
                         <div className="flex-1 flex flex-col items-center justify-center text-center overflow-hidden w-full px-4">
-                            <h2 className="text-white font-bold leading-[1.2] tracking-tight selection:bg-[#00ff88]/30 w-full"
-                                style={{ fontSize: 'clamp(1rem, 4vh, 2.75rem)' }}>
+                            <h4 className="text-white font-bold leading-[1.2] tracking-tight selection:bg-[#00ff88]/30 w-full"
+                                style={{ fontSize: 'clamp(0.875rem, calc(0.5rem + 2.5vh), 2.5rem)' }}>
                                 {card.question}
-                            </h2>
+                            </h4>
                             {card.hint && (
                                 <div className="mt-4 p-3 bg-white/[0.02] rounded-xl border border-dashed border-white/5 w-full max-w-lg animate-in fade-in slide-in-from-bottom-2 duration-700">
                                     <p className="text-[9px] italic text-gray-500 leading-relaxed">"{card.hint}"</p>
@@ -100,10 +100,10 @@ const SingleCardView: React.FC<SingleCardViewProps> = ({
 
                     {/* Back Side */}
                     <div
-                        className="absolute inset-0 w-full h-full rounded-[2rem] flex flex-col p-6 md:p-8 bg-[#0c0c0c] border-2 border-[#00ff88]/10 shadow-[0_0_60px_rgba(0,255,136,0.03)] overflow-hidden"
+                        className="absolute inset-0 w-full h-full rounded-[2rem] flex flex-col p-4 md:p-6 bg-[#0c0c0c] border-2 border-[#00ff88]/10 shadow-[0_0_60px_rgba(0,255,136,0.03)] overflow-hidden"
                         style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
                     >
-                        <div className="flex justify-between items-center mb-4">
+                        <div className="flex justify-between items-center mb-1">
                             <div className="flex flex-col">
                                 <span className="text-[9px] font-black text-[#00ff88]/80 uppercase tracking-[0.3em]">Knowledge Node</span>
                                 {card.interval !== undefined && (
@@ -125,14 +125,14 @@ const SingleCardView: React.FC<SingleCardViewProps> = ({
 
                         <div className="flex-1 flex flex-col items-center justify-center text-center overflow-hidden w-full px-4">
                             <p className="text-white font-black leading-[1.1] selection:bg-[#00ff88]/30 w-full"
-                                style={{ fontSize: 'clamp(1.125rem, 5vh, 3.25rem)' }}>
+                                style={{ fontSize: 'clamp(1rem, calc(0.6rem + 3vh), 3rem)' }}>
                                 {card.answer}
                             </p>
                         </div>
 
                         {/* Rating Hub - Injected Assessment */}
-                        <div className="mt-4 pt-4 border-t border-white/5">
-                            <div className="text-[7px] font-black text-gray-700 uppercase tracking-[0.4em] mb-2 text-center">Recall Assessment</div>
+                        <div className="mt-1 pt-4 border-t border-white/5">
+                            <div className="text-[5px] font-black text-gray-700 uppercase tracking-[0.4em] mb-2 text-center">Recall Assessment</div>
                             <div className="grid grid-cols-4 gap-1.5">
                                 {[
                                     { label: 'Again', key: 'again', color: 'red-500' },

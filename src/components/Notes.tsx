@@ -15,7 +15,7 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
     const {
         notesData, setNotesData, openExportModal, isGeneratingNotes,
         generationScope, notesRevisions, switchRevision, deleteRevision, renameRevision, loadProjectModule,
-        activeRevisionIds, notesSettings, setNotesSettings
+        activeRevisionIds, notesSettings, setNotesSettings, addLocalDraft
     } = useStore();
 
     const [showRegenerateScope, setShowRegenerateScope] = useState(false);
@@ -61,8 +61,8 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
                                     key={cat.id}
                                     onClick={() => setNotesSettings({ ...notesSettings, category: cat.id })}
                                     className={`group flex items-start gap-4 p-6 rounded-[2rem] border transition-all duration-300 text-left relative overflow-hidden ${notesSettings.category === cat.id
-                                            ? 'bg-white/5 border-white/20 ring-1 ring-white/10'
-                                            : 'bg-black/40 border-white/5 hover:border-white/10'
+                                        ? 'bg-white/5 border-white/20 ring-1 ring-white/10'
+                                        : 'bg-black/40 border-white/5 hover:border-white/10'
                                         }`}
                                 >
                                     <div
@@ -166,7 +166,10 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
                         loadProjectModule('notesData');
                     }
                 }}
-                onNew={() => setShowRegenerateScope(true)}
+                onNew={() => {
+                    const draftId = addLocalDraft('notes');
+                    switchRevision('notes', draftId);
+                }}
                 onRename={async (revId, newName) => {
                     try {
                         await renameRevision('notes', revId, newName);

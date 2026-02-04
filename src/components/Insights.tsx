@@ -15,7 +15,7 @@ const Insights: React.FC<InsightsProps> = ({ onGenerate }) => {
     const {
         insightsData, setInsightsData, openExportModal, isGeneratingInsights,
         generationScope, insightsRevisions, switchRevision, deleteRevision, renameRevision, loadProjectModule,
-        activeRevisionIds
+        activeRevisionIds, addLocalDraft
     } = useStore();
     const [showRegenerateScope, setShowRegenerateScope] = useState(false);
 
@@ -122,7 +122,10 @@ const Insights: React.FC<InsightsProps> = ({ onGenerate }) => {
                         loadProjectModule('insightsData');
                     }
                 }}
-                onNew={() => setShowRegenerateScope(true)}
+                onNew={() => {
+                    const draftId = addLocalDraft('insights');
+                    switchRevision('insights', draftId);
+                }}
                 onRename={async (revId, newName) => {
                     try {
                         await renameRevision('insights', revId, newName);

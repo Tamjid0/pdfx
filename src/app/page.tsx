@@ -7,6 +7,7 @@ import { ExportModal } from "../components/ExportModal";
 import * as apiService from "../services/apiService";
 import { useStore } from "../store/useStore";
 import { toast } from 'react-hot-toast';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 import { useFileUpload } from "../hooks/useFileUpload";
 import { useChat } from "../hooks/useChat";
@@ -14,8 +15,13 @@ import AuthGuard from "../components/auth/AuthGuard";
 
 const Home = () => {
     const [isMounted, setIsMounted] = useState(false);
+    const searchParams = useSearchParams();
+    const router = useRouter();
     const { handleFileUpload } = useFileUpload();
     const { handleSendMessage } = useChat();
+
+    // Rehydration state
+    const [hasLoadedUrlProject, setHasLoadedUrlProject] = useState(false);
 
     useEffect(() => {
         setIsMounted(true);
@@ -55,12 +61,14 @@ const Home = () => {
         summaryData, insightsData, notesData, quizData, flashcardsData,
         isSlideMode, setIsSlideMode, setSlides, fileType, updateStats,
         resetWorkspace, setIsPageLoading, setTopics, isAppendMode, generationScope,
-        updateRevisionsFromSync, refreshCurrentProject
+        updateRevisionsFromSync, refreshCurrentProject, loadProject
     } = useStore();
 
     const backToImport = () => {
         setView("import");
         setMode("editor");
+        // Clear project ID from URL when going back to import
+        router.push('/');
     };
 
     const handleEditorChange = (html: string, text: string) => {
@@ -262,6 +270,30 @@ const Home = () => {
             default: return false;
         }
     };
+
+    // URL Sync & Persistence
+    useEffect(() => {
+        if (!isMounted) return;
+
+        const urlDocId = searchParams.get('id');
+        if (urlDocId && !fileId && !hasLoadedUrlProject) {
+            setHasLoadedUrlProject(true);
+            loadProject(urlDocId).catch(() => {
+                toast.error("Failed to restore session");
+                router.replace('/');
+            });
+        }
+    }, [isMounted, searchParams, fileId, loadProject, hasLoadedUrlProject, router]);
+
+    // Update URL when project changes
+    useEffect(() => {
+        if (fileId) {
+            const currentId = searchParams.get('id');
+            if (currentId !== fileId) {
+                router.replace(`/?id=${fileId}`);
+            }
+        }
+    }, [fileId, searchParams, router]);
 
     return (
         <AuthGuard>

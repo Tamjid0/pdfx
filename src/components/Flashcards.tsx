@@ -19,7 +19,7 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
         flashcardsData, setFlashcardsData, openExportModal, isGeneratingFlashcards,
         flashcardsRevisions, switchRevision, deleteRevision, renameRevision, loadProjectModule,
         activeRevisionIds, setMode, setPrompt, logActivity, embeddedChats, openEmbeddedChat, closeEmbeddedChat,
-        setActiveNodeIds
+        setActiveNodeIds, addLocalDraft
     } = useStore();
 
     const [flippedCards, setFlippedCards] = useState<number[]>([]);
@@ -268,7 +268,8 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
                     }
                 }}
                 onNew={() => {
-                    setFlashcardsData(null);
+                    const draftId = addLocalDraft('flashcards');
+                    switchRevision('flashcards', draftId);
                     setPhase('initial');
                 }}
                 onRename={async (revId, newName) => {

@@ -16,7 +16,7 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
     const {
         summaryData, setSummaryData, openExportModal, isGeneratingSummary,
         generationScope, summaryRevisions, switchRevision, deleteRevision, renameRevision, loadProjectModule,
-        activeRevisionIds
+        activeRevisionIds, addLocalDraft
     } = useStore();
     const [copied, setCopied] = useState(false);
     const [showRegenerateScope, setShowRegenerateScope] = useState(false);
@@ -182,7 +182,10 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
                         loadProjectModule('summaryData');
                     }
                 }}
-                onNew={() => setShowRegenerateScope(true)}
+                onNew={() => {
+                    const draftId = addLocalDraft('summary');
+                    switchRevision('summary', draftId);
+                }}
                 onRename={async (revId, newName) => {
                     try {
                         await renameRevision('summary', revId, newName);

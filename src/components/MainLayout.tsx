@@ -2,6 +2,7 @@
 
 import { useStore } from '../store/useStore';
 import React from 'react';
+import { useRouter } from 'next/navigation';
 
 import { Allotment } from "allotment";
 import "allotment/dist/style.css";
@@ -71,6 +72,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     handleScrapeUrl, handleGenerate, handleExport, handleSendMessage, getHasGenerated,
     fileType, fileId
 }) => {
+    const router = useRouter();
     const [showExitConfirm, setShowExitConfirm] = React.useState(false);
 
     // Check if we are in document viewing mode (PDF or Slides)
@@ -96,6 +98,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 
     const confirmExit = () => {
         useStore.getState().resetWorkspace();
+        // Clear project ID from URL when exiting session
+        router.replace('/');
         setShowExitConfirm(false);
     };
 

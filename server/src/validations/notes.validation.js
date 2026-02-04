@@ -5,9 +5,11 @@ export const notesSchema = {
         text: z.string().optional(),
         fileId: z.string().optional(),
         settings: z.object({
+            category: z.string().optional(),
             keyConcepts: z.boolean().optional(),
             actionItems: z.boolean().optional(),
             aiSummary: z.boolean().optional(),
+            detailLevel: z.string().optional(),
         }).optional(),
         scope: z.object({
             type: z.enum(['all', 'pages', 'topics']),

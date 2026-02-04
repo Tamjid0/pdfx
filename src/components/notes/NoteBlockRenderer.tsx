@@ -1,6 +1,26 @@
+import React from 'react';
 import { PresentationRenderer } from './presentation/PresentationRenderer';
+import { SummaryBlock } from './blocks/SummaryBlock';
+import { TextBlock } from './blocks/TextBlock';
+import { KeywordsBlock } from './blocks/KeywordsBlock';
+import { DefinitionBlock } from './blocks/DefinitionBlock';
+import { ExplanationBlock } from './blocks/ExplanationBlock';
+import { FormulaBlock } from './blocks/FormulaBlock';
+import { ExampleBlock } from './blocks/ExampleBlock';
+import { QuizBlock } from './blocks/QuizBlock';
 
-// ... (existing interfaces)
+export interface NoteBlock {
+    type: string;
+    title?: string;
+    content?: string | any;
+    items?: any[];
+    icon?: string;
+    [key: string]: any;
+}
+
+interface NoteBlockRendererProps {
+    blocks: NoteBlock[];
+}
 
 export const NoteBlockRenderer: React.FC<NoteBlockRendererProps> = ({ blocks }) => {
     if (!blocks || blocks.length === 0) return null;

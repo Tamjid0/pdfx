@@ -1,28 +1,15 @@
-import React from 'react';
-import { SummaryBlock } from './blocks/SummaryBlock';
-import { TextBlock } from './blocks/TextBlock';
-import { KeywordsBlock } from './blocks/KeywordsBlock';
-import { DefinitionBlock } from './blocks/DefinitionBlock';
-import { ExplanationBlock } from './blocks/ExplanationBlock';
-import { FormulaBlock } from './blocks/FormulaBlock';
-import { ExampleBlock } from './blocks/ExampleBlock';
-import { QuizBlock } from './blocks/QuizBlock';
+import { PresentationRenderer } from './presentation/PresentationRenderer';
 
-export interface NoteBlock {
-    type: string;
-    title?: string;
-    content?: string | any;
-    items?: any[];
-    icon?: string;
-    [key: string]: any;
-}
-
-interface NoteBlockRendererProps {
-    blocks: NoteBlock[];
-}
+// ... (existing interfaces)
 
 export const NoteBlockRenderer: React.FC<NoteBlockRendererProps> = ({ blocks }) => {
     if (!blocks || blocks.length === 0) return null;
+
+    // Check if we are in "Presentation Mode" (top-level presentation deck)
+    const presentationBlock = blocks.find(b => b.type === 'presentation_deck');
+    if (presentationBlock) {
+        return <PresentationRenderer data={presentationBlock as any} />;
+    }
 
     return (
         <div className="notes-container max-w-[1000px] mx-auto bg-[#0a0a0a] rounded-[24px] overflow-hidden font-sans border border-[#222]">

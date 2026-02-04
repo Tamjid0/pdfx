@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Interactive Presentation Notes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .slide-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .slide-btn {
+            padding: 10px 20px;
+            background: #e8e8e8;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .slide-btn:hover {
+            background: #d0d0d0;
+        }
+
+        .slide-btn.active {
+            background: #4a90e2;
+            color: white;
+        }
+
+        .slide-content {
+            display: none;
+        }
+
+        .slide-content.active {
+            display: block;
+        }
+
+        .zones {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .zones {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .zone {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .zone-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .zone-icon {
+            font-size: 24px;
+        }
+
+        .zone-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .zone-content {
+            color: #555;
+            font-size: 15px;
+        }
+
+        .zone-content ul {
+            list-style-position: inside;
+            margin-left: 10px;
+        }
+
+        .zone-content li {
+            margin-bottom: 8px;
+        }
+
+        .script-zone {
+            border-left: 4px solid #4a90e2;
+        }
+
+        .delivery-zone {
+            border-left: 4px solid #f39c12;
+        }
+
+        .deepdive-zone {
+            border-left: 4px solid #27ae60;
+            grid-column: 1 / -1;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .timer {
+            display: inline-block;
+            background: #f8f9fa;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .collapsible {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .collapsible:after {
+            content: ' ▼';
+            font-size: 12px;
+            color: #999;
+        }
+
+        .collapsible.collapsed:after {
+            content: ' ▶';
+        }
+
+        .collapse-content {
+            margin-top: 10px;
+        }
+
+        .collapse-content.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Building Trust in AI Chatbots</h1>
+            <p>A presentation on user perceptions and trust factors</p>
+        </div>
+
+        <div class="slide-nav">
+            <button class="slide-btn active" onclick="showSlide(1)">Slide 1: Title</button>
+            <button class="slide-btn" onclick="showSlide(2)">Slide 2: The Trust Problem</button>
+            <button class="slide-btn" onclick="showSlide(3)">Slide 3: Key Factors</button>
+            <button class="slide-btn" onclick="showSlide(4)">Slide 4: Statistics</button>
+            <button class="slide-btn" onclick="showSlide(5)">Slide 5: Solutions</button>
+            <button class="slide-btn" onclick="showSlide(6)">Slide 6: Conclusion</button>
+        </div>
+
+        <!-- Slide 1 -->
+        <div class="slide-content active" id="slide-1">
+            <div class="zones">
+                <div class="zone script-zone">
+                    <div class="zone-header">
+                        <span class="zone-icon">💬</span>
+                        <h2 class="zone-title">What to Say</h2>
+                    </div>
+                    <div class="zone-content">
+                        <p>"Good morning everyone! Today we're going to explore a critical question: <span class="highlight">How do we build trust in AI chatbots?</span>"</p>
+                        <p style="margin-top: 10px;">"As AI becomes more integrated into our daily lives, understanding user trust isn't just important—it's essential for adoption."</p>
+                        <span class="timer">⏱️ ~30 seconds</span>
+                    </div>
+                </div>
+
+                <div class="zone delivery-zone">
+                    <div class="zone-header">
+                        <span class="zone-icon">🎭</span>
+                        <h2 class="zone-title">What to Do</h2>
+                    </div>
+                    <div class="zone-content">
+                        <ul>
+                            <li>Make eye contact with the audience</li>
+                            <li>Smile and speak with energy</li>
+                            <li>Pause after the key question for emphasis</li>
+                            <li>Use hand gesture when saying "integrated into our daily lives"</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="zone deepdive-zone">
+                    <div class="zone-header">
+                        <span class="zone-icon">📚</span>
+                        <h2 class="zone-title">Deep Dive (Safety Net)</h2>
+                    </div>
+                    <div class="zone-content">
+                        <p class="collapsible" onclick="toggleCollapse(this)"><strong>If asked: "Why is trust important?"</strong></p>
+                        <div class="collapse-content">
+                            <p>Trust determines adoption rates. Studies show 67% of users abandon AI tools they don't trust, regardless of functionality. Trust = Retention.</p>
+                        </div>
+                        
+                        <p class="collapsible" onclick="toggleCollapse(this)" style="margin-top: 15px;"><strong>Background context:</strong></p>
+                        <div class="collapse-content">
+                            <p>The global AI chatbot market is expected to reach $15.5B by 2028, but trust remains the #1 barrier to adoption according to recent surveys.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2 -->
+        <div class="slide-content" id="slide-2">
+            <div class="zones">
+                <div class="zone script-zone">
+                    <div class="zone-header">
+                        <span class="zone-icon">💬</span>
+                        <h2 class="zone-title">What to Say</h2>
+                    </div>
+                    <div class="zone-content">
+                        <p>"Let's start with the problem. <span class="highlight">Only 35% of users fully trust AI chatbots</span> with their information."</p>
+                        <p style="margin-top: 10px;">"The main concerns? Privacy, accuracy, and transparency. Users want to know: Is my data safe? Will I get correct information? And how does this thing actually work?"</p>
+                        <span class="timer">⏱️ ~45 seconds</span>
+                    </div>
+                </div>
+
+                <div class="zone delivery-zone">
+                    <div class="zone-header">
+                        <span class="zone-icon">🎭</span>
+                        <h2 class="zone-title">What to Do</h2>
+                    </div>
+                    <div class="zone-content">
+                        <ul>
+                            <li>Look concerned when stating the 35% statistic</li>
+                            <li>Count on fingers: "Privacy, accuracy, transparency"</li>
+                            <li>Raise eyebrows on each question to engage audience</li>
+                            <li>Scan the room to gauge reactions</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="zone deepdive-zone">
+                    <div class="zone-header">
+                        <span class="zone-icon">📚</span>
+                        <h2 class="zone-title">Deep Dive (Safety Net)</h2>
+                    </div>
+                    <div class="zone-content">
+                        <p class="collapsible" onclick="toggleCollapse(this)"><strong>Source for 35% statistic:</strong></p>
+                        <div class="collapse-content">
+                            <p>Pew Research Center, 2024 AI Trust Survey (N=5,000 users across demographics)</p>
+                        </div>
+                        
+                        <p class="collapsible" onclick="toggleCollapse(this)" style="margin-top: 15px;"><strong>If asked: "What about different age groups?"</strong></p>
+                        <div class="collapse-content">
+                            <p>18-29: 42% trust, 30-49: 35% trust, 50+: 28% trust. Younger users are more trusting but still cautious.</p>
+                        </div>
+
+                        <p class="collapsible" onclick="toggleCollapse(this)" style="margin-top: 15px;"><strong>Additional concerns:</strong></p>
+                        <div class="collapse-content">
+                            <ul>
+                                <li>Bias in responses (mentioned by 52%)</li>
+                                <li>Job displacement fears (38%)</li>
+                                <li>Inability to understand context (44%)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3 -->
+        <div class="slide-content" id="slide-3">
+            <div class="zones">
+                <div class="zone script-zone">
+                    <div class="zone-header">
+                        <span class="zone-icon">💬</span>
+                        <h2 class="zone-title">What to Say</h2>
+                    </div>
+                    <div class="zone-content">
+                        <p>"So what builds trust? We've identified <span class="highlight">four key factors</span>."</p>
+                        <p style="margin-top: 10px;">"First, transparency in how the AI works. Second, consistent and accurate responses. Third, clear data handling policies. And fourth, human-like but honest interaction."</p>
+                        <p style="margin-top: 10px;">"Notice I said 'human-like but honest'—users don't want to be fooled."</p>
+                        <span class="timer">⏱️ ~50 seconds</span>
+                    </div>
+                </div>
+
+                <div class="zone delivery-zone">
+                    <div class="zone-header">
+                        <span class="zone-icon">🎭</span>
+                        <h2 class="zone-title">What to Do</h2>
+                    </div>
+                    <div class="zone-content">
+                        <ul>
+                            <li>Hold up four fingers when mentioning "four key factors"</li>
+                            <li>Point to slide for each factor as you mention it</li>
+                            <li>Emphasize "honest" with vocal stress</li>
+                            <li>Make direct eye contact on "don't want to be fooled"</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="zone deepdive-zone">
+                    <div class="zone-header">
+                        <span class="zone-icon">📚</span>
+                        <h2 class="zone-title">Deep Dive (Safety Net)</h2>
+                    </div>
+                    <div class="zone-content">
+                        <p class="collapsible" onclick="toggleCollapse(this)"><strong>Factor rankings by importance:</strong></p>
+                        <div class="collapse-content">
+                            <p>1. Accuracy (78% rated as critical)<br>
+                            2. Data privacy (72%)<br>
+                            3. Transparency (65%)<br>
+                            4. Natural interaction (51%)</p>
+                        </div>
+                        
+                        <p class="collapsible" onclick="toggleCollapse(this)" style="margin-top: 15px;"><strong>Example of "honest interaction":</strong></p>
+                        <div class="collapse-content">
+                            <p>ChatGPT saying "I don't know" or "I may be wrong" increases trust by 23% compared to always giving confident answers (Stanford study, 2024).</p>
+                        </div>
+
+                        <p class="collapsible" onclick="toggleCollapse(this)" style="margin-top: 15px;"><strong>Transparency examples:</strong></p>
+                        <div class="collapse-content">
+                            <ul>
+                                <li>Showing sources for information</li>
+                                <li>Explaining limitations upfront</li>
+                                <li>Disclosing when AI isn't certain</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4 -->
+        <div class="slide-content" id="slide-4">
+            <div class="zones">
+                <div class="zone script-zone">
+                    <div class="zone-header">
+                        <span class="zone-icon">💬</span>
+                        <h2 class="zone-title">What to Say</h2>
+                    </div>
+                    <div class="zone-content">
+                        <p>"Let's look at some compelling numbers. When chatbots implement these trust factors, we see <span class="highlight">63% higher user retention</span>."</p>
+                        <p style="margin-top: 10px;">"And here's the kicker: trusted chatbots see 4.5 times more positive reviews and an 80% increase in recommendation rates."</p>
+                        <span class="timer">⏱️ ~35 seconds</span>
+                    </div>
+                </div>
+
+                <div class="zone delivery-zone">
+                    <div class="zone-header">
+                        <span class="zone-icon">🎭</span>
+                        <h2 class="zone-title">What to Do</h2>
+                    </div>
+                    <div class="zone-content">
+                        <ul>
+                            <li>Point to the chart on the slide</li>
+                            <li>Pause before "here's the kicker" for emphasis</li>
+                            <li>Use enthusiastic tone on the statistics</li>
+                            <li>Nod while sharing positive numbers</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="zone deepdive-zone">
+                    <div class="zone-header">
+                        <span class="zone-icon">📚</span>
+                        <h2 class="zone-title">Deep Dive (Safety Net)</h2>
+                    </div>
+                    <div class="zone-content">
+                        <p class="collapsible" onclick="toggleCollapse(this)"><strong>Data sources:</strong></p>
+                        <div class="collapse-content">
+                            <p>Meta-analysis of 47 AI chatbot platforms, 2023-2024. Sample size: 2.3M users. Conducted by MIT's AI Lab.</p>
+                        </div>
+                        
+                        <p class="collapsible" onclick="toggleCollapse(this)" style="margin-top: 15px;"><strong>If asked: "Which industries see the biggest impact?"</strong></p>
+                        <div class="collapse-content">
+                            <p>Healthcare (+78%), Banking (+71%), E-commerce (+58%). Healthcare sees highest impact due to sensitivity of information.</p>
+                        </div>
+
+                        <p class="collapsible" onclick="toggleCollapse(this)" style="margin-top: 15px;"><strong>ROI perspective:</strong></p>
+                        <div class="collapse-content">
+                            <p>Companies implementing trust-building features see average ROI of 340% within 18 months through reduced churn and support costs.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5 -->
+        <div class="slide-content" id="slide-5">
+            <div class="zones">
+                <div class="zone script-zone">
+                    <div class="zone-header">
+                        <span class="zone-icon">💬</span>
+                        <h2 class="zone-title">What to Say</h2>
+                    </div>
+                    <div class="zone-content">
+                        <p>"So how do we actually implement this? <span class="highlight">Three practical solutions:</span>"</p>
+                        <p style="margin-top: 10px;">"One: Design with transparency in mind from day one. Two: Regular accuracy audits and user feedback loops. Three: Clear communication about what the AI can and cannot do."</p>
+                        <p style="margin-top: 10px;">"It's not rocket science, but it requires commitment."</p>
+                        <span class="timer">⏱️ ~45 seconds</span>
+                    </div>
+                </div>
+
+                <div class="zone delivery-zone">
+                    <div class="zone-header">
+                        <span class="zone-icon">🎭</span>
+                        <h2 class="zone-title">What to Do</h2>
+                    </div>
+                    <div class="zone-content">
+                        <ul>
+                            <li>Move to center stage for this slide</li>
+                            <li>Hold up three fingers for "three solutions"</li>
+                            <li>Use hand gestures for each point</li>
+                            <li>Smile slightly on "not rocket science"</li>
+                            <li>Look serious on "requires commitment"</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="zone deepdive-zone">
+                    <div class="zone-header">
+                        <span class="zone-icon">📚</span>
+                        <h2 class="zone-title">Deep Dive (Safety Net)</h2>
+                    </div>
+                    <div class="zone-content">
+                        <p class="collapsible" onclick="toggleCollapse(this)"><strong>Implementation timeline:</strong></p>
+                        <div class="collapse-content">
+                            <p>Transparency features: 2-3 months. Audit systems: 1-2 months. Clear communication framework: 2-4 weeks. Total: ~4-6 months for full implementation.</p>
+                        </div>
+                        
+                        <p class="collapsible" onclick="toggleCollapse(this)" style="margin-top: 15px;"><strong>Real-world examples:</strong></p>
+                        <div class="collapse-content">
+                            <p><strong>Anthropic:</strong> Claude shows uncertainty levels<br>
+                            <strong>OpenAI:</strong> ChatGPT cites sources in responses<br>
+                            <strong>Google:</strong> Bard (now Gemini) has "double-check response" feature</p>
+                        </div>
+
+                        <p class="collapsible" onclick="toggleCollapse(this)" style="margin-top: 15px;"><strong>Common pitfalls to avoid:</strong></p>
+                        <div class="collapse-content">
+                            <ul>
+                                <li>Over-promising capabilities</li>
+                                <li>Hiding limitations in fine print</li>
+                                <li>Infrequent updates to accuracy</li>
+                                <li>Ignoring user feedback</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6 -->
+        <div class="slide-content" id="slide-6">
+            <div class="zones">
+                <div class="zone script-zone">
+                    <div class="zone-header">
+                        <span class="zone-icon">💬</span>
+                        <h2 class="zone-title">What to Say</h2>
+                    </div>
+                    <div class="zone-content">
+                        <p>"To wrap up: <span class="highlight">Trust isn't built overnight</span>, but it can be lost in seconds."</p>
+                        <p style="margin-top: 10px;">"By prioritizing transparency, accuracy, and honest communication, we can create AI chatbots that users not only use, but actually trust."</p>
+                        <p style="margin-top: 10px;">"Thank you. I'm happy to take questions."</p>
+                        <span class="timer">⏱️ ~30 seconds</span>
+                    </div>
+                </div>
+
+                <div class="zone delivery-zone">
+                    <div class="zone-header">
+                        <span class="zone-icon">🎭</span>
+                        <h2 class="zone-title">What to Do</h2>
+                    </div>
+                    <div class="zone-content">
+                        <ul>
+                            <li>Slow down for the opening line</li>
+                            <li>Make sweeping gesture on "can be lost in seconds"</li>
+                            <li>Re-establish eye contact with entire room</li>
+                            <li>Pause confidently after "thank you"</li>
+                            <li>Open posture for Q&A</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="zone deepdive-zone">
+                    <div class="zone-header">
+                        <span class="zone-icon">📚</span>
+                        <h2 class="zone-title">Deep Dive (Safety Net)</h2>
+                    </div>
+                    <div class="zone-content">
+                        <p class="collapsible" onclick="toggleCollapse(this)"><strong>Anticipated Q&A topics:</strong></p>
+                        <div class="collapse-content">
+                            <p><strong>Q: Cost of implementation?</strong><br>
+                            A: Varies, but typically 15-25% of chatbot development budget. ROI positive within 18 months.<br><br>
+                            <strong>Q: What about smaller companies?</strong><br>
+                            A: Start with clear communication and honest limitations. Transparency is free.<br><br>
+                            <strong>Q: How to measure trust?</strong><br>
+                            A: NPS scores, retention rates, usage frequency, and direct user surveys.</p>
+                        </div>
+                        
+                        <p class="collapsible" onclick="toggleCollapse(this)" style="margin-top: 15px;"><strong>Key takeaway to emphasize if needed:</strong></p>
+                        <div class="collapse-content">
+                            <p>Trust is the new competitive advantage in AI. Companies that prioritize it will lead the market.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function showSlide(slideNumber) {
+            // Hide all slides
+            const slides = document.querySelectorAll('.slide-content');
+            slides.forEach(slide => slide.classList.remove('active'));
+            
+            // Remove active class from all buttons
+            const buttons = document.querySelectorAll('.slide-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected slide
+            document.getElementById('slide-' + slideNumber).classList.add('active');
+            
+            // Highlight active button
+            buttons[slideNumber - 1].classList.add('active');
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleCollapse(element) {
+            element.classList.toggle('collapsed');
+            const content = element.nextElementSibling;
+            content.classList.toggle('hidden');
+        }
+
+        // Initialize: collapse all deep dive sections
+        document.addEventListener('DOMContentLoaded', function() {
+            const collapsibles = document.querySelectorAll('.collapsible');
+            collapsibles.forEach(item => {
+                item.classList.add('collapsed');
+                item.nextElementSibling.classList.add('hidden');
+            });
+        });
+    </script>
+</body>
+</html>

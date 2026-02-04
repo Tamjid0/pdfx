@@ -66,27 +66,50 @@ const getPromptByCategory = (category) => {
             3. "text" for updates.
             4. "explanation" for blockers/risks.`,
 
-        presentation: `You are a speaker coach. Goal: Create Presentation Talking Points.
+        presentation: `You are a world-class public speaking coach. Goal: Create a structured Presentation Deck.
             Strategy:
-            1. "summary" hook.
-            2. "text" for slide content.
-            3. "keywords" for main themes.
-            4. "quiz" for audience Q&A prep.`
+            1. Create a "presentation_deck" block.
+            2. Break content into 5-7 logical "slides".
+            3. For each slide, write the SCRIPT (what to say), DELIVERY cues (what to do), and DEEP DIVE (safety net info).
+            
+            Return this EXACT JSON structure for presentation mode:
+            {
+               "blocks": [
+                  {
+                    "type": "presentation_deck",
+                    "title": "Presentation Title",
+                    "subtitle": "Subtitle",
+                    "slides": [
+                      {
+                        "title": "Slide 1: Intro",
+                        "script": "Markdown script...",
+                        "delivery": ["Look at camera", "Pause for effect"],
+                        "deep_dive": [{ "question": "Why?", "answer": "Because..." }],
+                        "timing": "30 sec"
+                      }
+                    ]
+                  }
+               ]
+            }`
     };
 
     const selectedPrompt = prompts[category] || prompts.study;
 
+    // Use specific base blocks for non-presentation modes, or just generic instruction for presentation
+    const instructions = category === 'presentation'
+        ? "Return ONLY the valid JSON for the presentation_deck as shown above. Do not use other block types."
+        : `${baseBlocks}
+           Return ONLY a valid JSON object in this exact structure:
+           {
+             "blocks": [
+               { "type": "block_type", "title": "Optional Title", ...block_specific_fields }
+             ]
+           }`;
+
     return `${selectedPrompt}
 
-    ${baseBlocks}
+    ${instructions}
 
-    Return ONLY a valid JSON object in this exact structure:
-    {
-      "document_type": "string",
-      "blocks": [
-        { "type": "block_type", "title": "Optional Title", ...block_specific_fields }
-      ]
-    }
     Do NOT include markdown formatting, code fences, or explanations outside the JSON. Return only the raw JSON.`;
 };
 

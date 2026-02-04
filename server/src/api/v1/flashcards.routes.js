@@ -7,6 +7,7 @@ import ApiError from '../../utils/ApiError.js';
 
 import { resolveScopedText } from '../../utils/scoping.js';
 import { safeParseAiJson } from '../../utils/aiUtils.js';
+import logger from '../../utils/logger.js';
 
 const router = express.Router();
 
@@ -44,6 +45,7 @@ router.post('/', aiGenerationLimiter, validate(flashcardsSchema), async (req, re
 
         res.json(jsonResponse);
     } catch (error) {
+        logger.error('[Flashcards] Generation failed:', error);
         next(error);
     }
 });

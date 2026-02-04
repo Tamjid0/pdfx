@@ -8,6 +8,7 @@ import ApiError from '../../utils/ApiError.js';
 
 import { resolveScopedText } from '../../utils/scoping.js';
 import { safeParseAiJson } from '../../utils/aiUtils.js';
+import logger from '../../utils/logger.js';
 
 const router = express.Router();
 

@@ -7,6 +7,7 @@ import ApiError from '../../utils/ApiError.js';
 
 import { resolveScopedText } from '../../utils/scoping.js';
 import { safeParseAiJson } from '../../utils/aiUtils.js';
+import logger from '../../utils/logger.js';
 
 const router = express.Router();
 
@@ -44,6 +45,7 @@ router.post('/analyze', validate(analysisSchema), async (req, res, next) => {
             maxCount
         });
     } catch (error) {
+        logger.error('[Quiz] Analysis failed:', error);
         next(error);
     }
 });
@@ -113,6 +115,7 @@ router.post('/', aiGenerationLimiter, validate(quizSchema), async (req, res, nex
 
         res.json(json);
     } catch (error) {
+        logger.error('[Quiz] Generation failed:', error);
         next(error);
     }
 });

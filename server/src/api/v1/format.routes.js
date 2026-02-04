@@ -4,6 +4,7 @@ import { aiGenerationLimiter } from '../../middleware/rateLimitMiddleware.js';
 import validate from '../../middleware/validate.js';
 import { formatSchema } from '../../validations/format.validation.js';
 import ApiError from '../../utils/ApiError.js';
+import logger from '../../utils/logger.js';
 
 const router = express.Router();
 
@@ -41,6 +42,7 @@ router.post('/', aiGenerationLimiter, validate(formatSchema), async (req, res, n
 
         res.json({ formattedHtml: formattedHtml });
     } catch (error) {
+        logger.error('[Format] Operation failed:', error);
         next(error);
     }
 });

@@ -5,6 +5,7 @@ import validate from '../../middleware/validate.js';
 import { mindmapSchema } from '../../validations/mindmap.validation.js';
 import ApiError from '../../utils/ApiError.js';
 import { safeParseAiJson } from '../../utils/aiUtils.js';
+import logger from '../../utils/logger.js';
 
 const router = express.Router();
 
@@ -42,6 +43,7 @@ router.post('/', aiGenerationLimiter, validate(mindmapSchema), async (req, res, 
 
         res.json(jsonResponse);
     } catch (error) {
+        logger.error('[Mindmap] Generation failed:', error);
         next(error);
     }
 });

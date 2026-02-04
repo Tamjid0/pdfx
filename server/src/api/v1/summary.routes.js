@@ -7,6 +7,7 @@ import Document from '../../models/Document.js';
 import ApiError from '../../utils/ApiError.js';
 import { resolveScopedText } from '../../utils/scoping.js';
 import { safeParseAiJson } from '../../utils/aiUtils.js';
+import logger from '../../utils/logger.js';
 
 const router = express.Router();
 
@@ -63,6 +64,7 @@ router.post('/', aiGenerationLimiter, validate(summarySchema), async (req, res, 
         res.json(json);
 
     } catch (error) {
+        logger.error('[Summary] Generation failed:', error);
         next(error);
     }
 });

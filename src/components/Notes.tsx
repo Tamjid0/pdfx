@@ -4,7 +4,7 @@ import LocalizedShimmer from './LocalizedShimmer';
 import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
 import { VersionTabs } from './dashboard/VersionTabs';
 import { toast } from 'react-hot-toast';
-import { DynamicBlockRenderer } from './dashboard/DynamicBlockRenderer';
+import { NoteBlockRenderer } from './notes/NoteBlockRenderer';
 
 
 interface NotesProps {
@@ -191,7 +191,7 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
             <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8">
                 <div className="max-w-4xl mx-auto text-left">
                     {notesData?.blocks ? (
-                        <DynamicBlockRenderer blocks={notesData.blocks} />
+                        <NoteBlockRenderer blocks={notesData.blocks} />
                     ) : (
                         <div className="space-y-12">
                             <div className="flex flex-col gap-1">

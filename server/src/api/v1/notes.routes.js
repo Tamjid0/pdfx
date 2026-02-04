@@ -14,64 +14,82 @@ const router = express.Router();
 
 const getPromptByCategory = (category) => {
     const baseBlocks = `
-Possible Block Types:
-1. "overview": A comprehensive executive summary that sets the context. Significant detail is expected.
-2. "key_concepts": In-depth topic-wise breakdown. Each concept should have a substantial explanation. Include "source_pages" if possible.
-3. "definitions": Precise definitions for specialized terms. Use format: {"type": "definitions", "items": [{"term": "Concept", "explanation": "Detailed definition..."}]}.
-4. "steps": Detailed, step-by-step sequential processes or workflows.
-5. "examples": Rich illustrative cases, evidence, or scenarios mentioned in the text.
-6. "formulas": Mathematical formulas rendered in Katex. Use format: {"type": "formulas", "items": [{"formula": "E=mc^2", "label": "Energy-Mass Equivalence"}]}.
-7. "code": Programming code blocks with explanations. Use format: {"type": "code", "language": "python", "content": "print('hello')"}.
-8. "action_items": Tasks, responsibilities, or follow-ups. Use format: {"type": "action_items", "items": [{"task": "@John to review", "status": "pending"}]}.
-9. "milestones": Significant deadlines or phases. Use format: {"type": "milestones", "items": [{"milestone": "Phase 1", "date": "TBD"}]}.
-10. "blockers": Obstacles or risks that need resolution.
-11. "revision_summary": While concise, this should still cover all main pillars.
-`;
+    Strictly Structure the output into these specific block types. Do NOT invent new types.
+    
+    1. "summary": Quick executive summary.
+       Schema: { "type": "summary", "title": "Quick Summary", "content": "markdown string" }
+    
+    2. "text": Context, history, or general information.
+       Schema: { "type": "text", "title": "Historical Context", "content": "markdown string" }
+    
+    3. "keywords": List of important terms.
+       Schema: { "type": "keywords", "title": "Key Terms", "items": ["Term1", "Term2"] }
+    
+    4. "definitions": Table of precise definitions.
+       Schema: { "type": "definitions", "title": "Key Definitions", "items": [{ "term": "Atom", "definition": "Basic unit of matter" }] }
+    
+    5. "explanation": Collapsible deep-dive into a complex topic.
+       Schema: { "type": "explanation", "title": "Detailed Explanation", "content": "markdown string with headers" }
+    
+    6. "formulas": Mathematical formulas.
+       Schema: { "type": "formulas", "title": "Important Formulas", "items": [{ "formula": "E=mc^2", "label": "Energy", "explanation": "Mass-energy equivalence" }] }
+    
+    7. "examples": Problem-solution pairs.
+       Schema: { "type": "examples", "title": "Example Problems", "items": [{ "problem": "Calculate X", "solution": "Steps...", "answer": "42", "note": "Tip" }] }
+    
+    8. "quiz": Practice questions.
+       Schema: { "type": "quiz", "title": "Self Check", "items": [{ "question": "What is...?", "answer": "It is...", "hint": "Think about..." }] }
+    `;
 
     const prompts = {
-        study: `You are an elite academic research assistant. Goal: Transform text into highly detailed, research-grade Study Notes.
-            Thought Process: 
-            1. ANALYZE: Capture every nuance, formula, and conceptual pillar.
-            2. DRAFT: Create a "Perfect Learning Note" that explains 'why' and 'how'.
-            3. MAP: Structure into: overview, key_concepts, definitions, formulas, examples, revision_summary.`,
+        study: `You are an elite academic tutor. Goal: Create highly structured, interactive Study Notes.
+            Strategy:
+            1. Start with a "summary".
+            2. Provide "text" for background/context.
+            3. List "keywords".
+            4. Define "definitions" for technical terms.
+            5. Use "explanation" blocks for the core heavy concepts (collapsible).
+            6. If applicable, add "formulas" and "examples".
+            7. End with a "quiz" to test understanding.`,
 
-        meeting: `You are a high-level corporate secretary. Goal: Record decisions and accountability with Meeting Notes.
-            Thought Process:
-            1. ANALYZE: Identify attendees, context, key decisions, and action items.
-            2. DRAFT: Create a "Perfect Minutes Note" focusing on ownership and results.
-            3. MAP: Structure into: overview (as context), key_concepts (as decisions), action_items, revision_summary (as parking lot).`,
+        meeting: `You are a corporate secretary. Goal: Create structured Meeting Minutes.
+            Strategy:
+            1. "summary" of the meeting goal.
+            2. "keywords" for attendees/tags.
+            3. "text" blocks for discussion points.
+            4. "examples" block used for Action Items (Problem=Task, Solution=Owner).`,
 
-        project: `You are a lead project manager. Goal: Manage moving parts with Project Notes.
-            Thought Process:
-            1. ANALYZE: Identify mission scope, milestones, resources, and current blockers.
-            2. DRAFT: Create a "Perfect Execution Note" focusing on the path to 'Done'.
-            3. MAP: Structure into: overview (scope), milestones, key_concepts (resources), blockers, revision_summary.`,
+        project: `You are a project manager. Goal: Create a Project Status Report.
+            Strategy:
+            1. "summary" of status.
+            2. "definitions" for project acronyms.
+            3. "text" for updates.
+            4. "explanation" for blockers/risks.`,
 
-        presentation: `You are a world-class storyteller and public speaker. Goal: Structure a compelling Presentation Note.
-            Thought Process:
-            1. ANALYZE: Extract narrative flow, key punchlines, and supporting evidence.
-            2. DRAFT: Create a "Perfect Talk Script" that breaks down slides and talking points.
-            3. MAP: Structure into: overview (narrative hook), steps (slides), key_concepts (supporting data), revision_summary (Q&A prep).`
+        presentation: `You are a speaker coach. Goal: Create Presentation Talking Points.
+            Strategy:
+            1. "summary" hook.
+            2. "text" for slide content.
+            3. "keywords" for main themes.
+            4. "quiz" for audience Q&A prep.`
     };
 
     const selectedPrompt = prompts[category] || prompts.study;
 
     return `${selectedPrompt}
 
-    CRITICAL OBJECTIVE: Prioritize DEPTH and ACCURACY. The note must be accurate and useful first, then fitted into blocks.
-
     ${baseBlocks}
 
     Return ONLY a valid JSON object in this exact structure:
     {
       "document_type": "string",
-      "document_length_category": "short|medium|long",
       "blocks": [
-        { "type": "block_type", "title": "Section Title", "content": "Detailed markdown string or [strings]", "items": [any objects], "source_pages": [number] }
+        { "type": "block_type", "title": "Optional Title", ...block_specific_fields }
       ]
     }
     Do NOT include markdown formatting, code fences, or explanations outside the JSON. Return only the raw JSON.`;
 };
+
 
 router.post('/', optionalVerifyToken, aiGenerationLimiter, validate(notesSchema), async (req, res) => {
     try {

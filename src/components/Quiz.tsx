@@ -38,21 +38,27 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
     // Reset local state when data changes (e.g., switches revisions or generates new)
     useEffect(() => {
         if (quizData?.quiz?.length) {
-            // If we have data, jump to selection phase (Mode selection)
-            // But only if we are not in the middle of a setup/initial flow
-            if (phase !== 'setup' && phase !== 'initial' && phase !== 'analysis') {
-                setPhase('selection');
-                setCurrentIndex(0);
-                setSelectedAnswers({});
-                setExamResults(null);
-                setShowRegenerateScope(false);
+            // Forward transition: Move to 'selection' if we have data and aren't mid-action
+            if (!isGeneratingQuiz && !isAnalyzing) {
+                // We transition to 'selection' if we are in an "entry" phase.
+                // This ensures that after generation or switching to a revision with data, we see the quiz.
+                if (phase === 'initial' || phase === 'analysis' || phase === 'setup') {
+                    setPhase('selection');
+                    setCurrentIndex(0);
+                    setSelectedAnswers({});
+                    setExamResults(null);
+                    setShowRegenerateScope(false);
+                }
             }
-        } else if (!isGeneratingQuiz && !isAnalyzing && phase !== 'setup' && phase !== 'analysis' && phase !== 'selection') {
-            // Only reset to initial if we are not currently in the generation/setup flow
-            setPhase('initial');
-            setAnalysisData(null);
+        } else if (!isGeneratingQuiz && !isAnalyzing) {
+            // Backward transition: If we have NO data, go to 'initial'
+            // But don't interrupt the setup/analysis flow.
+            if (phase !== 'initial' && phase !== 'setup' && phase !== 'analysis' && phase !== 'selection') {
+                setPhase('initial');
+                setAnalysisData(null);
+            }
         }
-    }, [activeRevisionId, quizData, isGeneratingQuiz, isAnalyzing, phase]); // Added phase to deps
+    }, [activeRevisionId, quizData, isGeneratingQuiz, isAnalyzing, phase]);
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
@@ -275,7 +281,7 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
             );
         }
 
-        if (phase === 'setup') { // Explicitly check for setup phase
+        if (phase === 'setup') {
             return (
                 <div className="flex flex-col h-full overflow-hidden">
                     <div className="border-b border-white/5 bg-white/[0.01]">

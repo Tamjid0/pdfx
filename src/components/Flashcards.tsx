@@ -237,7 +237,11 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
                         )}
                     </button>
                     <button
-                        onClick={() => onGenerate('flashcards')}
+                        onClick={() => {
+                            if (window.confirm('Are you sure you want to regenerate? This will start a new session.')) {
+                                onGenerate('flashcards');
+                            }
+                        }}
                         disabled={isGeneratingFlashcards}
                         className="px-4 py-2 bg-[#1a1a1a] text-[#00ff88] border border-[#00ff88]/20 rounded-lg text-xs font-bold hover:bg-[#00ff88]/10 transition-all flex items-center gap-2 disabled:opacity-50"
                     >
@@ -327,10 +331,9 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
                                                     <div className="w-1.5 h-1.5 rounded-full bg-[#00ff88]/20"></div>
                                                 </div>
                                                 <p
-                                                    className="flex-1 text-sm font-bold text-center text-white flex items-center justify-center outline-none focus:text-[#00ff88]"
-                                                    contentEditable={true}
+                                                    className="flex-1 text-sm font-bold text-center text-white flex items-center justify-center outline-none"
+                                                    contentEditable={false}
                                                     suppressContentEditableWarning={true}
-                                                    onBlur={(e) => handleContentChange(e, index, 'question')}
                                                 >
                                                     {card.question}
                                                 </p>
@@ -356,9 +359,8 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
                                                 </div>
                                                 <p
                                                     className="flex-1 text-sm font-bold text-center flex items-center justify-center outline-none px-4"
-                                                    contentEditable={true}
+                                                    contentEditable={false}
                                                     suppressContentEditableWarning={true}
-                                                    onBlur={(e) => handleContentChange(e, index, 'answer')}
                                                 >
                                                     {card.answer}
                                                 </p>

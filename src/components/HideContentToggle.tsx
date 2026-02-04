@@ -36,7 +36,7 @@ const HideContentToggle: React.FC<HideContentToggleProps> = ({ storageKey, child
             {/* Eye Icon Toggle Button */}
             <button
                 onClick={toggleVisibility}
-                className="absolute top-4 right-4 z-50 p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all backdrop-blur-md group"
+                className="absolute top-2.5 right-2.5 z-[100] p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all backdrop-blur-md group"
                 title={isHidden ? 'Show Content' : 'Hide Content'}
             >
                 {isHidden ? (

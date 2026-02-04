@@ -45,34 +45,41 @@ const SingleCardView: React.FC<SingleCardViewProps> = ({
 
             {/* Card */}
             <div
-                className="perspective-1000 w-full max-w-2xl h-96 cursor-pointer mb-8"
+                className="w-full max-w-2xl h-96 cursor-pointer mb-8 group"
+                style={{ perspective: '2000px' }}
                 onClick={onFlip}
             >
-                <div className={`relative w-full h-full transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] transform-style-preserve-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
+                <div
+                    className={`relative w-full h-full transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}
+                    style={{ transformStyle: 'preserve-3d' }}
+                >
                     {/* Front */}
-                    <div className="absolute w-full h-full backface-hidden rounded-3xl flex flex-col p-12 bg-[#111] border-2 border-[#333] hover:border-[#00ff88]/30 transition-colors shadow-2xl">
-                        <div className="flex justify-between items-start mb-6">
-                            <span className="text-xs font-black text-[#444] uppercase tracking-widest">Question</span>
-                            <div className="w-2 h-2 rounded-full bg-[#00ff88]/20"></div>
+                    <div
+                        className="absolute w-full h-full rounded-3xl flex flex-col p-10 bg-[#111] border-2 border-[#333] group-hover:border-[#00ff88]/30 transition-colors shadow-2xl overflow-hidden"
+                        style={{ backfaceVisibility: 'hidden' }}
+                    >
+                        <div className="flex justify-between items-start mb-4">
+                            <span className="text-[10px] font-black text-[#444] uppercase tracking-widest">Question</span>
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#00ff88]/20"></div>
                         </div>
-                        <div className="flex-1 flex flex-col items-center justify-center space-y-4">
-                            <p className="text-2xl font-bold text-center text-white leading-relaxed">
+                        <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto custom-scrollbar pr-2">
+                            <p className="text-lg md:text-xl font-bold text-center text-white leading-relaxed">
                                 {card.question}
                             </p>
                             {card.hint && (
-                                <div className="mt-4 p-4 bg-white/[0.02] rounded-2xl border border-dashed border-white/10 max-w-sm">
-                                    <p className="text-[11px] italic text-gray-400 leading-relaxed">"{card.hint}"</p>
+                                <div className="mt-4 p-3 bg-white/[0.02] rounded-2xl border border-dashed border-white/10 w-full max-w-sm">
+                                    <p className="text-[10px] italic text-gray-500 text-center leading-relaxed">"{card.hint}"</p>
                                 </div>
                             )}
                         </div>
-                        <div className="flex items-center justify-between">
-                            <div className="text-xs text-gray-600 uppercase tracking-widest">
+                        <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4">
+                            <div className="text-[9px] text-gray-600 uppercase font-black tracking-widest animate-pulse">
                                 Click to reveal answer
                             </div>
                             {card.hintNodeIds && card.hintNodeIds.length > 0 && (
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onShowHint(card.hintNodeIds!); }}
-                                    className="px-3 py-1.5 bg-[#00ff88]/10 border border-[#00ff88]/20 rounded-lg text-[9px] font-black text-[#00ff88] uppercase tracking-[0.2em] hover:bg-[#00ff88]/20 transition-all"
+                                    className="px-3 py-1.5 bg-[#00ff88]/10 border border-[#00ff88]/20 rounded-lg text-[9px] font-black text-[#00ff88] uppercase tracking-widest hover:bg-[#00ff88]/20 transition-all"
                                 >
                                     Source Hint
                                 </button>
@@ -81,13 +88,16 @@ const SingleCardView: React.FC<SingleCardViewProps> = ({
                     </div>
 
                     {/* Back */}
-                    <div className="absolute w-full h-full backface-hidden rounded-3xl flex flex-col p-12 bg-[#1a1a1a] border-2 border-[#00ff88]/50 transform rotate-y-180 shadow-[0_0_40px_rgba(0,255,136,0.15)]">
-                        <div className="flex justify-between items-start mb-6">
+                    <div
+                        className="absolute w-full h-full rounded-3xl flex flex-col p-10 bg-[#1a1a1a] border-2 border-[#00ff88]/40 shadow-[0_0_40px_rgba(0,255,136,0.1)] overflow-hidden"
+                        style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+                    >
+                        <div className="flex justify-between items-start mb-4">
                             <div className="flex flex-col">
-                                <span className="text-xs font-black text-[#00ff88] uppercase tracking-widest">Answer</span>
+                                <span className="text-[10px] font-black text-[#00ff88] uppercase tracking-widest">Answer</span>
                                 {card.interval !== undefined && (
-                                    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter mt-1">
-                                        Interval: {card.interval}d
+                                    <span className="text-[9px] text-gray-500 font-bold uppercase tracking-tighter mt-1">
+                                        Review in {card.interval}d
                                     </span>
                                 )}
                             </div>
@@ -101,41 +111,41 @@ const SingleCardView: React.FC<SingleCardViewProps> = ({
                                 </svg>
                             </button>
                         </div>
-                        <div className="flex-1 flex items-center justify-center">
-                            <p className="text-xl font-bold text-center text-white leading-relaxed">
+                        <div className="flex-1 flex items-center justify-center overflow-y-auto custom-scrollbar pr-2">
+                            <p className="text-lg md:text-xl font-bold text-center text-white leading-relaxed">
                                 {card.answer}
                             </p>
                         </div>
 
                         {/* Rating Buttons */}
-                        <div className="mt-8 grid grid-cols-4 gap-3 pt-6 border-t border-white/10">
+                        <div className="mt-6 grid grid-cols-4 gap-2 pt-4 border-t border-white/5">
                             <button
                                 onClick={(e) => { e.stopPropagation(); onRate('again'); }}
-                                className="flex flex-col items-center gap-2 p-4 rounded-2xl hover:bg-red-500/10 transition-all group border border-transparent hover:border-red-500/20"
+                                className="flex flex-col items-center gap-1.5 p-3 rounded-xl hover:bg-red-500/10 transition-all group border border-transparent hover:border-red-500/20"
                             >
-                                <span className="text-xs font-black text-red-500 uppercase tracking-wider group-hover:text-red-400">Again</span>
-                                <div className="w-full h-2 bg-red-500/20 rounded-full group-hover:bg-red-500/40"></div>
+                                <span className="text-[9px] font-black text-red-500 uppercase tracking-widest">Again</span>
+                                <div className="w-full h-1 bg-red-500/20 rounded-full group-hover:bg-red-500/40"></div>
                             </button>
                             <button
                                 onClick={(e) => { e.stopPropagation(); onRate('hard'); }}
-                                className="flex flex-col items-center gap-2 p-4 rounded-2xl hover:bg-orange-500/10 transition-all group border border-transparent hover:border-orange-500/20"
+                                className="flex flex-col items-center gap-1.5 p-3 rounded-xl hover:bg-orange-500/10 transition-all group border border-transparent hover:border-orange-500/20"
                             >
-                                <span className="text-xs font-black text-orange-500 uppercase tracking-wider group-hover:text-orange-400">Hard</span>
-                                <div className="w-full h-2 bg-orange-500/20 rounded-full group-hover:bg-orange-500/40"></div>
+                                <span className="text-[9px] font-black text-orange-500 uppercase tracking-widest">Hard</span>
+                                <div className="w-full h-1 bg-orange-500/20 rounded-full group-hover:bg-orange-500/40"></div>
                             </button>
                             <button
                                 onClick={(e) => { e.stopPropagation(); onRate('good'); }}
-                                className="flex flex-col items-center gap-2 p-4 rounded-2xl hover:bg-blue-500/10 transition-all group border border-transparent hover:border-blue-500/20"
+                                className="flex flex-col items-center gap-1.5 p-3 rounded-xl hover:bg-blue-500/10 transition-all group border border-transparent hover:border-blue-500/20"
                             >
-                                <span className="text-xs font-black text-blue-500 uppercase tracking-wider group-hover:text-blue-400">Good</span>
-                                <div className="w-full h-2 bg-blue-500/20 rounded-full group-hover:bg-blue-500/40"></div>
+                                <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">Good</span>
+                                <div className="w-full h-1 bg-blue-500/20 rounded-full group-hover:bg-blue-500/40"></div>
                             </button>
                             <button
                                 onClick={(e) => { e.stopPropagation(); onRate('easy'); }}
-                                className="flex flex-col items-center gap-2 p-4 rounded-2xl hover:bg-[#00ff88]/10 transition-all group border border-transparent hover:border-[#00ff88]/20"
+                                className="flex flex-col items-center gap-1.5 p-3 rounded-xl hover:bg-[#00ff88]/10 transition-all group border border-transparent hover:border-[#00ff88]/20"
                             >
-                                <span className="text-xs font-black text-[#00ff88] uppercase tracking-wider">Easy</span>
-                                <div className="w-full h-2 bg-[#00ff88]/20 rounded-full group-hover:bg-[#00ff88]/40"></div>
+                                <span className="text-[9px] font-black text-[#00ff88] uppercase tracking-widest">Easy</span>
+                                <div className="w-full h-1 bg-[#00ff88]/20 rounded-full group-hover:bg-[#00ff88]/40"></div>
                             </button>
                         </div>
                     </div>

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useStore } from '../store/useStore';
 
 interface CollapsibleChatPanelProps {
@@ -201,12 +203,16 @@ const CollapsibleChatPanel: React.FC<CollapsibleChatPanelProps> = ({
                         className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                         <div
-                            className={`max-w-[85%] rounded-2xl p-3 ${msg.role === 'user'
-                                    ? 'bg-[#00ff88]/10 border border-[#00ff88]/20 text-white'
-                                    : 'bg-white/5 border border-white/5 text-gray-300'
+                            className={`max-w-[90%] rounded-2xl p-3 ${msg.role === 'user'
+                                ? 'bg-[#00ff88]/10 border border-[#00ff88]/20 text-white'
+                                : 'bg-white/5 border border-white/10 text-gray-300'
                                 }`}
                         >
-                            <p className="text-xs leading-relaxed">{msg.content}</p>
+                            <div className="prose prose-invert prose-xs max-w-none text-[12px] leading-relaxed">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {msg.content}
+                                </ReactMarkdown>
+                            </div>
                         </div>
                     </div>
                 ))}

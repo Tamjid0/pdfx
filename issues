@@ -1,0 +1,31 @@
+ui issue:
+
+1. hide icon is getting behind source...half of the icon is clickable
+
+2.quiz chat icon is over next question text....
+
+3. flashcard ui is so broken in single mode...too big text in sinlegle mode text getting out over card
+also card are not flipping in single mode...and for now disable editing the card or like dobuble click should enable editing the card...
+
+
+4. also quiz questions are also talking too much space with big text....use appropriate text size and fix the sizes...
+also after completing a exam text and ui is so bold
+
+
+
+
+logical and functional issues:
+
+
+1.quiz hint not highlighting in pdf/slide
+
+2.quiz chat returning raw markdown
+
+
+3. there should not be hint or ask ai in exam mode....but at the end of the exam when shown all answers there should be option to hint and ask ai...
+4. clicking on rtenegrate button accross all mode should use the presets that uses in that tab...so suppose in the beginning i choose page 1 and after generating i choose to regenrate then it should use only that 1 page in that tab...
+and add a confirmation dop up for regenration....
+
+
+
+now fix all iissues one by one

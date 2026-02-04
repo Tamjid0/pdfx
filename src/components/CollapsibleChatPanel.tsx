@@ -200,18 +200,48 @@ const CollapsibleChatPanel: React.FC<CollapsibleChatPanelProps> = ({
                 {messages.map((msg, idx) => (
                     <div
                         key={idx}
-                        className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                        className={`message flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 duration-300`}
                     >
-                        <div
-                            className={`max-w-[90%] rounded-2xl p-3 ${msg.role === 'user'
-                                ? 'bg-[#00ff88]/10 border border-[#00ff88]/20 text-white'
-                                : 'bg-white/5 border border-white/10 text-gray-300'
-                                }`}
-                        >
-                            <div className="prose prose-invert prose-xs max-w-none text-[12px] leading-relaxed">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                    {msg.content}
-                                </ReactMarkdown>
+                        <div className={`max-w-[85%] ${msg.role === 'user' ? 'user' : 'assistant-message w-full'}`}>
+                            <div className={`message-content leading-relaxed ${msg.role === 'user'
+                                ? 'bg-[#2f2f2f] px-4 py-3 rounded-2xl text-white text-[13px]'
+                                : 'text-[#d1d1d1]'
+                                }`}>
+                                {msg.role === 'assistant' ? (
+                                    <div className="prose prose-invert prose-xs max-w-none text-[12px] leading-relaxed">
+                                        <ReactMarkdown
+                                            remarkPlugins={[remarkGfm]}
+                                            components={{
+                                                p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                                                h2: ({ children }) => <h2 className="text-sm font-bold mt-4 mb-2 text-white">{children}</h2>,
+                                                h3: ({ children }) => <h3 className="text-[13px] font-bold mt-3 mb-1 text-white/90">{children}</h3>,
+                                                ul: ({ children }) => <ul className="list-disc pl-4 mb-3">{children}</ul>,
+                                                li: ({ children }) => <li className="mb-0.5">{children}</li>,
+                                                a: ({ href, children }) => {
+                                                    if (href?.startsWith('#')) {
+                                                        const nodeIds = href.slice(1).split(',');
+                                                        return (
+                                                            <button
+                                                                onClick={() => setActiveNodeIds(nodeIds)}
+                                                                className="text-[#00ff88] font-semibold border-b border-[#00ff88]/40 hover:bg-[#00ff88]/10 transition-colors cursor-pointer"
+                                                            >
+                                                                {children}
+                                                            </button>
+                                                        );
+                                                    }
+                                                    return <a href={href} className="text-[#00ff88] underline" target="_blank" rel="noreferrer">{children}</a>;
+                                                }
+                                            }}
+                                        >
+                                            {msg.content.replace(/((?:\[{1,2}[a-f0-9-]{36}\]{1,2}\s*[,]?\s*)+)/g, (match) => {
+                                                const ids = Array.from(match.matchAll(/([a-f0-9-]{36})/g)).map(m => m[1]);
+                                                return ids.length > 0 ? ` [📌](#${ids.join(',')}) ` : match;
+                                            })}
+                                        </ReactMarkdown>
+                                    </div>
+                                ) : (
+                                    <span className="whitespace-pre-wrap">{msg.content}</span>
+                                )}
                             </div>
                         </div>
                     </div>

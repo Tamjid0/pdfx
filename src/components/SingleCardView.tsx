@@ -27,25 +27,27 @@ const SingleCardView: React.FC<SingleCardViewProps> = ({
     onShowHint
 }) => {
     return (
-        <div className="flex flex-col h-full items-center justify-center p-8 bg-[#0a0a0a]">
+        <div className="flex flex-col h-full items-center justify-between p-4 md:p-8 bg-[#0a0a0a] overflow-hidden">
             {/* Progress Indicator */}
-            <div className="mb-8 flex items-center gap-4">
-                <div className="px-4 py-2 bg-white/5 rounded-full border border-white/10">
-                    <span className="text-xs font-black text-white uppercase tracking-widest">
-                        Card {cardIndex + 1} of {totalCards}
-                    </span>
+            <div className="w-full max-w-2xl flex flex-col items-center gap-4 mb-4">
+                <div className="flex items-center gap-4">
+                    <div className="px-4 py-1.5 bg-white/5 rounded-full border border-white/10">
+                        <span className="text-[10px] md:text-xs font-black text-white uppercase tracking-widest">
+                            Card {cardIndex + 1} of {totalCards}
+                        </span>
+                    </div>
                 </div>
-                <div className="h-1 w-48 bg-white/5 rounded-full overflow-hidden">
+                <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
                     <div
-                        className="h-full bg-[#00ff88] transition-all duration-500"
+                        className="h-full bg-[#00ff88] transition-all duration-500 shadow-[0_0_10px_rgba(0,255,136,0.5)]"
                         style={{ width: `${((cardIndex + 1) / totalCards) * 100}%` }}
                     />
                 </div>
             </div>
 
-            {/* Card */}
+            {/* Card Container */}
             <div
-                className="w-full max-w-2xl h-96 cursor-pointer mb-8 group"
+                className="w-full max-w-4xl flex-1 cursor-pointer mb-6 group relative"
                 style={{ perspective: '2000px' }}
                 onClick={onFlip}
             >
@@ -55,33 +57,42 @@ const SingleCardView: React.FC<SingleCardViewProps> = ({
                 >
                     {/* Front */}
                     <div
-                        className="absolute w-full h-full rounded-3xl flex flex-col p-10 bg-[#111] border-2 border-[#333] group-hover:border-[#00ff88]/30 transition-colors shadow-2xl overflow-hidden"
+                        className="absolute inset-0 w-full h-full rounded-[2.5rem] flex flex-col p-8 md:p-12 bg-[#111] border border-white/10 group-hover:border-[#00ff88]/30 transition-all duration-500 shadow-2xl overflow-hidden"
                         style={{ backfaceVisibility: 'hidden' }}
                     >
-                        <div className="flex justify-between items-start mb-4">
-                            <span className="text-[10px] font-black text-[#444] uppercase tracking-widest">Question</span>
-                            <div className="w-1.5 h-1.5 rounded-full bg-[#00ff88]/20"></div>
+                        <div className="flex justify-between items-center mb-8">
+                            <span className="text-[10px] font-black text-[#444] uppercase tracking-[0.3em]">Query</span>
+                            <div className="flex gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#00ff88]/40 animate-pulse"></span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#00ff88]/20"></span>
+                            </div>
                         </div>
-                        <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto custom-scrollbar pr-2">
-                            <p className="text-lg md:text-xl font-bold text-center text-white leading-relaxed">
+
+                        <div className="flex-1 flex flex-col items-center justify-center text-center">
+                            <h2 className="text-white font-bold leading-[1.4] tracking-tight selection:bg-[#00ff88]/30"
+                                style={{ fontSize: 'clamp(1.125rem, 3.5vh, 2.25rem)' }}>
                                 {card.question}
-                            </p>
+                            </h2>
                             {card.hint && (
-                                <div className="mt-4 p-3 bg-white/[0.02] rounded-2xl border border-dashed border-white/10 w-full max-w-sm">
-                                    <p className="text-[10px] italic text-gray-500 text-center leading-relaxed">"{card.hint}"</p>
+                                <div className="mt-8 p-4 bg-white/[0.03] rounded-2xl border border-dashed border-white/10 w-full max-w-md animate-in fade-in slide-in-from-bottom-2 duration-700">
+                                    <p className="text-[11px] italic text-gray-500 leading-relaxed">"{card.hint}"</p>
                                 </div>
                             )}
                         </div>
-                        <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4">
-                            <div className="text-[9px] text-gray-600 uppercase font-black tracking-widest animate-pulse">
-                                Click to reveal answer
+
+                        <div className="mt-8 flex items-center justify-between border-t border-white/5 pt-6">
+                            <div className="flex items-center gap-2 group/tip">
+                                <div className="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center text-[8px] text-white/40 group-hover/tip:border-[#00ff88]/40 group-hover/tip:text-[#00ff88]">?</div>
+                                <span className="text-[9px] text-gray-600 uppercase font-black tracking-widest transition-colors group-hover/tip:text-gray-400">
+                                    Double-sided matrix • Click to reveal
+                                </span>
                             </div>
                             {card.hintNodeIds && card.hintNodeIds.length > 0 && (
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onShowHint(card.hintNodeIds!); }}
-                                    className="px-3 py-1.5 bg-[#00ff88]/10 border border-[#00ff88]/20 rounded-lg text-[9px] font-black text-[#00ff88] uppercase tracking-widest hover:bg-[#00ff88]/20 transition-all"
+                                    className="px-4 py-2 bg-[#00ff88]/5 border border-[#00ff88]/20 rounded-xl text-[9px] font-black text-[#00ff88] uppercase tracking-widest hover:bg-[#00ff88]/10 hover:border-[#00ff88]/40 transition-all active:scale-95"
                                 >
-                                    Source Hint
+                                    Focus Source
                                 </button>
                             )}
                         </div>
@@ -89,93 +100,89 @@ const SingleCardView: React.FC<SingleCardViewProps> = ({
 
                     {/* Back */}
                     <div
-                        className="absolute w-full h-full rounded-3xl flex flex-col p-10 bg-[#1a1a1a] border-2 border-[#00ff88]/40 shadow-[0_0_40px_rgba(0,255,136,0.1)] overflow-hidden"
+                        className="absolute inset-0 w-full h-full rounded-[2.5rem] flex flex-col p-8 md:p-12 bg-[#0a0a0a] border-2 border-[#00ff88]/20 shadow-[0_0_50px_rgba(0,255,136,0.05)] overflow-hidden"
                         style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
                     >
-                        <div className="flex justify-between items-start mb-4">
+                        <div className="flex justify-between items-center mb-8">
                             <div className="flex flex-col">
-                                <span className="text-[10px] font-black text-[#00ff88] uppercase tracking-widest">Answer</span>
+                                <span className="text-[10px] font-black text-[#00ff88] uppercase tracking-[0.3em]">Knowledge</span>
                                 {card.interval !== undefined && (
-                                    <span className="text-[9px] text-gray-500 font-bold uppercase tracking-tighter mt-1">
-                                        Review in {card.interval}d
+                                    <span className="text-[9px] text-gray-600 font-bold uppercase tracking-widest mt-1">
+                                        Recall efficiency: {card.interval} Days
                                     </span>
                                 )}
                             </div>
                             <button
                                 onClick={(e) => { e.stopPropagation(); onAskAI(); }}
-                                className="p-2 bg-[#00ff88]/10 rounded-xl text-[#00ff88] hover:bg-[#00ff88]/20 transition-all border border-[#00ff88]/20"
-                                title="Ask AI for explanation"
+                                className="w-12 h-12 flex items-center justify-center bg-[#00ff88]/5 rounded-2xl text-[#00ff88] hover:bg-[#00ff88]/10 transition-all border border-[#00ff88]/10 hover:border-[#00ff88]/40 shadow-xl"
+                                title="Synthesize AI Explanation"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                 </svg>
                             </button>
                         </div>
-                        <div className="flex-1 flex items-center justify-center overflow-y-auto custom-scrollbar pr-2">
-                            <p className="text-lg md:text-xl font-bold text-center text-white leading-relaxed">
+
+                        <div className="flex-1 flex flex-col items-center justify-center text-center">
+                            <p className="text-white font-black leading-[1.3] selection:bg-[#00ff88]/30"
+                                style={{ fontSize: 'clamp(1.25rem, 4vh, 2.75rem)' }}>
                                 {card.answer}
                             </p>
                         </div>
 
-                        {/* Rating Buttons */}
-                        <div className="mt-6 grid grid-cols-4 gap-2 pt-4 border-t border-white/5">
-                            <button
-                                onClick={(e) => { e.stopPropagation(); onRate('again'); }}
-                                className="flex flex-col items-center gap-1.5 p-3 rounded-xl hover:bg-red-500/10 transition-all group border border-transparent hover:border-red-500/20"
-                            >
-                                <span className="text-[9px] font-black text-red-500 uppercase tracking-widest">Again</span>
-                                <div className="w-full h-1 bg-red-500/20 rounded-full group-hover:bg-red-500/40"></div>
-                            </button>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); onRate('hard'); }}
-                                className="flex flex-col items-center gap-1.5 p-3 rounded-xl hover:bg-orange-500/10 transition-all group border border-transparent hover:border-orange-500/20"
-                            >
-                                <span className="text-[9px] font-black text-orange-500 uppercase tracking-widest">Hard</span>
-                                <div className="w-full h-1 bg-orange-500/20 rounded-full group-hover:bg-orange-500/40"></div>
-                            </button>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); onRate('good'); }}
-                                className="flex flex-col items-center gap-1.5 p-3 rounded-xl hover:bg-blue-500/10 transition-all group border border-transparent hover:border-blue-500/20"
-                            >
-                                <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">Good</span>
-                                <div className="w-full h-1 bg-blue-500/20 rounded-full group-hover:bg-blue-500/40"></div>
-                            </button>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); onRate('easy'); }}
-                                className="flex flex-col items-center gap-1.5 p-3 rounded-xl hover:bg-[#00ff88]/10 transition-all group border border-transparent hover:border-[#00ff88]/20"
-                            >
-                                <span className="text-[9px] font-black text-[#00ff88] uppercase tracking-widest">Easy</span>
-                                <div className="w-full h-1 bg-[#00ff88]/20 rounded-full group-hover:bg-[#00ff88]/40"></div>
-                            </button>
+                        {/* Rating Hub */}
+                        <div className="mt-8 pt-8 border-t border-white/5">
+                            <div className="text-[9px] font-black text-gray-600 uppercase tracking-[0.3em] mb-4 text-center">Recall difficulty Assessment</div>
+                            <div className="grid grid-cols-4 gap-3">
+                                {[
+                                    { label: 'Again', key: 'again', color: 'red-500' },
+                                    { label: 'Hard', key: 'hard', color: 'orange-500' },
+                                    { label: 'Good', key: 'good', color: 'blue-500' },
+                                    { label: 'Easy', key: 'easy', color: '[#00ff88]' }
+                                ].map((r) => (
+                                    <button
+                                        key={r.key}
+                                        onClick={(e) => { e.stopPropagation(); onRate(r.key as any); }}
+                                        className={`flex flex-col items-center gap-2 p-3 rounded-2xl hover:bg-${r.color}/10 transition-all group border border-transparent hover:border-${r.color}/20`}
+                                    >
+                                        <span className={`text-[9px] font-black text-${r.color} uppercase tracking-widest`}>{r.label}</span>
+                                        <div className={`w-full h-1 bg-${r.color}/20 rounded-full group-hover:bg-${r.color}/40 transition-colors`}></div>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Navigation */}
-            <div className="flex items-center gap-6">
+            {/* Navigation & Controls */}
+            <div className="w-full max-w-2xl flex items-center justify-between gap-6 pb-4">
                 <button
                     onClick={onPrev}
                     disabled={cardIndex === 0}
-                    className="p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all disabled:opacity-30 disabled:cursor-not-allowed group"
+                    className="w-14 h-14 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all disabled:opacity-10 disabled:grayscale group active:scale-90"
                 >
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                    <svg className="w-5 h-5 text-white/50 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
                     </svg>
                 </button>
 
-                <div className="text-center">
-                    <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Navigation</div>
-                    <div className="text-sm text-white font-mono">← / →</div>
+                <div className="flex flex-col items-center">
+                    <div className="text-[10px] font-black text-white/30 uppercase tracking-[0.4em] mb-2">Workspace Navigation</div>
+                    <div className="flex items-center gap-3">
+                        <kbd className="px-2 py-1 bg-white/5 rounded border border-white/10 text-[10px] text-gray-400 font-mono">←</kbd>
+                        <span className="w-1 h-1 rounded-full bg-white/10"></span>
+                        <kbd className="px-2 py-1 bg-white/5 rounded border border-white/10 text-[10px] text-gray-400 font-mono">→</kbd>
+                    </div>
                 </div>
 
                 <button
                     onClick={onNext}
                     disabled={cardIndex === totalCards - 1}
-                    className="p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all disabled:opacity-30 disabled:cursor-not-allowed group"
+                    className="w-14 h-14 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all disabled:opacity-10 disabled:grayscale group active:scale-90"
                 >
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                    <svg className="w-5 h-5 text-white/50 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
                     </svg>
                 </button>
             </div>

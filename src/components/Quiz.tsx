@@ -39,17 +39,20 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
     useEffect(() => {
         if (quizData?.quiz?.length) {
             // If we have data, jump to selection phase (Mode selection)
-            setPhase('selection');
-            setCurrentIndex(0);
-            setSelectedAnswers({});
-            setExamResults(null);
-            setShowRegenerateScope(false);
+            // But only if we are not in the middle of a setup/initial flow
+            if (phase !== 'setup' && phase !== 'initial' && phase !== 'analysis') {
+                setPhase('selection');
+                setCurrentIndex(0);
+                setSelectedAnswers({});
+                setExamResults(null);
+                setShowRegenerateScope(false);
+            }
         } else if (!isGeneratingQuiz && !isAnalyzing && phase !== 'setup' && phase !== 'analysis' && phase !== 'selection') {
             // Only reset to initial if we are not currently in the generation/setup flow
             setPhase('initial');
             setAnalysisData(null);
         }
-    }, [activeRevisionId, quizData, isGeneratingQuiz, isAnalyzing]);
+    }, [activeRevisionId, quizData, isGeneratingQuiz, isAnalyzing, phase]); // Added phase to deps
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
@@ -272,7 +275,7 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
             );
         }
 
-        if (!quizData || !quizData.quiz || quizData.quiz.length === 0) {
+        if (phase === 'setup') { // Explicitly check for setup phase
             return (
                 <div className="flex flex-col h-full overflow-hidden">
                     <div className="border-b border-white/5 bg-white/[0.01]">
@@ -869,7 +872,10 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
 
                             <div className="flex gap-4 pt-10">
                                 <button
-                                    onClick={() => setPhase('setup')}
+                                    onClick={() => {
+                                        setQuizData(null);
+                                        setPhase('initial');
+                                    }}
                                     className="flex-1 py-5 bg-white text-black rounded-[2rem] text-xs font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
                                 >
                                     New Session

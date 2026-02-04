@@ -1,6 +1,5 @@
 import express from 'express';
 import { generateFullDocumentTransformation } from '../../services/aiGenerationService.js';
-import { getVectorStore } from '../../services/vectorStoreService.js';
 import { aiGenerationLimiter } from '../../middleware/rateLimitMiddleware.js';
 import validate from '../../middleware/validate.js';
 import { summarySchema } from '../../validations/summary.validation.js';

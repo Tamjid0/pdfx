@@ -52,4 +52,11 @@ class VectorStoreService {
     }
 }
 
-export default new VectorStoreService();
+const vectorStoreService = new VectorStoreService();
+export default vectorStoreService;
+
+/**
+ * Legacy support for named export
+ */
+export const getVectorStore = (documentId) => vectorStoreService.loadStore(documentId);
+

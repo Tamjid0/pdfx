@@ -70,7 +70,8 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
 
     const handleCardClick = (e: React.MouseEvent, index: number) => {
         // Only flip if not clicking on an editable element
-        if ((e.target as HTMLElement).isContentEditable) return;
+        const target = e.target as HTMLElement;
+        if (target && typeof target.isContentEditable !== 'undefined' && target.isContentEditable) return;
 
         setFlippedCards(prev =>
             prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]

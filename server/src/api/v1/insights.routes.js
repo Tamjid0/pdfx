@@ -21,30 +21,38 @@ router.post('/', optionalVerifyToken, aiGenerationLimiter, validate(insightsSche
             fullText = await resolveScopedText(fileId, scope);
         }
 
-        const promptInstruction = `You are a high-level strategic analyst and academic researcher. Your goal is to extract deep, non-obvious insights from the provided text.
+        const promptInstruction = `You are a strategic analyst. Goal: Extract deep, non-obvious insights and structure them for a high-level dashboard.
+        
+        Strictly output these 5 block types in this order:
 
-CRITICAL OBJECTIVE: Move beyond surface-level summaries. The user needs "solid insights" that fulfill academic research or professional level understanding. Prioritize SUBSTANCE over structural brevity.
+        1. "synthesis" (Hidden Connection)
+           - Find two seemingly unrelated facts that are actually connected.
+           - Schema: { "type": "synthesis", "title": "The Connection Title", "subtitle": "Hidden Connection", "content": "Markdown explanation..." }
 
-Follow this thought process:
-1. CRITICAL ANALYSIS: Identify hidden patterns, complex relationships, and high-level implications in the text.
-2. SYNTHESIS: Mentally construct a deep "Insight Narrative" that explains 'why' and 'how', not just 'what'.
-3. ADAPTIVE STRUCTURING: Map these heavy insights into the appropriate block types below. Ensure each block is RICH in content.
+        2. "gap_analysis" (What's Missing)
+           - Identify critical omissions in the text.
+           - Schema: { "type": "gap_analysis", "title": "Critical Gaps", "subtitle": "Gap Analysis", "content": "Intro text...", "items": ["Gap 1", "Gap 2"], "badges": [{ "label": "Critical Gap", "type": "critical" }] }
 
-Possible Insight Blocks:
-1. "key_takeaways": Critical, high-impact lessons or findings. Provide detailed explanations for each.
-2. "patterns_relationships": Detailed analysis of how concepts interrelate or fit into broader academic/industry frameworks.
-3. "exam_focus": Identification of core conceptual pillars likely to be tested, with deep explanations of potential complexities.
-4. "real_world": Practical, industry, or historical applications of these concepts with concrete examples.
-5. "conceptual_tests": High-level challenge questions that require deep synthesis to answer, including detailed 'hints' that guide the thinking process.
+        3. "actionable" (What To Do)
+           - Concrete steps to take based on the text.
+           - Schema: { "type": "actionable", "title": "Action Plan", "subtitle": "Actionable Takeaway", "content": "Intro text...", "items": [{ "title": "Step 1", "description": "Do this..." }] }
 
-Return ONLY a valid JSON object in this exact structure:
-{
-  "document_type": "string",
-  "blocks": [
-    { "type": "block_type", "title": "Section Title", "content": "Detailed markdown string or [detailed strings]", "items": [any objects], "source_pages": [number] }
-  ]
-}
-Do NOT include markdown formatting, code fences, or explanations outside the JSON. Return only the raw JSON.`;
+        4. "key_stat" (Data Grid)
+           - Extract the most important numbers.
+           - Schema: { "type": "key_stat", "title": "By The Numbers", "subtitle": "Key Statistics", "content": "Intro text...", "items": [{ "value": "87%", "label": "Retention Rate" }] }
+
+        5. "trend" (Future Outlook)
+           - Predict a future trend based on the text.
+           - Schema: { "type": "trend", "title": "The Evolution", "subtitle": "Emerging Trend", "content": "Markdown text...", "implication": "What is driving this change..." }
+
+        Return ONLY a valid JSON object in this exact structure:
+        {
+          "document_type": "string",
+          "blocks": [
+            { "type": "block_type", ...fields }
+          ]
+        }
+        Do NOT include markdown formatting, code fences, or explanations outside the JSON. Return only the raw JSON.`;
 
         const aiResponse = await generateFullDocumentTransformation(fullText, promptInstruction, { outputFormat: 'json' });
 

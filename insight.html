@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Insight Layout - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header .meta {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .insight-block {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .insight-block:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .insight-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .insight-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-right: 12px;
+        }
+
+        .synthesis .insight-icon {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+
+        .gap-analysis .insight-icon {
+            background: #fff7e6;
+            color: #fa8c16;
+        }
+
+        .actionable .insight-icon {
+            background: #f6ffed;
+            color: #52c41a;
+        }
+
+        .key-stat .insight-icon {
+            background: #fff0f6;
+            color: #eb2f96;
+        }
+
+        .trend .insight-icon {
+            background: #f9f0ff;
+            color: #722ed1;
+        }
+
+        .insight-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .insight-subtitle {
+            font-size: 12px;
+            color: #a0aec0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .insight-content {
+            color: #4a5568;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        .insight-content p {
+            margin-bottom: 12px;
+        }
+
+        .insight-content ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .insight-content li {
+            margin-bottom: 8px;
+        }
+
+        .highlight {
+            background: #fef5e7;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 4px;
+        }
+
+        .action-list {
+            background: #f7fafc;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border-left: 4px solid #52c41a;
+        }
+
+        .action-item {
+            display: flex;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+
+        .action-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .action-number {
+            background: #52c41a;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 6px;
+            margin-top: 10px;
+        }
+
+        .badge-high {
+            background: #fee;
+            color: #c53030;
+        }
+
+        .badge-medium {
+            background: #fef5e7;
+            color: #d97706;
+        }
+
+        .badge-info {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 22px;
+            }
+            
+            .insight-title {
+                font-size: 16px;
+            }
+
+            .stat-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>The Future of Remote Work: 2024-2026 Analysis</h1>
+            <div class="meta">Document processed • 4 key insights extracted • Generated on Feb 5, 2026</div>
+        </div>
+
+        <!-- Insight Block 1: Hidden Connection (Synthesis) -->
+        <div class="insight-block synthesis">
+            <div class="insight-header">
+                <div class="insight-icon">🔗</div>
+                <div>
+                    <div class="insight-subtitle">Hidden Connection</div>
+                    <div class="insight-title">The Productivity Paradox</div>
+                </div>
+            </div>
+            <div class="insight-content">
+                <p>While the document highlights that <span class="highlight">87% of workers report higher productivity</span> when working remotely, it also reveals a concerning trend: companies experiencing a 23% increase in employee burnout rates over the same period.</p>
+                <p><strong>The Connection:</strong> These seemingly contradictory findings are actually linked. Workers are more productive because they're working longer hours without the natural boundaries of office life—blurring the line between work and personal time. The productivity gains are real, but they're coming at the cost of sustainable work-life balance.</p>
+            </div>
+        </div>
+
+        <!-- Insight Block 2: Gap Analysis (Metacognition) -->
+        <div class="insight-block gap-analysis">
+            <div class="insight-header">
+                <div class="insight-icon">⚠️</div>
+                <div>
+                    <div class="insight-subtitle">Gap Analysis</div>
+                    <div class="insight-title">What the Document Doesn't Address</div>
+                </div>
+            </div>
+            <div class="insight-content">
+                <p>The document provides extensive data on remote work adoption and productivity metrics, but critical gaps remain:</p>
+                <ul>
+                    <li><strong>Long-term career development:</strong> How does remote work impact mentorship, skill development, and career progression over 5-10 years?</li>
+                    <li><strong>Regional inequality:</strong> No analysis of how remote work policies affect different geographic regions or socioeconomic groups</li>
+                    <li><strong>Infrastructure requirements:</strong> Missing discussion on internet connectivity, home office costs, and employer support policies</li>
+                </ul>
+                <div>
+                    <span class="badge badge-high">Critical Gap</span>
+                    <span class="badge badge-medium">Data Missing</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insight Block 3: Actionable Takeaway (So What?) -->
+        <div class="insight-block actionable">
+            <div class="insight-header">
+                <div class="insight-icon">✓</div>
+                <div>
+                    <div class="insight-subtitle">Actionable Takeaway</div>
+                    <div class="insight-title">What You Should Do Next</div>
+                </div>
+            </div>
+            <div class="insight-content">
+                <p>Based on this analysis, here are concrete steps for organizations implementing remote work:</p>
+                <div class="action-list">
+                    <div class="action-item">
+                        <div class="action-number">1</div>
+                        <div><strong>Implement "Right to Disconnect" policies</strong> - Set clear boundaries for after-hours communication to combat burnout while maintaining productivity gains</div>
+                    </div>
+                    <div class="action-item">
+                        <div class="action-number">2</div>
+                        <div><strong>Create structured mentorship programs</strong> - Address the career development gap with virtual mentorship matching and quarterly in-person sessions</div>
+                    </div>
+                    <div class="action-item">
+                        <div class="action-number">3</div>
+                        <div><strong>Audit remote work readiness</strong> - Survey employees on home office setups and provide stipends or equipment to ensure equitable working conditions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insight Block 4: Key Statistics -->
+        <div class="insight-block key-stat">
+            <div class="insight-header">
+                <div class="insight-icon">📊</div>
+                <div>
+                    <div class="insight-subtitle">Key Statistics</div>
+                    <div class="insight-title">Numbers That Matter</div>
+                </div>
+            </div>
+            <div class="insight-content">
+                <p>The most significant data points from the document:</p>
+                <div class="stat-grid">
+                    <div class="stat-item">
+                        <span class="stat-number">87%</span>
+                        <div class="stat-label">Higher productivity reported</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">23%</span>
+                        <div class="stat-label">Increase in burnout</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">62%</span>
+                        <div class="stat-label">Want hybrid model</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">$11K</span>
+                        <div class="stat-label">Avg. annual savings per employee</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insight Block 5: Emerging Trend -->
+        <div class="insight-block trend">
+            <div class="insight-header">
+                <div class="insight-icon">📈</div>
+                <div>
+                    <div class="insight-subtitle">Emerging Trend</div>
+                    <div class="insight-title">The Hybrid Evolution</div>
+                </div>
+            </div>
+            <div class="insight-content">
+                <p>The document reveals a clear shift from the binary "remote vs. office" debate to a more nuanced approach. <span class="highlight">62% of organizations</span> are now implementing hybrid models with flexible attendance policies.</p>
+                <p><strong>What's driving this:</strong> Companies are discovering that the optimal arrangement isn't one-size-fits-all. Different roles, teams, and individuals thrive under different conditions. The future isn't about choosing remote or in-office—it's about creating adaptable frameworks that allow both.</p>
+                <div>
+                    <span class="badge badge-info">Trend to Watch</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add subtle interaction feedback
+        document.querySelectorAll('.insight-block').forEach(block => {
+            block.addEventListener('click', function() {
+                this.style.background = '#f8f9fa';
+                setTimeout(() => {
+                    this.style.background = 'white';
+                }, 200);
+            });
+        });
+    </script>
+</body>
+</html>

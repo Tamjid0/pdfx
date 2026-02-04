@@ -25,8 +25,8 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
 
     const categories = [
         { id: 'study', title: 'Study Notes', desc: 'Academic depth, definitions, formulas & self-quizzes.', icon: '📚', color: '#00ff88' },
-        { id: 'meeting', title: 'Meeting Notes', desc: 'Context, decisions, @action items & parking lots.', icon: '🤝', color: '#3b82f6' },
-        { id: 'project', title: 'Project Notes', desc: 'Scope, milestones, resources & blockers.', icon: '🚀', color: '#a855f7' },
+        // { id: 'meeting', title: 'Meeting Notes', desc: 'Context, decisions, @action items & parking lots.', icon: '🤝', color: '#3b82f6' },
+        // { id: 'project', title: 'Project Notes', desc: 'Scope, milestones, resources & blockers.', icon: '🚀', color: '#a855f7' },
         { id: 'presentation', title: 'Presentation', desc: 'Narrative flow, slide structure & key talking points.', icon: '🎙️', color: '#f59e0b' }
     ];
 

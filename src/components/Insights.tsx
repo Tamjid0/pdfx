@@ -5,6 +5,7 @@ import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
 import { VersionTabs } from './dashboard/VersionTabs';
 import { toast } from 'react-hot-toast';
 import { DynamicBlockRenderer } from './dashboard/DynamicBlockRenderer';
+import { InsightBlockRenderer } from './insights/InsightBlockRenderer';
 
 
 interface InsightsProps {
@@ -147,7 +148,7 @@ const Insights: React.FC<InsightsProps> = ({ onGenerate }) => {
             <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 relative">
                 <div className="max-w-4xl mx-auto text-left">
                     {insightsData?.blocks ? (
-                        <DynamicBlockRenderer blocks={insightsData.blocks} />
+                        <InsightBlockRenderer blocks={insightsData.blocks} />
                     ) : (
                         <div className="grid grid-cols-1 gap-4">
                             {insightsData?.insights?.map((insight: Insight, index: number) => (

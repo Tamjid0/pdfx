@@ -5,25 +5,45 @@ import ApiError from './ApiError.js';
  * Resolves the full text for AI processing based on a provided scope.
  * @param {string} fileId - The document ID
  * @param {Object} scope - { type: 'all' | 'pages' | 'topics', value: any }
+ * @param {boolean} includeIds - Whether to include node IDs in the text
  * @returns {Promise<string>}
  */
-export async function resolveScopedText(fileId, scope) {
+export async function resolveScopedText(fileId, scope, includeIds = false) {
     const document = await Document.findOne({ documentId: fileId });
     if (!document) {
         throw new ApiError(404, `No document found for fileId: ${fileId}`);
     }
 
+    const formatContent = (node) => {
+        const text = node.content?.text || '';
+        if (includeIds && node.id) {
+            return `[[${node.id}]]: ${text}`;
+        }
+        return text;
+    };
+
     if (!scope || scope.type === 'all') {
-        return document.extractedText;
+        if (!includeIds) return document.extractedText;
+
+        // If includeIds, we need to rebuild from nodes to get tags
+        const pages = (document.structure?.pages || document.structure?.structure?.pages || []);
+        return pages
+            .flatMap(p => p.nodes || [])
+            .filter(n => n.type === 'text')
+            .map(formatContent)
+            .join('\n');
     }
 
     if (scope.type === 'pages') {
         const selectedPages = Array.isArray(scope.value) ? scope.value : [scope.value];
-        // Note: selectedPages are 1-based, chunks are 0-based
-        const scopedChunks = document.chunks.filter(chunk =>
-            selectedPages.includes(chunk.metadata.pageIndex + 1)
-        );
-        return scopedChunks.map(c => c.content).join('\n\n');
+        const pages = (document.structure?.pages || document.structure?.structure?.pages || []);
+
+        return pages
+            .filter((p, i) => selectedPages.includes(i + 1))
+            .flatMap(p => p.nodes || [])
+            .filter(n => n.type === 'text')
+            .map(formatContent)
+            .join('\n');
     }
 
     if (scope.type === 'topics') {
@@ -33,7 +53,6 @@ export async function resolveScopedText(fileId, scope) {
         const selectedTopics = document.topics.filter(t => selectedTopicIds.includes(t.id));
         const nodeIds = new Set(selectedTopics.flatMap(t => t.nodes));
 
-        // Robust path resolution: supports both direct pages and nested DocumentRoot structure
         const pages = (document.structure?.pages || document.structure?.structure?.pages || []);
 
         const allTextNodes = pages
@@ -42,7 +61,7 @@ export async function resolveScopedText(fileId, scope) {
 
         return allTextNodes
             .filter(n => nodeIds.has(n.id))
-            .map(n => n.content?.text || '')
+            .map(formatContent)
             .join(' ');
     }
 

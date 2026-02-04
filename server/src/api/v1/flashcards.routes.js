@@ -17,15 +17,20 @@ router.post('/', aiGenerationLimiter, validate(flashcardsSchema), async (req, re
 
     try {
         if (fileId) {
-            fullText = await resolveScopedText(fileId, scope);
+            fullText = await resolveScopedText(fileId, scope, true);
         }
 
         const promptInstruction = `Generate 10 high-quality flashcards from the following text.
         Each flashcard must have a clear "question" and a concise "answer".
+        
+        CITATIONS:
+        The text is tagged with [[nodeId]]. 
+        For EACH flashcard, you MUST provide a "hint" (a subtle clue) and "hintNodeIds" (an array of EXACT nodeId strings from where the answer can be found).
+
         Return ONLY a valid JSON object in this exact structure:
         {
           "flashcards": [
-            { "question": "Question text here?", "answer": "Answer text here." }
+            { "question": "...", "answer": "...", "hint": "clue here", "hintNodeIds": ["id1", "id2"] }
           ]
         }
         Do NOT include markdown formatting, code fences, or explanations. Just the raw JSON string.`;

@@ -63,6 +63,8 @@ export interface Flashcard {
     ease?: number;         // Difficulty multiplier (default ~2.5)
     dueDate?: string;      // ISO string for when the card is next due
     state?: 'new' | 'learning' | 'review' | 'relearning';
+    hint?: string;
+    hintNodeIds?: string[];
 }
 
 export interface FlashcardsData {
@@ -74,18 +76,26 @@ export type QuizItem = {
     question: string;
     options: { label: string; value: string; }[];
     correctAnswer: string;
+    hint?: string;
+    hintNodeIds?: string[];
 } | {
     type: 'tf';
     question: string;
     correctAnswer: string; // Stored as string 'true'/'false' for consistency if needed, or boolean. Local Quiz.tsx used boolean. Let's use string 'true'/'false' to match API usually.
+    hint?: string;
+    hintNodeIds?: string[];
 } | {
     type: 'fib';
     question: string;
     correctAnswer: string;
+    hint?: string;
+    hintNodeIds?: string[];
 } | {
     type: 'sa';
     question: string;
     correctAnswer: string;
+    hint?: string;
+    hintNodeIds?: string[];
 };
 
 export interface QuizData {
@@ -261,6 +271,12 @@ interface AppState {
     setGenerationScope: (scope: GenerationScope) => void;
     isAppendMode: boolean;
     setIsAppendMode: (val: boolean) => void;
+
+    // Embedded Chats for Quiz/Flashcard Items
+    embeddedChats: Record<string, { itemId: string; itemType: 'quiz' | 'flashcard'; itemData: any; isOpen: boolean }>;
+    openEmbeddedChat: (itemId: string, itemType: 'quiz' | 'flashcard', itemData: any) => void;
+    closeEmbeddedChat: (itemId: string) => void;
+    closeAllEmbeddedChats: () => void;
 
     // Actions
     setHtmlPreview: (html: string | null) => void;
@@ -464,6 +480,25 @@ export const useStore = create<AppState>((set, get) => ({
     generationScope: { type: 'all', value: null },
     isAppendMode: false,
     setIsAppendMode: (val) => set({ isAppendMode: val }),
+
+    // Embedded Chats Implementation
+    embeddedChats: {},
+    openEmbeddedChat: (itemId, itemType, itemData) => {
+        set((state) => ({
+            embeddedChats: {
+                ...state.embeddedChats,
+                [itemId]: { itemId, itemType, itemData, isOpen: true }
+            }
+        }));
+    },
+    closeEmbeddedChat: (itemId) => {
+        set((state) => {
+            const { [itemId]: removed, ...rest } = state.embeddedChats;
+            return { embeddedChats: rest };
+        });
+    },
+    closeAllEmbeddedChats: () => set({ embeddedChats: {} }),
+
 
     setHtmlPreview: (html) => set({ htmlPreview: html }),
     setIsLoading: (loading) => set({ isLoading: loading }),

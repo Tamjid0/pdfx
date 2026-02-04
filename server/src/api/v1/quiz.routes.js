@@ -55,7 +55,7 @@ router.post('/', aiGenerationLimiter, validate(quizSchema), async (req, res, nex
 
     try {
         if (fileId) {
-            fullText = await resolveScopedText(fileId, scope);
+            fullText = await resolveScopedText(fileId, scope, true);
         }
 
         const { questionTypes = ['multiple-choice'], difficulty = 'medium', questionCount = 10 } = settings || {};
@@ -78,13 +78,23 @@ router.post('/', aiGenerationLimiter, validate(quizSchema), async (req, res, nex
         You MUST provide exactly ${questionCount} items.
         Mix the following question types: ${questionTypes.join(', ')}.
         
+        CITATIONS:
+        The text is tagged with [[nodeId]]. 
+        For EACH question, you MUST provide a "hint" (a subtle clue) and "hintNodeIds" (an array of EXACT nodeId strings from where the hint or answer can be found).
+
         CRITICAL: Follow this formatting for types:
         ${questionTypeInstructions}
 
         Return ONLY a valid JSON object in this exact structure:
         {
           "quiz": [
-            { "question": "...", "type": "mc|tf|fib", ...rest_of_fields }
+            { 
+              "question": "...", 
+              "type": "mc|tf|fib", 
+              "hint": "clue here", 
+              "hintNodeIds": ["id1", "id2"], 
+              ...rest_of_fields 
+            }
           ]
         }
         Do NOT include markdown formatting, explanations, or any text outside the JSON.`;

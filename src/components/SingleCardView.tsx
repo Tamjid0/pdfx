@@ -11,6 +11,7 @@ interface SingleCardViewProps {
     onPrev: () => void;
     onRate: (rating: 'again' | 'hard' | 'good' | 'easy') => void;
     onAskAI: () => void;
+    onShowHint: (nodeIds: string[]) => void;
 }
 
 const SingleCardView: React.FC<SingleCardViewProps> = ({
@@ -22,7 +23,8 @@ const SingleCardView: React.FC<SingleCardViewProps> = ({
     onNext,
     onPrev,
     onRate,
-    onAskAI
+    onAskAI,
+    onShowHint
 }) => {
     return (
         <div className="flex flex-col h-full items-center justify-center p-8 bg-[#0a0a0a]">
@@ -53,13 +55,28 @@ const SingleCardView: React.FC<SingleCardViewProps> = ({
                             <span className="text-xs font-black text-[#444] uppercase tracking-widest">Question</span>
                             <div className="w-2 h-2 rounded-full bg-[#00ff88]/20"></div>
                         </div>
-                        <div className="flex-1 flex items-center justify-center">
+                        <div className="flex-1 flex flex-col items-center justify-center space-y-4">
                             <p className="text-2xl font-bold text-center text-white leading-relaxed">
                                 {card.question}
                             </p>
+                            {card.hint && (
+                                <div className="mt-4 p-4 bg-white/[0.02] rounded-2xl border border-dashed border-white/10 max-w-sm">
+                                    <p className="text-[11px] italic text-gray-400 leading-relaxed">"{card.hint}"</p>
+                                </div>
+                            )}
                         </div>
-                        <div className="text-center text-xs text-gray-600 uppercase tracking-widest">
-                            Click to reveal answer
+                        <div className="flex items-center justify-between">
+                            <div className="text-xs text-gray-600 uppercase tracking-widest">
+                                Click to reveal answer
+                            </div>
+                            {card.hintNodeIds && card.hintNodeIds.length > 0 && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onShowHint(card.hintNodeIds!); }}
+                                    className="px-3 py-1.5 bg-[#00ff88]/10 border border-[#00ff88]/20 rounded-lg text-[9px] font-black text-[#00ff88] uppercase tracking-[0.2em] hover:bg-[#00ff88]/20 transition-all"
+                                >
+                                    Source Hint
+                                </button>
+                            )}
                         </div>
                     </div>
 

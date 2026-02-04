@@ -1,4 +1,4 @@
-import { generateChunkBasedTransformation, generateChunkBasedStreamingTransformation } from '../services/aiGenerationService.js';
+import { generateChunkBasedTransformation, generateChunkBasedStreamingTransformation, generateItemContextResponse } from '../services/aiGenerationService.js';
 import logger from '../utils/logger.js';
 
 export const chatWithDocument = async (req, res) => {
@@ -51,3 +51,23 @@ export const chatWithDocumentStream = async (req, res) => {
         res.end();
     }
 };
+
+/**
+ * Chat with context about a specific quiz or flashcard item
+ */
+export const chatWithItemContext = async (req, res) => {
+    const { fileId, itemType, itemData, message, chatHistory } = req.body;
+
+    if (!fileId || !itemType || !itemData || !message) {
+        return res.status(400).json({ error: 'fileId, itemType, itemData, and message are required.' });
+    }
+
+    try {
+        const response = await generateItemContextResponse(fileId, itemType, itemData, message, chatHistory || []);
+        res.json(response);
+    } catch (error) {
+        logger.error(`[ChatController] Error during item-context chat: ${error.message}`);
+        res.status(500).json({ error: error.message || 'Failed to get a response.' });
+    }
+};
+

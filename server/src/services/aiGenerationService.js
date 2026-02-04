@@ -240,3 +240,102 @@ User Query: "${query}"
         throw new Error('Failed to generate streaming response.');
     }
 }
+
+/**
+ * Generate AI response for quiz/flashcard item-specific questions
+ * @param {string} fileId - Document ID
+ * @param {string} itemType - 'quiz' or 'flashcard'
+ * @param {object} itemData - The quiz question or flashcard data
+ * @param {string} message - User's question
+ * @param {array} chatHistory - Previous messages in this conversation
+ * @returns {Promise<object>} - Response with text, nodeIds, and pageIndex
+ */
+export async function generateItemContextResponse(fileId, itemType, itemData, message, chatHistory = []) {
+    const indexesDir = path.join(process.cwd(), 'src', 'database', 'indexes');
+    const indexPath = path.join(indexesDir, fileId);
+
+    if (!fs.existsSync(indexPath)) {
+        throw new Error(`FAISS index for fileId '${fileId}' not found.`);
+    }
+
+    // Build search query from item data and user message
+    const searchQuery = itemType === 'quiz'
+        ? `${itemData.question} ${itemData.correctAnswer} ${message}`
+        : `${itemData.question} ${itemData.answer} ${message}`;
+
+    const vectorStore = await FaissStore.load(indexPath, hfEmbeddings);
+    const searchResults = await vectorStore.similaritySearch(searchQuery, 5);
+
+    if (searchResults.length === 0) {
+        return {
+            text: "I couldn't find relevant information in the document to answer this question.",
+            nodeIds: [],
+            pageIndex: null
+        };
+    }
+
+    // Extract node IDs and build context
+    const nodeIds = [];
+    const context = searchResults.map((doc) => {
+        const meta = doc.metadata || {};
+        const displayIndex = (meta.pageIndex !== undefined) ? meta.pageIndex + 1 : 'Unknown';
+        const type = meta.pageType || 'Page';
+
+        // Extract node IDs from metadata if available
+        if (meta.nodeIds && Array.isArray(meta.nodeIds)) {
+            nodeIds.push(...meta.nodeIds);
+        }
+
+        return `[Source: ${type} ${displayIndex}]\n${doc.pageContent}`;
+    }).join('\n\n---\n\n');
+
+    // Build chat history context
+    const historyContext = chatHistory.length > 0
+        ? chatHistory.map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`).join('\n')
+        : '';
+
+    const itemContext = itemType === 'quiz'
+        ? `Question: ${itemData.question}\nOptions: ${itemData.options?.map(o => o.value).join(', ') || 'N/A'}\nCorrect Answer: ${itemData.correctAnswer}`
+        : `Flashcard Front: ${itemData.question}\nFlashcard Back: ${itemData.answer}`;
+
+    const systemPrompt = `
+You are an AI tutor helping a student understand a ${itemType} item from their study material.
+
+${itemType.toUpperCase()} CONTEXT:
+${itemContext}
+
+DOCUMENT CONTEXT:
+"""
+${context}
+"""
+
+${historyContext ? `PREVIOUS CONVERSATION:\n${historyContext}\n` : ''}
+
+STUDENT'S QUESTION: "${message}"
+
+INSTRUCTIONS:
+- Provide a clear, educational explanation
+- Reference the document context when relevant
+- Help the student understand the concept, don't just give the answer
+- Be concise but thorough
+- Use markdown formatting for clarity
+`;
+
+    try {
+        const result = await retryOperation(() => aiModel.generateContent(systemPrompt));
+        const text = result?.response?.text()?.trim() || "No content generated.";
+
+        // Get the first page index from search results
+        const pageIndex = searchResults[0]?.metadata?.pageIndex;
+
+        return {
+            text,
+            nodeIds: [...new Set(nodeIds)], // Remove duplicates
+            pageIndex
+        };
+    } catch (error) {
+        logger.error(`[AI-Service] Item context response failed: ${error.message}`);
+        throw new Error('Failed to generate response for item context.');
+    }
+}
+

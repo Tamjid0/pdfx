@@ -1,42 +1,15 @@
-thiink like that i upload a document and i want to make a perefct note....so here are some simple expamples of what a proper notes contains.....(these are just examples)...
-
-so note mode should generate a perefct note as need......then format it into different blocks as needed...block is just a tool to represent the data but main data should be accurate and useful...now i want you to redesign the note mode where ai will be instrocuted to first  make a note and then fit the note with the aviabkle blocks(in one request not multiple) now you redesign the note mode by adding more block support for better output..
-
+tasks:
+1. when in quiz or flashcard or relevent modes let user hide the artboard or editor with a eye icon which will cover the editor or artboard or pdf or slide with hidden overlay
 
 
-here are simple exapmles what a good note contains.....they contains many other things so dont stick to only these ypour job is to find what a proper note contains and then redesign the mode...
+2. in flashcard mode let user switch between one card at a time(which will show like quiz exam one card then another with chnager button) or all card (current view)...
 
-### 1. Study Notes (The Learning Note)
+3. from now on let let ai also send hint through uuid lik chatmode for quiz like for mathmatical things ai will generate a question also will send a hint with answer let user click on hint that will let user go to that section in the pdf or slide(just like chat mode) and highlight them...
+also include this feature in exam mode only when exam is finished let user see the answer and explanation form the pdf or slide...
 
-**Goal:** To convert new information into long-term memory and understanding.
+4. Another important feature this is completely new....let user ask detail question about a quiz or flashcard so give a option to export them(that quiz or flashcard) into chat mode(graphically) and it will work like an attachment and let user add question or queries about that quiz or flashcard.....
 
-* **Definitions:** Technical terms explained in your own words.
-* **Formulas/Theorems:** The "rules" of the subject, usually highlighted or in LaTeX:
-
-
-* **Visual Aids:** Rough sketches, diagrams (like a cell or a timeline), or mind maps.
-* **Self-Quiz Questions:** Questions in the margins used to test yourself later.
-* **Summary:** A 2-sentence wrap-up of the main takeaway.
-
-### 2. Meeting Notes (The Accountability Note)
-
-**Goal:** To record decisions and ensure everyone knows their "homework" after a discussion.
-
-* **Context:** Date, time, and attendees.
-* **Key Decisions:** A clear list of what was officially agreed upon to avoid future arguments.
-* **Action Items:** Tasks assigned to specific people (e.g., "**@John** to send the final PDF by Tuesday").
-* **Parking Lot:** A section for ideas that were brought up but aren't relevant to the current meeting.
-
-### 3. Project Notes (The Execution Note)
-
-**Goal:** To manage the moving parts of a specific goal or "mission."
-
-* **Project Scope:** A clear statement of what "done" looks like.
-* **Milestones:** A timeline of major deadlines or phases.
-* **Resources/Links:** A collection of passwords, file paths, or contact info needed for the work.
-* **Blockers:** A list of things stopping progress that need to be fixed.
-
-### 4. presenttation notes 
+but there is a small problem currently quiz/flashcard and chatmode is seperate feature...my plan is open the chatmode in a colsapable unit in other mode where needed like were talking about chat or quiz....when a quiz is imported in chatmode chatmode should never cover the entire quiz/flashcardmode....im cofused about the ui....if you have a better place or idea for chat mode integration in otehr mode use that idea....but one thing when switched to orignal chat mode immeditale that chatmode should close....but these chat mode should be parallal should be updated parelally
 
 
-and finally let user choose 1 between these 4 note catagories....write seperate struv=cture and prompt for each of them...
+this is for now impllement these feature no.4 is the most important part

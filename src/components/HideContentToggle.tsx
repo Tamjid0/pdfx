@@ -3,10 +3,14 @@ import React, { useState, useEffect } from 'react';
 interface HideContentToggleProps {
     storageKey: string; // Unique key for localStorage persistence
     children: React.ReactNode; // Content to potentially hide
+    enabled?: boolean; // Whether the toggle feature is active
 }
 
-const HideContentToggle: React.FC<HideContentToggleProps> = ({ storageKey, children }) => {
+const HideContentToggle: React.FC<HideContentToggleProps> = ({ storageKey, children, enabled = true }) => {
     const [isHidden, setIsHidden] = useState(false);
+
+    // If not enabled, just return children
+    if (!enabled) return <>{children}</>;
 
     // Load state from localStorage on mount
     useEffect(() => {

@@ -6,7 +6,6 @@ import { toast } from 'react-hot-toast';
 import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
 import SingleCardView from './SingleCardView';
 import CollapsibleChatPanel from './CollapsibleChatPanel';
-import HideContentToggle from './HideContentToggle';
 
 interface FlashcardsProps {
     onGenerate: (mode: Mode) => void;
@@ -226,7 +225,6 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
                     <h3 className="text-xs font-black text-white uppercase tracking-[0.3em]">Knowledge Deck</h3>
                 </div>
                 <div className="flex items-center gap-3">
-                    {/* View Mode Toggle */}
                     <button
                         onClick={() => setViewMode(viewMode === 'grid' ? 'single' : 'grid')}
                         className="px-4 py-2 bg-[#1a1a1a] text-white border border-white/10 rounded-lg text-xs font-bold hover:bg-white/5 transition-all flex items-center gap-2"
@@ -286,136 +284,132 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
                 }}
             />
 
-            <HideContentToggle storageKey={`flashcards_visibility_${activeRevisionId || 'default'}`}>
-                <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 relative">
-                    {viewMode === 'single' ? (
-                        <SingleCardView
-                            card={cardsArray[currentCardIndex]}
-                            cardIndex={currentCardIndex}
-                            totalCards={cardsArray.length}
-                            isFlipped={flippedCards.includes(currentCardIndex)}
-                            onFlip={() => handleCardClick({} as any, currentCardIndex)}
-                            onNext={() => setCurrentCardIndex(prev => Math.min(prev + 1, cardsArray.length - 1))}
-                            onPrev={() => setCurrentCardIndex(prev => Math.max(prev - 1, 0))}
-                            onRate={(rating) => handleRateCard(currentCardIndex, rating)}
-                            onAskAI={() => openEmbeddedChat(`flashcard_${currentCardIndex}`, 'flashcard', cardsArray[currentCardIndex])}
-                            onShowHint={handleShowHint}
-                        />
-                    ) : (
-                        <>
-                            <p className="text-[#666] text-[10px] font-black uppercase tracking-[0.3em] mb-8 text-center">Interactive Sessions • Click to reveal</p>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-                                {cardsArray.map((card, index: number) => (
-                                    <div key={index} className="relative group">
-                                        <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    deleteCard(index);
-                                                }}
-                                                className="p-2 bg-[#111]/80 rounded-full text-gray-400 hover:text-red-500 hover:bg-[#111] border border-[#222] transition-colors shadow-lg backdrop-blur-sm"
-                                                title="Delete Card"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                            </button>
-                                        </div>
-                                        <div
-                                            className="perspective-1000 h-64 cursor-pointer"
-                                            onClick={(e) => handleCardClick(e, index)}
+            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-8 relative">
+                {viewMode === 'single' ? (
+                    <SingleCardView
+                        card={cardsArray[currentCardIndex]}
+                        cardIndex={currentCardIndex}
+                        totalCards={cardsArray.length}
+                        isFlipped={flippedCards.includes(currentCardIndex)}
+                        onFlip={() => handleCardClick({} as any, currentCardIndex)}
+                        onNext={() => setCurrentCardIndex(prev => Math.min(prev + 1, cardsArray.length - 1))}
+                        onPrev={() => setCurrentCardIndex(prev => Math.max(prev - 1, 0))}
+                        onRate={(rating) => handleRateCard(currentCardIndex, rating)}
+                        onAskAI={() => openEmbeddedChat(`flashcard_${currentCardIndex}`, 'flashcard', cardsArray[currentCardIndex])}
+                        onShowHint={handleShowHint}
+                    />
+                ) : (
+                    <>
+                        <p className="text-[#666] text-[10px] font-black uppercase tracking-[0.3em] mb-8 text-center">Interactive Sessions • Click to reveal</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+                            {cardsArray.map((card, index: number) => (
+                                <div key={index} className="relative group">
+                                    <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                deleteCard(index);
+                                            }}
+                                            className="p-2 bg-[#111]/80 rounded-full text-gray-400 hover:text-red-500 hover:bg-[#111] border border-[#222] transition-colors shadow-lg backdrop-blur-sm"
+                                            title="Delete Card"
                                         >
-                                            <div className={`relative w-full h-full transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] transform-style-preserve-3d ${flippedCards.includes(index) ? 'rotate-y-180' : ''}`}>
-                                                {/* Front */}
-                                                <div className="absolute w-full h-full backface-hidden rounded-xl flex flex-col p-6 bg-[#111] border border-[#222] group-hover:border-[#00ff88]/30 transition-colors shadow-xl">
-                                                    <div className="flex justify-between items-start mb-4">
-                                                        <span className="text-[10px] font-black text-[#444] uppercase tracking-widest">Question {index + 1}</span>
-                                                        <div className="w-1.5 h-1.5 rounded-full bg-[#00ff88]/20"></div>
-                                                    </div>
-                                                    <p
-                                                        className="flex-1 text-sm font-bold text-center text-white flex items-center justify-center outline-none focus:text-[#00ff88]"
-                                                        contentEditable={true}
-                                                        suppressContentEditableWarning={true}
-                                                        onBlur={(e) => handleContentChange(e, index, 'question')}
-                                                    >
-                                                        {card.question}
-                                                    </p>
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>
+                                    </div>
+                                    <div
+                                        className="perspective-1000 h-64 cursor-pointer"
+                                        onClick={(e) => handleCardClick(e, index)}
+                                    >
+                                        <div className={`relative w-full h-full transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] transform-style-preserve-3d ${flippedCards.includes(index) ? 'rotate-y-180' : ''}`}>
+                                            <div className="absolute w-full h-full backface-hidden rounded-xl flex flex-col p-6 bg-[#111] border border-[#222] group-hover:border-[#00ff88]/30 transition-colors shadow-xl">
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <span className="text-[10px] font-black text-[#444] uppercase tracking-widest">Question {index + 1}</span>
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-[#00ff88]/20"></div>
                                                 </div>
-                                                {/* Back */}
-                                                <div className="absolute w-full h-full backface-hidden rounded-xl flex flex-col p-6 bg-[#1a1a1a] border-2 border-[#00ff88]/50 text-white transform rotate-y-180 shadow-[0_0_30px_rgba(0,255,136,0.1)]">
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-[10px] font-black text-[#00ff88] uppercase tracking-widest">Self-Assessment</span>
-                                                            {card.interval !== undefined && (
-                                                                <span className="text-[8px] text-gray-500 font-bold uppercase tracking-tighter">Current Interval: {card.interval}d</span>
-                                                            )}
-                                                        </div>
-                                                        <div className="flex gap-2">
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); handleAskAI(index); }}
-                                                                className="p-1.5 bg-[#00ff88]/10 rounded-lg text-[#00ff88] hover:bg-[#00ff88]/20 transition-all border border-[#00ff88]/20"
-                                                                title="Ask AI for explanation"
-                                                            >
-                                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
-                                                            </button>
-                                                            <svg className="w-4 h-4 text-[#00ff88]/40" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>
-                                                        </div>
+                                                <p
+                                                    className="flex-1 text-sm font-bold text-center text-white flex items-center justify-center outline-none focus:text-[#00ff88]"
+                                                    contentEditable={true}
+                                                    suppressContentEditableWarning={true}
+                                                    onBlur={(e) => handleContentChange(e, index, 'question')}
+                                                >
+                                                    {card.question}
+                                                </p>
+                                            </div>
+                                            <div className="absolute w-full h-full backface-hidden rounded-xl flex flex-col p-6 bg-[#1a1a1a] border-2 border-[#00ff88]/50 text-white transform rotate-y-180 shadow-[0_0_30px_rgba(0,255,136,0.1)]">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] font-black text-[#00ff88] uppercase tracking-widest">Self-Assessment</span>
+                                                        {card.interval !== undefined && (
+                                                            <span className="text-[8px] text-gray-500 font-bold uppercase tracking-tighter">Current Interval: {card.interval}d</span>
+                                                        )}
                                                     </div>
-                                                    <p
-                                                        className="flex-1 text-sm font-bold text-center flex items-center justify-center outline-none px-4"
-                                                        contentEditable={true}
-                                                        suppressContentEditableWarning={true}
-                                                        onBlur={(e) => handleContentChange(e, index, 'answer')}
-                                                    >
-                                                        {card.answer}
-                                                    </p>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleAskAI(index); }}
+                                                            className="p-1.5 bg-[#00ff88]/10 rounded-lg text-[#00ff88] hover:bg-[#00ff88]/20 transition-all border border-[#00ff88]/20"
+                                                            title="Ask AI for explanation"
+                                                        >
+                                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                                                        </button>
+                                                        <svg className="w-4 h-4 text-[#00ff88]/40" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>
+                                                    </div>
+                                                </div>
+                                                <p
+                                                    className="flex-1 text-sm font-bold text-center flex items-center justify-center outline-none px-4"
+                                                    contentEditable={true}
+                                                    suppressContentEditableWarning={true}
+                                                    onBlur={(e) => handleContentChange(e, index, 'answer')}
+                                                >
+                                                    {card.answer}
+                                                </p>
 
-                                                    <div className="mt-4 grid grid-cols-4 gap-1.5 pt-4 border-t border-white/5">
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); handleRateCard(index, 'again'); }}
-                                                            className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-red-500/10 transition-colors group/btn"
-                                                        >
-                                                            <span className="text-[8px] font-black text-red-500 uppercase tracking-tighter group-hover/btn:text-red-400">Again</span>
-                                                            <div className="w-full h-1 bg-red-500/20 rounded-full group-hover/btn:bg-red-500/40"></div>
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); handleRateCard(index, 'hard'); }}
-                                                            className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-orange-500/10 transition-colors group/btn"
-                                                        >
-                                                            <span className="text-[8px] font-black text-orange-500 uppercase tracking-tighter group-hover/btn:text-orange-400">Hard</span>
-                                                            <div className="w-full h-1 bg-orange-500/20 rounded-full group-hover/btn:bg-orange-500/40"></div>
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); handleRateCard(index, 'good'); }}
-                                                            className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-blue-500/10 transition-colors group/btn"
-                                                        >
-                                                            <span className="text-[8px] font-black text-blue-500 uppercase tracking-tighter group-hover/btn:text-blue-400">Good</span>
-                                                            <div className="w-full h-1 bg-blue-500/20 rounded-full group-hover/btn:bg-blue-500/40"></div>
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); handleRateCard(index, 'easy'); }}
-                                                            className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-[#00ff88]/10 transition-colors group/btn"
-                                                        >
-                                                            <span className="text-[8px] font-black text-[#00ff88] uppercase tracking-tighter group-hover/btn:text-[#00ff88]">Easy</span>
-                                                            <div className="w-full h-1 bg-[#00ff88]/20 rounded-full group-hover/btn:bg-[#00ff88]/40"></div>
-                                                        </button>
-                                                    </div>
+                                                <div className="mt-4 grid grid-cols-4 gap-1.5 pt-4 border-t border-white/5">
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleRateCard(index, 'again'); }}
+                                                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-red-500/10 transition-colors group/btn"
+                                                    >
+                                                        <span className="text-[8px] font-black text-red-500 uppercase tracking-tighter group-hover/btn:text-red-400">Again</span>
+                                                        <div className="w-full h-1 bg-red-500/20 rounded-full group-hover/btn:bg-red-500/40"></div>
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleRateCard(index, 'hard'); }}
+                                                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-orange-500/10 transition-colors group/btn"
+                                                    >
+                                                        <span className="text-[8px] font-black text-orange-500 uppercase tracking-tighter group-hover/btn:text-orange-400">Hard</span>
+                                                        <div className="w-full h-1 bg-orange-500/20 rounded-full group-hover/btn:bg-orange-500/40"></div>
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleRateCard(index, 'good'); }}
+                                                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-blue-500/10 transition-colors group/btn"
+                                                    >
+                                                        <span className="text-[8px] font-black text-blue-500 uppercase tracking-tighter group-hover/btn:text-blue-400">Good</span>
+                                                        <div className="w-full h-1 bg-blue-500/20 rounded-full group-hover/btn:bg-blue-500/40"></div>
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleRateCard(index, 'easy'); }}
+                                                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-[#00ff88]/10 transition-colors group/btn"
+                                                    >
+                                                        <span className="text-[8px] font-black text-[#00ff88] uppercase tracking-tighter group-hover/btn:text-[#00ff88]">Easy</span>
+                                                        <div className="w-full h-1 bg-[#00ff88]/20 rounded-full group-hover/btn:bg-[#00ff88]/40"></div>
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                ))}
+                                </div>
+                            ))}
 
-                                <button
-                                    onClick={addCard}
-                                    className="h-64 border-2 border-[#1a1a1a] border-dashed rounded-2xl flex flex-col items-center justify-center text-[#444] hover:text-[#00ff88] hover:border-[#00ff88]/30 hover:bg-[#00ff88]/5 transition-all group"
-                                >
-                                    <svg className="w-8 h-8 mb-4 opacity-20 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Append New Card</span>
-                                </button>
-                            </div>
-                        </>
-                    )}
-                </div>
-            </HideContentToggle>
+                            <button
+                                onClick={addCard}
+                                className="h-64 border-2 border-[#1a1a1a] border-dashed rounded-2xl flex flex-col items-center justify-center text-[#444] hover:text-[#00ff88] hover:border-[#00ff88]/30 hover:bg-[#00ff88]/5 transition-all group"
+                            >
+                                <svg className="w-8 h-8 mb-4 opacity-20 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                                <span className="text-[10px] font-black uppercase tracking-widest">Append New Card</span>
+                            </button>
+                        </div>
+                    </>
+                )}
+            </div>
 
             <div className="p-6 bg-[#0f0f0f] border-t border-[#222] flex justify-between items-center">
                 <button className="text-[10px] font-black text-[#444] uppercase tracking-widest hover:text-white transition-all">Clear Session</button>
@@ -437,7 +431,6 @@ const Flashcards: React.FC<FlashcardsProps> = ({ onGenerate }) => {
                 </div>
             </div>
 
-            {/* Render Embedded Chat Panels */}
             {Object.entries(embeddedChats).map(([itemId, chat]) => (
                 chat.isOpen && chat.itemType === 'flashcard' && (
                     <CollapsibleChatPanel

@@ -24,6 +24,7 @@ import Quiz from "./Quiz";
 import Mindmap from "./Mindmap";
 import Chat from "./Chat";
 import { RevisionSwitcher } from "./dashboard/RevisionSwitcher";
+import HideContentToggle from "./HideContentToggle";
 
 interface MainLayoutProps {
     view: string;
@@ -179,24 +180,29 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                                 {isMounted && (
                                     <Allotment>
                                         <Allotment.Pane>
-                                            <div className="flex-1 flex flex-col overflow-y-auto border-r border-[#222] h-full">
-                                                {leftPanelView === 'slides' ? (
-                                                    <SlidePipelineContainer />
-                                                ) : (mode === 'editor' || leftPanelView === 'editor') ? (
-                                                    <div className="p-6 h-full flex flex-col">
-                                                        <Editor
-                                                            htmlContent={htmlPreview}
-                                                            onEditorChange={handleEditorChange}
-                                                            onFileUpload={handleFileUpload}
-                                                            onPasteContent={handlePasteContent}
-                                                        />
-                                                    </div>
-                                                ) : (
-                                                    <div className="p-6 h-full flex flex-col">
-                                                        <Artboard htmlContent={htmlPreview} isLoading={false} activeNotesToggles={activeNotesToggles} activeInsightsToggles={activeInsightsToggles} onExport={handleExport} />
-                                                    </div>
-                                                )}
-                                            </div>
+                                            <HideContentToggle
+                                                storageKey={`source_visibility_${fileId || 'default'}`}
+                                                enabled={['quiz', 'flashcards'].includes(mode)}
+                                            >
+                                                <div className="flex-1 flex flex-col overflow-y-auto border-r border-[#222] h-full">
+                                                    {leftPanelView === 'slides' ? (
+                                                        <SlidePipelineContainer />
+                                                    ) : (mode === 'editor' || leftPanelView === 'editor') ? (
+                                                        <div className="p-6 h-full flex flex-col">
+                                                            <Editor
+                                                                htmlContent={htmlPreview}
+                                                                onEditorChange={handleEditorChange}
+                                                                onFileUpload={handleFileUpload}
+                                                                onPasteContent={handlePasteContent}
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="p-6 h-full flex flex-col">
+                                                            <Artboard htmlContent={htmlPreview} isLoading={false} activeNotesToggles={activeNotesToggles} activeInsightsToggles={activeInsightsToggles} onExport={handleExport} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </HideContentToggle>
                                         </Allotment.Pane>
                                         {showSecondPane && (
                                             <Allotment.Pane>

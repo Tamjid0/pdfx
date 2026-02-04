@@ -51,6 +51,35 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
         }
     }, [activeRevisionId, quizData, isGeneratingQuiz, isAnalyzing]);
 
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const finishExam = useCallback(() => {
+        if (!quizData?.quiz) return;
+        let currentScore = 0;
+        quizData.quiz.forEach((q, index) => {
+            const userAnswer = selectedAnswers[`q${index}`];
+            if (q.type === 'tf' || q.type === 'mc') {
+                if (userAnswer === q.correctAnswer) currentScore++;
+            } else if (q.type === 'fib') {
+                if (typeof userAnswer === 'string' && typeof q.correctAnswer === 'string' &&
+                    userAnswer.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase()) {
+                    currentScore++;
+                }
+            }
+        });
+
+        const timeTaken = Math.floor((Date.now() - sessionStartTime) / 1000);
+        setExamResults({
+            score: currentScore,
+            timeTaken
+        });
+        setPhase('results');
+    }, [quizData, selectedAnswers, sessionStartTime]);
+
     // --- Timer Logic ---
     useEffect(() => {
         let timer: NodeJS.Timeout;
@@ -81,13 +110,7 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
             }, 1000);
         }
         return () => clearInterval(timer);
-    }, [phase, timeLeft, quizSettings.quizMode, quizSettings.timerType, quizSettings.timeLimit, currentIndex, quizData?.quiz?.length]);
-
-    const formatTime = (seconds: number) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    };
+    }, [phase, timeLeft, quizSettings.quizMode, quizSettings.timerType, quizSettings.timeLimit, currentIndex, quizData?.quiz?.length, finishExam]);
 
     // --- Actions ---
     const handleAnalyze = async () => {
@@ -143,29 +166,6 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
         setCurrentIndex(prev => prev - 1);
     };
 
-    const finishExam = useCallback(() => {
-        if (!quizData?.quiz) return;
-        let currentScore = 0;
-        quizData.quiz.forEach((q, index) => {
-            const userAnswer = selectedAnswers[`q${index}`];
-            if (q.type === 'tf' || q.type === 'mc') {
-                if (userAnswer === q.correctAnswer) currentScore++;
-            } else if (q.type === 'fib') {
-                if (typeof userAnswer === 'string' && typeof q.correctAnswer === 'string' &&
-                    userAnswer.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase()) {
-                    currentScore++;
-                }
-            }
-        });
-
-        const timeTaken = Math.floor((Date.now() - sessionStartTime) / 1000);
-        setExamResults({
-            score: currentScore,
-            timeTaken
-        });
-        setPhase('results');
-    }, [quizData, selectedAnswers, sessionStartTime]);
-
     const handleAnswerChange = (questionIndex: number, value: any) => {
         setSelectedAnswers(prev => ({
             ...prev,
@@ -176,7 +176,6 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
     const handleShowHint = (q: QuizItem) => {
         if (!q.hintNodeIds) return;
         setActiveNodeIds(q.hintNodeIds);
-        // If we have node ids, the store effect in DocumentViewer/SlideViewer will handle navigation.
         toast.success("Hint source highlighted in document");
     };
 
@@ -274,7 +273,6 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
         }
 
         if (!quizData || !quizData.quiz || quizData.quiz.length === 0) {
-            // This is the setup phase after analysis
             return (
                 <div className="flex flex-col h-full overflow-hidden">
                     <div className="border-b border-white/5 bg-white/[0.01]">
@@ -306,7 +304,6 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                {/* Summary Column */}
                                 <div className="bg-white/[0.02] border border-white/5 rounded-[2rem] p-8 space-y-6">
                                     <div className="flex items-center gap-3">
                                         <span className="w-1 h-4 bg-[#00ff88] rounded-full"></span>
@@ -328,7 +325,6 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
                                     </div>
                                 </div>
 
-                                {/* Configuration Column */}
                                 <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-8 space-y-8">
                                     <div className="flex items-center gap-3">
                                         <span className="w-1 h-4 bg-[#00ff88] rounded-full"></span>
@@ -344,7 +340,7 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
                                             type="range" min="5" max={analysisData?.maxCount || 50} step="5"
                                             value={quizSettings.questionCount}
                                             onChange={(e) => setQuizSettings({ ...quizSettings, questionCount: parseInt(e.target.value) })}
-                                            className="w-full h-1 bg-white/5 rounded-lg appearance-none cursor-pointer accent-[#00ff88]"
+                                            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#00ff88]"
                                         />
                                     </div>
 
@@ -354,7 +350,7 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
                                             {['easy', 'medium', 'hard'].map((lvl) => (
                                                 <button
                                                     key={lvl}
-                                                    onClick={() => setQuizSettings({ ...quizSettings, difficulty: lvl })}
+                                                    onClick={() => setQuizSettings({ ...quizSettings, difficulty: lvl as any })}
                                                     className={`flex-1 py-2.5 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all ${quizSettings.difficulty === lvl
                                                         ? 'bg-[#00ff88] text-black border-transparent'
                                                         : 'bg-white/5 border-white/5 text-gray-500 hover:text-white'
@@ -567,16 +563,16 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-16">
-                                            {q.type === 'mc' && q.options.map((opt, oIdx) => (
+                                            {q.type === 'mc' && q.options?.map((opt, oIdx) => (
                                                 <button
                                                     key={oIdx}
                                                     onClick={() => handleAnswerChange(qIdx, opt.value)}
-                                                    className={`text-left p-4 rounded-2xl border transition-all flex items-center gap-4 ${selectedAnswers[`q${qIdx}`] === opt.value
+                                                    className={`text-left p-4 rounded-2xl border transition-all flex items-center gap-4 ${selectedAnswers['q' + qIdx] === opt.value
                                                         ? 'bg-[#00ff88]/10 border-[#00ff88]/40'
                                                         : 'bg-black/20 border-white/5 hover:border-white/10'
                                                         }`}
                                                 >
-                                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[9px] font-black border ${selectedAnswers[`q${qIdx}`] === opt.value ? 'bg-[#00ff88] text-black border-transparent' : 'bg-white/5 border-white/10 text-gray-500'}`}>{opt.label}</div>
+                                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[9px] font-black border ${selectedAnswers['q' + qIdx] === opt.value ? 'bg-[#00ff88] text-black border-transparent' : 'bg-white/5 border-white/10 text-gray-500'}`}>{opt.label}</div>
                                                     <span className="text-[13px] font-medium text-gray-300">{opt.value}</span>
                                                 </button>
                                             ))}
@@ -585,7 +581,7 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
                                                 <button
                                                     key={val}
                                                     onClick={() => handleAnswerChange(qIdx, val)}
-                                                    className={`text-left p-4 rounded-2xl border transition-all font-black text-[10px] uppercase tracking-widest ${selectedAnswers[`q${qIdx}`] === val
+                                                    className={`text-left p-4 rounded-2xl border transition-all font-black text-[10px] uppercase tracking-widest ${selectedAnswers['q' + qIdx] === val
                                                         ? 'bg-[#00ff88]/10 border-[#00ff88]/40 text-white'
                                                         : 'bg-black/20 border-white/5 text-gray-500 hover:text-white'
                                                         }`}
@@ -600,7 +596,7 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
                                                 <input
                                                     type="text"
                                                     placeholder="Enter response..."
-                                                    value={selectedAnswers[`q${qIdx}`] || ''}
+                                                    value={selectedAnswers['q' + qIdx] || ''}
                                                     onChange={(e) => handleAnswerChange(qIdx, e.target.value)}
                                                     className="w-full p-4 bg-white/[0.03] border border-white/10 rounded-2xl text-[13px] font-bold text-[#00ff88] focus:border-[#00ff88]/50 outline-none transition-all"
                                                 />
@@ -644,251 +640,249 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
                                 </div>
                             </div>
                         </div>
-                    </HideContentToggle>
-                    </div >
+                    </div>
                 );
             }
 
-// EXAM MODE
-const q = quizData.quiz[currentIndex];
-const progress = ((currentIndex + 1) / quizData.quiz.length) * 100;
+            // EXAM MODE
+            const q = quizData.quiz[currentIndex];
+            const progress = ((currentIndex + 1) / quizData.quiz.length) * 100;
 
-return (
-    <div className="flex flex-col h-full overflow-hidden">
-        <div className="p-4 bg-white/[0.02] border-b border-white/5 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-                <div className="px-3 py-1 bg-[#00ff88]/10 border border-[#00ff88]/20 rounded-full text-[9px] font-black text-[#00ff88] uppercase tracking-widest">
-                    Question {currentIndex + 1} of {quizData.quiz.length}
-                </div>
-                <div className="h-1 w-32 bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#00ff88] transition-all duration-500" style={{ width: `${progress}%` }}></div>
-                </div>
-            </div>
-            <div className={`text-sm font-mono font-black tabular-nums transition-colors duration-300 ${timeLeft < 60 ? 'text-red-500 animate-pulse' : 'text-white/60'}`}>
-                {formatTime(timeLeft)}
-            </div>
-        </div>
-
-        <div className="flex-1 flex flex-col p-12 custom-scrollbar">
-            <div className="max-w-2xl mx-auto w-full flex-1 flex flex-col justify-center">
-                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                    <div className="space-y-4">
-                        <h2 className="text-xl md:text-2xl font-bold text-white leading-tight">
-                            {q.question}
-                        </h2>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => openEmbeddedChat(`quiz_${currentIndex}`, 'quiz', q)}
-                                className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-bold text-gray-500 hover:text-white hover:bg-white/10 transition-all flex items-center gap-2"
-                            >
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
-                                ASK AI
-                            </button>
-                            {q.hint && (
-                                <button
-                                    onClick={() => handleShowHint(q)}
-                                    className="px-4 py-2 bg-[#00ff88]/10 border border-[#00ff88]/20 rounded-xl text-[10px] font-bold text-[#00ff88] hover:bg-[#00ff88]/20 transition-all flex items-center gap-2"
-                                >
-                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                    SOURCE HINT
-                                </button>
-                            )}
+            return (
+                <div className="flex flex-col h-full overflow-hidden">
+                    <div className="p-4 bg-white/[0.02] border-b border-white/5 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="px-3 py-1 bg-[#00ff88]/10 border border-[#00ff88]/20 rounded-full text-[9px] font-black text-[#00ff88] uppercase tracking-widest">
+                                Question {currentIndex + 1} of {quizData.quiz.length}
+                            </div>
+                            <div className="h-1 w-32 bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-full bg-[#00ff88] transition-all duration-500" style={{ width: `${progress}%` }}></div>
+                            </div>
+                        </div>
+                        <div className={`text-sm font-mono font-black tabular-nums transition-colors duration-300 ${timeLeft < 60 ? 'text-red-500 animate-pulse' : 'text-white/60'}`}>
+                            {formatTime(timeLeft)}
                         </div>
                     </div>
 
-                    <div className="space-y-3">
-                        {q.type === 'mc' && q.options.map((opt, oIdx) => (
-                            <button
-                                key={oIdx}
-                                onClick={() => handleAnswerChange(currentIndex, opt.value)}
-                                className={`w-full text-left p-5 rounded-[1.5rem] border transition-all group flex items-center justify-between
-                                                ${selectedAnswers[`q${currentIndex}`] === opt.value
-                                        ? 'bg-[#00ff88]/10 border-[#00ff88]/40 ring-1 ring-[#00ff88]/20'
-                                        : 'bg-white/[0.02] border-white/5 hover:border-white/20 hover:bg-white/[0.04]'
-                                    }`}
-                            >
-                                <div className="flex gap-5 items-center">
-                                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[10px] font-black border transition-colors
-                                                    ${selectedAnswers[`q${currentIndex}`] === opt.value
-                                            ? 'bg-[#00ff88] border-transparent text-black'
-                                            : 'bg-white/5 border-white/10 text-gray-500 group-hover:text-white'
-                                        }`}>
-                                        {opt.label}
+                    <div className="flex-1 flex flex-col p-12 custom-scrollbar">
+                        <div className="max-w-2xl mx-auto w-full flex-1 flex flex-col justify-center">
+                            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                                <div className="space-y-4">
+                                    <h2 className="text-xl md:text-2xl font-bold text-white leading-tight">
+                                        {q.question}
+                                    </h2>
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={() => openEmbeddedChat(`quiz_${currentIndex}`, 'quiz', q)}
+                                            className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-bold text-gray-500 hover:text-white hover:bg-white/10 transition-all flex items-center gap-2"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                                            ASK AI
+                                        </button>
+                                        {q.hint && (
+                                            <button
+                                                onClick={() => handleShowHint(q)}
+                                                className="px-4 py-2 bg-[#00ff88]/10 border border-[#00ff88]/20 rounded-xl text-[10px] font-bold text-[#00ff88] hover:bg-[#00ff88]/20 transition-all flex items-center gap-2"
+                                            >
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                SOURCE HINT
+                                            </button>
+                                        )}
                                     </div>
-                                    <span className={`text-sm font-semibold tracking-tight transition-colors ${selectedAnswers[`q${currentIndex}`] === opt.value ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
-                                        {opt.value}
-                                    </span>
                                 </div>
-                            </button>
-                        ))}
 
-                        {q.type === 'tf' && ['true', 'false'].map((val) => (
-                            <button
-                                key={val}
-                                onClick={() => handleAnswerChange(currentIndex, val)}
-                                className={`w-full text-left p-5 rounded-[1.5rem] border transition-all flex items-center justify-between
+                                <div className="space-y-3">
+                                    {q.type === 'mc' && q.options?.map((opt, oIdx) => (
+                                        <button
+                                            key={oIdx}
+                                            onClick={() => handleAnswerChange(currentIndex, opt.value)}
+                                            className={`w-full text-left p-5 rounded-[1.5rem] border transition-all group flex items-center justify-between
+                                                ${selectedAnswers[`q${currentIndex}`] === opt.value
+                                                    ? 'bg-[#00ff88]/10 border-[#00ff88]/40 ring-1 ring-[#00ff88]/20'
+                                                    : 'bg-white/[0.02] border-white/5 hover:border-white/20 hover:bg-white/[0.04]'
+                                                }`}
+                                        >
+                                            <div className="flex gap-5 items-center">
+                                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[10px] font-black border transition-colors
+                                                    ${selectedAnswers[`q${currentIndex}`] === opt.value
+                                                        ? 'bg-[#00ff88] border-transparent text-black'
+                                                        : 'bg-white/5 border-white/10 text-gray-500 group-hover:text-white'
+                                                    }`}>
+                                                    {opt.label}
+                                                </div>
+                                                <span className={`text-sm font-semibold tracking-tight transition-colors ${selectedAnswers[`q${currentIndex}`] === opt.value ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
+                                                    {opt.value}
+                                                </span>
+                                            </div>
+                                        </button>
+                                    ))}
+
+                                    {q.type === 'tf' && ['true', 'false'].map((val) => (
+                                        <button
+                                            key={val}
+                                            onClick={() => handleAnswerChange(currentIndex, val)}
+                                            className={`w-full text-left p-5 rounded-[1.5rem] border transition-all flex items-center justify-between
                                                 ${selectedAnswers[`q${currentIndex}`] === val
-                                        ? 'bg-[#00ff88]/10 border-[#00ff88]/40 ring-1 ring-[#00ff88]/20'
-                                        : 'bg-white/[0.02] border-white/5 hover:border-white/20 hover:bg-white/[0.04]'
-                                    }`}
-                            >
-                                <span className={`text-sm font-black uppercase tracking-widest ${selectedAnswers[`q${currentIndex}`] === val ? 'text-white' : 'text-gray-500'}`}>{val}</span>
-                            </button>
-                        ))}
+                                                    ? 'bg-[#00ff88]/10 border-[#00ff88]/40 ring-1 ring-[#00ff88]/20'
+                                                    : 'bg-white/[0.02] border-white/5 hover:border-white/20 hover:bg-white/[0.04]'
+                                                }`}
+                                        >
+                                            <span className={`text-sm font-black uppercase tracking-widest ${selectedAnswers[`q${currentIndex}`] === val ? 'text-white' : 'text-gray-500'}`}>{val}</span>
+                                        </button>
+                                    ))}
 
-                        {q.type === 'fib' && (
-                            <input
-                                type="text"
-                                placeholder="Type your answer here..."
-                                value={selectedAnswers[`q${currentIndex}`] || ''}
-                                onChange={(e) => handleAnswerChange(currentIndex, e.target.value)}
-                                className="w-full p-6 bg-white/[0.03] border border-white/10 rounded-3xl text-sm font-bold text-[#00ff88] focus:border-[#00ff88]/50 outline-none transition-all placeholder:text-gray-700"
-                            />
+                                    {q.type === 'fib' && (
+                                        <input
+                                            type="text"
+                                            placeholder="Type your answer here..."
+                                            value={selectedAnswers[`q${currentIndex}`] || ''}
+                                            onChange={(e) => handleAnswerChange(currentIndex, e.target.value)}
+                                            className="w-full p-6 bg-white/[0.03] border border-white/10 rounded-3xl text-sm font-bold text-[#00ff88] focus:border-[#00ff88]/50 outline-none transition-all placeholder:text-gray-700"
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-6 bg-white/[0.02] border-t border-white/5 flex items-center justify-between">
+                        <button
+                            disabled={currentIndex === 0}
+                            onClick={prevQuestion}
+                            className="px-6 py-3 text-xs font-black text-gray-500 uppercase tracking-widest hover:text-white transition-colors disabled:opacity-0"
+                        >
+                            Back
+                        </button>
+                        {currentIndex === quizData.quiz.length - 1 ? (
+                            <button
+                                onClick={finishExam}
+                                className="px-8 py-3 bg-[#00ff88] text-black rounded-xl text-xs font-black uppercase tracking-widest hover:bg-[#00dd77] transition-all shadow-xl"
+                            >
+                                Complete Assessment
+                            </button>
+                        ) : (
+                            <button
+                                onClick={nextQuestion}
+                                className="px-8 py-3 bg-white/5 border border-white/10 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-white/10 transition-all"
+                            >
+                                Next Question
+                            </button>
                         )}
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <div className="p-6 bg-white/[0.02] border-t border-white/5 flex items-center justify-between">
-            <button
-                disabled={currentIndex === 0}
-                onClick={prevQuestion}
-                className="px-6 py-3 text-xs font-black text-gray-500 uppercase tracking-widest hover:text-white transition-colors disabled:opacity-0"
-            >
-                Back
-            </button>
-            {currentIndex === quizData.quiz.length - 1 ? (
-                <button
-                    onClick={finishExam}
-                    className="px-8 py-3 bg-[#00ff88] text-black rounded-xl text-xs font-black uppercase tracking-widest hover:bg-[#00dd77] transition-all shadow-xl"
-                >
-                    Complete Assessment
-                </button>
-            ) : (
-                <button
-                    onClick={nextQuestion}
-                    className="px-8 py-3 bg-white/5 border border-white/10 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-white/10 transition-all"
-                >
-                    Next Question
-                </button>
-            )}
-        </div>
-    </div>
-);
+            );
         }
 
-// --- PHASE: RESULTS ---
-if (phase === 'results' && examResults) {
-    if (!quizData?.quiz?.length) return null;
-    const accuracy = Math.round((examResults.score / quizData.quiz.length) * 100);
+        if (phase === 'results' && examResults) {
+            if (!quizData?.quiz?.length) return null;
+            const accuracy = Math.round((examResults.score / quizData.quiz.length) * 100);
 
-    return (
-        <div className="flex flex-col h-full overflow-hidden">
-            <div className="p-12 md:p-20 flex-1 overflow-y-auto custom-scrollbar">
-                <div className="max-w-4xl mx-auto space-y-16">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div className="md:col-span-2 space-y-6">
-                            <h1 className="text-4xl md:text-6xl font-black text-white leading-none tracking-tighter uppercase whitespace-nowrap">
-                                Assessment <br /><span className="text-[#00ff88]">Analytics</span>
-                            </h1>
-                            <p className="text-gray-500 text-sm leading-relaxed max-w-sm">
-                                Your audit cycle is complete. Mastery of this document is currently rated at <span className="text-white font-bold">{accuracy}%</span>.
-                            </p>
-                        </div>
-                        <div className="flex flex-col items-center justify-center bg-white/[0.02] p-8 rounded-[3rem] border border-white/5">
-                            <div className="text-6xl font-black text-white mb-2">{accuracy}%</div>
-                            <div className="text-[10px] font-black tracking-[0.4em] text-gray-500 uppercase">Proficiency Level</div>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                        {[
-                            { label: 'Scored Items', value: `${examResults.score} / ${quizData.quiz.length}`, icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
-                            { label: 'Time Spent', value: formatTime(examResults.timeTaken), icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-                            { label: 'Avg Speed', value: `${Math.round(examResults.timeTaken / quizData.quiz.length)}s / item`, icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
-                            { label: 'Proficiency', value: accuracy > 80 ? 'Elite' : accuracy > 50 ? 'Stable' : 'Unstable', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' }
-                        ].map((stat, i) => (
-                            <div key={i} className="bg-white/[0.02] p-6 rounded-3xl border border-white/5 space-y-4">
-                                <svg className="w-5 h-5 text-[#00ff88] opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={stat.icon} /></svg>
-                                <div>
-                                    <div className="text-sm font-black text-white">{stat.value}</div>
-                                    <div className="text-[9px] font-black text-gray-600 uppercase tracking-widest mt-1">{stat.label}</div>
+            return (
+                <div className="flex flex-col h-full overflow-hidden">
+                    <div className="p-12 md:p-20 flex-1 overflow-y-auto custom-scrollbar">
+                        <div className="max-w-4xl mx-auto space-y-16">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                <div className="md:col-span-2 space-y-6">
+                                    <h1 className="text-4xl md:text-6xl font-black text-white leading-none tracking-tighter uppercase whitespace-nowrap">
+                                        Assessment <br /><span className="text-[#00ff88]">Analytics</span>
+                                    </h1>
+                                    <p className="text-gray-500 text-sm leading-relaxed max-w-sm">
+                                        Your audit cycle is complete. Mastery of this document is currently rated at <span className="text-white font-bold">{accuracy}%</span>.
+                                    </p>
+                                </div>
+                                <div className="flex flex-col items-center justify-center bg-white/[0.02] p-8 rounded-[3rem] border border-white/5">
+                                    <div className="text-6xl font-black text-white mb-2">{accuracy}%</div>
+                                    <div className="text-[10px] font-black tracking-[0.4em] text-gray-500 uppercase">Proficiency Level</div>
                                 </div>
                             </div>
-                        ))}
-                    </div>
 
-                    <div className="space-y-8">
-                        <h3 className="text-[11px] font-black text-white uppercase tracking-[0.4em]">Detailed Review</h3>
-                        <div className="space-y-4">
-                            {quizData.quiz.map((q, i) => {
-                                const userAnswer = selectedAnswers[`q${i}`];
-                                const isCorrect = q.type === 'fib'
-                                    ? userAnswer?.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase()
-                                    : userAnswer === q.correctAnswer;
-
-                                return (
-                                    <div key={i} className={`p-6 rounded-3xl border transition-all ${isCorrect ? 'bg-white/[0.01] border-white/5 opacity-50' : 'bg-red-500/5 border-red-500/20'}`}>
-                                        <div className="flex items-start gap-4">
-                                            <div className={`mt-1.5 w-1.5 h-1.5 rounded-full ${isCorrect ? 'bg-gray-700' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`}></div>
-                                            <div className="space-y-3 flex-1">
-                                                <div className="text-sm font-bold text-white/90">{q.question}</div>
-                                                {!isCorrect && (
-                                                    <div className="flex gap-4 items-center">
-                                                        <div className="text-[10px] uppercase font-black tracking-widest text-[#00ff88]">Correct: {String(q.correctAnswer)}</div>
-                                                        <div className="text-[10px] uppercase font-black tracking-widest text-red-500">Yours: {String(userAnswer || 'Skipped')}</div>
-                                                    </div>
-                                                )}
-                                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                {[
+                                    { label: 'Scored Items', value: `${examResults.score} / ${quizData.quiz.length}`, icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+                                    { label: 'Time Spent', value: formatTime(examResults.timeTaken), icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+                                    { label: 'Avg Speed', value: `${Math.round(examResults.timeTaken / quizData.quiz.length)}s / item`, icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
+                                    { label: 'Proficiency', value: accuracy > 80 ? 'Elite' : accuracy > 50 ? 'Stable' : 'Unstable', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' }
+                                ].map((stat, i) => (
+                                    <div key={i} className="bg-white/[0.02] p-6 rounded-3xl border border-white/5 space-y-4">
+                                        <svg className="w-5 h-5 text-[#00ff88] opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={stat.icon} /></svg>
+                                        <div>
+                                            <div className="text-sm font-black text-white">{stat.value}</div>
+                                            <div className="text-[9px] font-black text-gray-600 uppercase tracking-widest mt-1">{stat.label}</div>
                                         </div>
                                     </div>
-                                );
-                            })}
+                                ))}
+                            </div>
+
+                            <div className="space-y-8">
+                                <h3 className="text-[11px] font-black text-white uppercase tracking-[0.4em]">Detailed Review</h3>
+                                <div className="space-y-4">
+                                    {quizData.quiz.map((q, i) => {
+                                        const userAnswer = selectedAnswers['q' + i];
+                                        const isCorrect = q.type === 'fib'
+                                            ? userAnswer?.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase()
+                                            : userAnswer === q.correctAnswer;
+
+                                        return (
+                                            <div key={i} className={`p-6 rounded-3xl border transition-all ${isCorrect ? 'bg-white/[0.01] border-white/5 opacity-50' : 'bg-red-500/5 border-red-500/20'}`}>
+                                                <div className="flex items-start gap-4">
+                                                    <div className={`mt-1.5 w-1.5 h-1.5 rounded-full ${isCorrect ? 'bg-gray-700' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`}></div>
+                                                    <div className="space-y-3 flex-1">
+                                                        <div className="text-sm font-bold text-white/90">{q.question}</div>
+                                                        {!isCorrect && (
+                                                            <div className="flex gap-4 items-center">
+                                                                <div className="text-[10px] uppercase font-black tracking-widest text-[#00ff88]">Correct: {String(q.correctAnswer)}</div>
+                                                                <div className="text-[10px] uppercase font-black tracking-widest text-red-500">Yours: {String(userAnswer || 'Skipped')}</div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div className="flex gap-4 pt-10">
+                                <button
+                                    onClick={() => setPhase('setup')}
+                                    className="flex-1 py-5 bg-white text-black rounded-[2rem] text-xs font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
+                                >
+                                    New Session
+                                </button>
+                                <button
+                                    onClick={() => openExportModal('quiz', quizData)}
+                                    className="flex-1 py-5 border border-white/10 text-white rounded-[2rem] text-xs font-black uppercase tracking-widest hover:bg-white/5 transition-all"
+                                >
+                                    Export Results
+                                </button>
+                            </div>
                         </div>
                     </div>
-
-                    <div className="flex gap-4 pt-10">
-                        <button
-                            onClick={() => setPhase('setup')}
-                            className="flex-1 py-5 bg-white text-black rounded-[2rem] text-xs font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
-                        >
-                            New Session
-                        </button>
-                        <button
-                            onClick={() => openExportModal('quiz', quizData)}
-                            className="flex-1 py-5 border border-white/10 text-white rounded-[2rem] text-xs font-black uppercase tracking-widest hover:bg-white/5 transition-all"
-                        >
-                            Export Results
-                        </button>
-                    </div>
                 </div>
-            </div>
-        </div>
-    );
-}
+            );
+        }
 
-return null;
+        return null;
     };
 
-return (
-    <div className="flex flex-col h-full bg-[#0a0a0a] rounded-xl border border-[#222] overflow-hidden">
-        {renderPhase()}
+    return (
+        <div className="flex flex-col h-full bg-[#0a0a0a] rounded-xl border border-[#222] overflow-hidden">
+            {renderPhase()}
 
-        {/* Embedded Chat Panels */}
-        {Object.entries(embeddedChats).map(([itemId, chat]) => (
-            chat.isOpen && chat.itemType === 'quiz' && (
-                <CollapsibleChatPanel
-                    key={itemId}
-                    itemId={itemId}
-                    itemType={chat.itemType}
-                    itemData={chat.itemData}
-                    onClose={() => closeEmbeddedChat(itemId)}
-                />
-            )
-        ))}
-    </div>
-);
+            {/* Embedded Chat Panels */}
+            {Object.entries(embeddedChats).map(([itemId, chat]) => (
+                chat.isOpen && chat.itemType === 'quiz' && (
+                    <CollapsibleChatPanel
+                        key={itemId}
+                        itemId={itemId}
+                        itemType={chat.itemType}
+                        itemData={chat.itemData}
+                        onClose={() => closeEmbeddedChat(itemId)}
+                    />
+                )
+            ))}
+        </div>
+    );
 };
 
 export default Quiz;

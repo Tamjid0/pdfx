@@ -9,21 +9,23 @@ interface HideContentToggleProps {
 const HideContentToggle: React.FC<HideContentToggleProps> = ({ storageKey, children, enabled = true }) => {
     const [isHidden, setIsHidden] = useState(false);
 
-    // If not enabled, just return children
-    if (!enabled) return <>{children}</>;
-
     // Load state from localStorage on mount
     useEffect(() => {
+        if (!enabled) return;
         const saved = localStorage.getItem(storageKey);
         if (saved === 'true') {
             setIsHidden(true);
         }
-    }, [storageKey]);
+    }, [storageKey, enabled]);
 
     // Save state to localStorage when it changes
     useEffect(() => {
+        if (!enabled) return;
         localStorage.setItem(storageKey, String(isHidden));
-    }, [isHidden, storageKey]);
+    }, [isHidden, storageKey, enabled]);
+
+    // If not enabled, just return children
+    if (!enabled) return <>{children}</>;
 
     const toggleVisibility = () => {
         setIsHidden(!isHidden);

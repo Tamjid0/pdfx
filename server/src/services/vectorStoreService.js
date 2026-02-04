@@ -1,45 +1,55 @@
-import fs from 'fs';
 import { FaissStore } from '@langchain/community/vectorstores/faiss';
 import { hfEmbeddings } from './embeddingService.js';
 import storageService from './storageService.js';
+import fs from 'fs';
+import logger from '../utils/logger.js';
 
-// Production Cache: Stores loaded FaissStore instances to avoid redundant disk I/O
-const vectorStoreCache = new Map();
-const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
-
-/**
- * Loads a vector store from disk or returns it from cache.
- * @param {string} fileId - Unique identifier for the document.
- * @returns {Promise<FaissStore|null>}
- */
-export const getVectorStore = async (fileId) => {
-    // 1. Check Cache
-    if (vectorStoreCache.has(fileId)) {
-        const cached = vectorStoreCache.get(fileId);
-        if (Date.now() - cached.timestamp < CACHE_TTL) {
-            cached.timestamp = Date.now(); // Refresh TTL
-            return cached.instance;
+class VectorStoreService {
+    /**
+     * Creates and saves a new vector store from document chunks
+     * @param {string} documentId 
+     * @param {Array} docs - Array of { pageContent, metadata }
+     */
+    async saveChunks(documentId, docs) {
+        try {
+            logger.info(`[VectorStore] Creating index for ${documentId} with ${docs.length} chunks.`);
+            const vectorStore = await FaissStore.fromDocuments(docs, hfEmbeddings);
+            const indexPath = storageService.getIndexPath(documentId);
+            await vectorStore.save(indexPath);
+            return indexPath;
+        } catch (error) {
+            logger.error(`[VectorStore] Failed to save chunks for ${documentId}: ${error.message}`);
+            throw error;
         }
-        vectorStoreCache.delete(fileId);
     }
 
-    const vectorStorePath = storageService.getIndexPath(fileId);
-    if (fs.existsSync(vectorStorePath)) {
-        const instance = await FaissStore.load(vectorStorePath, hfEmbeddings);
-
-        // 2. Update Cache
-        vectorStoreCache.set(fileId, {
-            instance,
-            timestamp: Date.now()
-        });
-
-        // Optional: Simple Cache Eviction (keep latest 50 docs)
-        if (vectorStoreCache.size > 50) {
-            const oldestKey = vectorStoreCache.keys().next().value;
-            vectorStoreCache.delete(oldestKey);
+    /**
+     * Loads an existing vector store for a document
+     * @param {string} documentId 
+     */
+    async loadStore(documentId) {
+        const indexPath = storageService.getIndexPath(documentId);
+        if (!fs.existsSync(indexPath)) {
+            throw new Error(`Vector index not found for document ${documentId}`);
         }
-
-        return instance;
+        return await FaissStore.load(indexPath, hfEmbeddings);
     }
-    return null;
-};
+
+    /**
+     * Performs similarity search on a document's vector store
+     * @param {string} documentId 
+     * @param {string} query 
+     * @param {number} topN 
+     */
+    async similaritySearch(documentId, query, topN = 10) {
+        try {
+            const vectorStore = await this.loadStore(documentId);
+            return await vectorStore.similaritySearch(query, topN);
+        } catch (error) {
+            logger.error(`[VectorStore] Search failed for ${documentId}: ${error.message}`);
+            throw error;
+        }
+    }
+}
+
+export default new VectorStoreService();

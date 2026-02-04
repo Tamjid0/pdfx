@@ -17,7 +17,10 @@ import storageService from '../services/storageService.js';
 import { DocumentProcessor } from '../services/DocumentProcessor.js';
 import { addDocumentJob, isRedisConnected } from '../services/queueService.js';
 import User from '../models/User.js';
+import Document from '../models/Document.js';
 import { deleteCachePattern } from '../services/cacheService.js';
+import vectorStoreService from '../services/vectorStoreService.js';
+import { StructuredChunker } from '../services/StructuredChunker.js';
 
 const documentProcessor = new DocumentProcessor();
 
@@ -163,28 +166,75 @@ export const uploadFile = async (req, res, next) => {
 
 export const embedText = async (req, res) => {
     const { text, fileName } = req.body;
+    const userId = req.body.userId || req.user?.uid || 'guest';
 
     if (!text) {
         return res.status(400).send({ error: 'No text provided for embedding.' });
     }
 
-    const fileId = crypto.randomBytes(16).toString('hex');
+    const documentId = crypto.randomUUID();
 
     try {
         const cleanedText = cleanText(text);
-        const splitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000, chunkOverlap: 100 });
-        const docs = await splitter.createDocuments([cleanedText]);
+        const documentGraph = documentProcessor.generateGraphFromText(cleanedText, fileName || `Pasted Content ${new Date().toLocaleString()}`);
+        documentGraph.userId = userId;
+        documentGraph.documentId = documentId;
 
-        const vectorStore = await FaissStore.fromDocuments(docs, hfEmbeddings);
-        const indexPath = storageService.getIndexPath(fileId);
-        await vectorStore.save(indexPath);
+        const chunks = StructuredChunker.chunkByStructure(documentGraph);
+        const topics = StructuredChunker.detectTopics(documentGraph);
 
+        // 1. Create Vector Store
+        const docsWithMetadata = chunks.map(chunk => ({
+            pageContent: chunk.content,
+            metadata: { ...chunk.metadata, source: documentId, fileName: documentGraph.name }
+        }));
+        await vectorStoreService.saveChunks(documentId, docsWithMetadata);
+
+        // 2. Create MongoDB Document Record
+        const documentData = {
+            documentId,
+            userId,
+            type: 'text',
+            originalFile: {
+                name: documentGraph.name,
+                mime: 'text/plain',
+                size: Buffer.byteLength(cleanedText, 'utf8'),
+                processedAt: new Date()
+            },
+            extractedText: cleanedText,
+            structure: documentGraph,
+            chunks,
+            topics,
+            isArchived: false,
+            lastAccessedAt: new Date()
+        };
+
+        await Document.create(documentData);
+
+        // --- MONGODB USER STATS UPDATE (Fire and Forget) ---
+        if (userId !== 'guest') {
+            User.findOneAndUpdate(
+                { firebaseUid: userId },
+                {
+                    $inc: {
+                        'usage.totalFiles': 1,
+                        'usage.totalWords': cleanedText.split(/\s+/).length
+                    }
+                }
+            ).catch(err => logger.error(`[StatsUpdate] Failed for user ${userId}: ${err.message}`));
+        }
+
+        // Invalidate Cache for this user's document list
+        deleteCachePattern(`docs_list:${userId}:*`).catch(err =>
+            logger.error(`[Cache] Invalidation failed for user ${userId}: ${err.message}`)
+        );
 
         res.json({
-            fileId: fileId,
-            fileName: fileName || 'Pasted Content',
+            fileId: documentId,
+            documentId: documentId,
+            fileName: documentData.originalFile.name,
             extractedText: cleanedText,
-            message: 'Text processed and index created successfully.'
+            message: 'Text processed, index created, and document saved successfully.'
         });
 
     } catch (error) {

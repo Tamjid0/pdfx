@@ -82,6 +82,8 @@ const Home = () => {
             const data = await apiService.embedText(text, name);
             if (data.fileId) {
                 setFileId(data.fileId);
+                // Update URL to enable rehydration for pasted content
+                router.replace(`?id=${data.fileId}`);
             }
         } catch (error) {
             console.error("Background embedding failed:", error);

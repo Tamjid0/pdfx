@@ -1,6 +1,5 @@
 import genAI from '../config/gemini.js';
-import { FaissStore } from '@langchain/community/vectorstores/faiss';
-import { hfEmbeddings } from './embeddingService.js';
+import vectorStoreService from './vectorStoreService.js';
 import path from 'path';
 import fs from 'fs';
 import logger from '../utils/logger.js';
@@ -66,15 +65,7 @@ User's specific instruction: "${promptInstruction}"
 }
 
 export async function generateChunkBasedTransformation(fileId, query, topN = 10) {
-    const indexesDir = path.join(process.cwd(), 'src', 'database', 'indexes');
-    const indexPath = path.join(indexesDir, fileId);
-
-    if (!fs.existsSync(indexPath)) {
-        throw new Error(`FAISS index for fileId '${fileId}' not found.`);
-    }
-
-    const vectorStore = await FaissStore.load(indexPath, hfEmbeddings);
-    const searchResults = await vectorStore.similaritySearch(query, topN);
+    const searchResults = await vectorStoreService.similaritySearch(fileId, query, topN);
 
     if (searchResults.length === 0) {
         return "Information not found in document.";
@@ -149,15 +140,7 @@ User Query: "${query}"
 }
 
 export async function* generateChunkBasedStreamingTransformation(fileId, query, topN = 10) {
-    const indexesDir = path.join(process.cwd(), 'src', 'database', 'indexes');
-    const indexPath = path.join(indexesDir, fileId);
-
-    if (!fs.existsSync(indexPath)) {
-        throw new Error(`FAISS index for fileId '${fileId}' not found.`);
-    }
-
-    const vectorStore = await FaissStore.load(indexPath, hfEmbeddings);
-    const searchResults = await vectorStore.similaritySearch(query, topN);
+    const searchResults = await vectorStoreService.similaritySearch(fileId, query, topN);
 
     if (searchResults.length === 0) {
         yield "Information not found in document.";
@@ -251,20 +234,12 @@ User Query: "${query}"
  * @returns {Promise<object>} - Response with text, nodeIds, and pageIndex
  */
 export async function generateItemContextResponse(fileId, itemType, itemData, message, chatHistory = []) {
-    const indexesDir = path.join(process.cwd(), 'src', 'database', 'indexes');
-    const indexPath = path.join(indexesDir, fileId);
-
-    if (!fs.existsSync(indexPath)) {
-        throw new Error(`FAISS index for fileId '${fileId}' not found.`);
-    }
-
     // Build search query from item data and user message
     const searchQuery = itemType === 'quiz'
         ? `${itemData.question} ${itemData.correctAnswer} ${message}`
         : `${itemData.question} ${itemData.answer} ${message}`;
 
-    const vectorStore = await FaissStore.load(indexPath, hfEmbeddings);
-    const searchResults = await vectorStore.similaritySearch(searchQuery, 5);
+    const searchResults = await vectorStoreService.similaritySearch(fileId, searchQuery, 5);
 
     if (searchResults.length === 0) {
         return {

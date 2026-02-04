@@ -96,3 +96,26 @@ export const addDocumentJob = async (data) => {
         throw error;
     }
 };
+
+/**
+ * Adds a repeatable cleanup job for guest data
+ */
+export const addScheduledCleanupJob = async () => {
+    try {
+        const queue = await getDocumentQueue();
+        if (!queue) return;
+
+        // Run every 6 hours
+        await queue.add('cleanup-guests', {}, {
+            repeat: {
+                every: 6 * 3600 * 1000, // 6 Hours
+            },
+            jobId: 'periodic-guest-cleanup'
+        });
+
+        logger.info('[QueueService] Scheduled periodic guest cleanup job.');
+    } catch (error) {
+        logger.error(`[QueueService] Failed to schedule cleanup: ${error.message}`);
+    }
+};
+

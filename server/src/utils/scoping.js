@@ -22,11 +22,13 @@ export async function resolveScopedText(fileId, scope, includeIds = false) {
         return text;
     };
 
-    if (!scope || scope.type === 'all') {
+    if (!scope || scope.type === 'all' || !document.structure || !document.structure.pages) {
         if (!includeIds) return document.extractedText;
 
-        // If includeIds, we need to rebuild from nodes to get tags
         const pages = (document.structure?.pages || document.structure?.structure?.pages || []);
+        if (pages.length === 0) return document.extractedText;
+
+        // If includeIds, we need to rebuild from nodes to get tags
         return pages
             .flatMap(p => p.nodes || [])
             .filter(n => n.type === 'text')

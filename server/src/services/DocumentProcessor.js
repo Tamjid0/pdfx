@@ -38,12 +38,18 @@ export class DocumentProcessor {
         } else if (
             mime.includes('presentation') ||
             mime.includes('powerpoint') ||
-            // Fallback: If it's a generic stream but has pptx/ppt extension, try PptxExtractor
             (mime === 'application/octet-stream' && (originalName.match(/\.pptx$/i) || originalName.match(/\.ppt$/i)))
         ) {
             const buffer = fs.readFileSync(filePath);
             documentGraph = await this.pptxExtractor.extract(buffer, originalName);
             documentGraph.type = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+        } else if (
+            mime.includes('text/') ||
+            mime === 'application/json' ||
+            (mime === 'application/octet-stream' && (originalName.match(/\.txt$/i) || originalName.match(/\.md$/i)))
+        ) {
+            const content = fs.readFileSync(filePath, 'utf-8');
+            documentGraph = this.generateGraphFromText(content, originalName);
         } else {
             throw new Error(`Unsupported MIME type: ${mime}`);
         }
@@ -168,6 +174,64 @@ export class DocumentProcessor {
 
     async processFile(file, userId = 'guest') {
         return this.process(file.path, file.mimetype, file.originalname, null, userId);
+    }
+
+    /**
+     * Converts raw text into a structured DocumentGraph
+     */
+    generateGraphFromText(text, name) {
+        const documentId = crypto.randomUUID();
+        const pages = [];
+        const blocks = text.split(/\n\s*\n/); // Split by double newlines
+
+        let currentPageNodes = [];
+        let blockCount = 0;
+
+        blocks.forEach((block, index) => {
+            if (!block.trim()) return;
+
+            currentPageNodes.push({
+                id: `node-${index}`,
+                type: 'text',
+                content: block.trim(),
+                metadata: {
+                    index,
+                    isHeading: block.length < 100 && block.split('\n').length === 1
+                }
+            });
+
+            blockCount++;
+
+            // Create a new "page" every 10 blocks to maintain structure
+            if (blockCount >= 10) {
+                pages.push({
+                    pageIndex: pages.length,
+                    nodes: currentPageNodes
+                });
+                currentPageNodes = [];
+                blockCount = 0;
+            }
+        });
+
+        // Add remaining nodes
+        if (currentPageNodes.length > 0) {
+            pages.push({
+                pageIndex: pages.length,
+                nodes: currentPageNodes
+            });
+        }
+
+        return {
+            documentId,
+            name: name || 'Pasted Content',
+            type: 'text/plain',
+            metadata: {
+                title: name,
+                pageCount: pages.length,
+                wordCount: text.split(/\s+/).length
+            },
+            pages
+        };
     }
 
     derivePlainText(docGraph) {

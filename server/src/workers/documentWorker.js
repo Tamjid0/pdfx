@@ -3,6 +3,7 @@ import logger from '../utils/logger.js';
 import { DocumentProcessor } from '../services/DocumentProcessor.js';
 import { embedStructuredChunks } from '../controllers/fileUploadController.js';
 import { isRedisConnected } from '../services/queueService.js';
+import cleanupService from '../services/CleanupService.js';
 
 const connection = {
     host: process.env.REDIS_HOST || '127.0.0.1',
@@ -23,6 +24,14 @@ export const initDocumentWorker = async () => {
 
     try {
         _worker = new Worker('document-processing', async (job) => {
+            // Handle Cleanup Jobs
+            if (job.name === 'cleanup-guests') {
+                logger.info('[Worker] Starting scheduled guest cleanup...');
+                const result = await cleanupService.cleanupGuests(24); // Purge older than 24h
+                logger.info(`[Worker] Guest cleanup complete. Purged: ${result.purged}/${result.total}`);
+                return result;
+            }
+
             const { filePath, mimeType, fileName, documentId, userId = 'guest', triggerFullProcess = false } = job.data;
             logger.info(`Processing job ${job.id}: ${fileName}`);
 

@@ -63,7 +63,9 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
 connectDB();
 
 // Start Background Worker (Safe Initialization)
-initDocumentWorker().catch(err => {
+initDocumentWorker().then(() => {
+    import('./services/queueService.js').then(qs => qs.addScheduledCleanupJob());
+}).catch(err => {
     logger.error('Background worker failed to initialize:', err);
 });
 

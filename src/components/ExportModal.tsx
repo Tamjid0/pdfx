@@ -6,6 +6,7 @@ import {
 import { getExportStyles } from '../utils/exportStyles';
 import { getTemplate } from '../templates';
 import { transformModeContent } from '../utils/contentTransformer';
+import { getAuthHeaders } from '../services/apiService';
 
 interface ExportModalProps { }
 
@@ -72,9 +73,11 @@ export const ExportModal: React.FC<ExportModalProps> = () => {
                 body.data = data;
             }
 
+            const authHeaders = await getAuthHeaders();
             const response = await fetch('/api/v1/export', {
                 method: 'POST',
                 headers: {
+                    ...authHeaders,
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(body),

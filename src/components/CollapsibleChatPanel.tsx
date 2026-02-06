@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useStore } from '../store/useStore';
+import { getAuthHeaders } from '../services/apiService';
 
 interface CollapsibleChatPanelProps {
     itemId: string;
@@ -63,9 +64,13 @@ const CollapsibleChatPanel: React.FC<CollapsibleChatPanelProps> = ({
         setIsLoading(true);
 
         try {
+            const authHeaders = await getAuthHeaders();
             const response = await fetch('/api/v1/chat/item-context', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    ...authHeaders,
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({
                     fileId,
                     itemType,

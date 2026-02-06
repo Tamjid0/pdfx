@@ -60,6 +60,26 @@ const ModeSwitcher: React.FC<ModeSwitcherProps> = ({ currentMode, onModeChange }
         };
     }, [dropdownRef]);
 
+    // Ensure currentMode is always in the visible bar
+    useEffect(() => {
+        if (currentMode && hiddenModes.some(m => m.id === currentMode)) {
+            const newHiddenModes = [...hiddenModes];
+            const newVisibleModes = [...visibleModes];
+
+            const modeToMakeVisible = newHiddenModes.find(m => m.id === currentMode);
+            const lastVisibleMode = newVisibleModes[3];
+
+            if (modeToMakeVisible) {
+                newVisibleModes[3] = modeToMakeVisible;
+                const visibleIndex = newHiddenModes.indexOf(modeToMakeVisible);
+                newHiddenModes.splice(visibleIndex, 1, lastVisibleMode);
+
+                setVisibleModes(newVisibleModes);
+                setHiddenModes(newHiddenModes);
+            }
+        }
+    }, [currentMode]);
+
     return (
         <div className="mode-selector inline-flex bg-[#1a1a1a] p-1.5 rounded-2xl border border-[#333] gap-1 shadow-lg">
             {visibleModes.map(mode => (

@@ -7,9 +7,9 @@ import { TrendBlock } from './blocks/TrendBlock';
 
 interface InsightBlock {
     type: string;
-    title: string;
+    title?: string;
     subtitle?: string;
-    content: string;
+    content?: string | string[];
     items?: any[];
     stats?: any[];
     badges?: any[];

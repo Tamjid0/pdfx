@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useStore, type Mode, type QuizItem, type QuizData } from '../store/useStore';
 import LocalizedShimmer from './LocalizedShimmer';
+import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
 import { VersionTabs } from './dashboard/VersionTabs';
 import { toast } from 'react-hot-toast';
-import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
 
 import { analyzeQuizContent } from '../services/apiService';
 import CollapsibleChatPanel from './CollapsibleChatPanel';
@@ -16,9 +16,9 @@ type QuizPhase = 'initial' | 'analysis' | 'setup' | 'selection' | 'exam' | 'resu
 
 const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
     const {
-        quizData, setQuizData, openExportModal, isGeneratingQuiz,
-        switchRevision, deleteRevision, renameRevision, quizRevisions, loadProjectModule,
-        activeRevisionIds, stats, quizSettings, setQuizSettings, generationScope, fileId,
+        quizData, setQuizData, isGeneratingQuiz,
+        switchRevision, loadProjectModule,
+        activeRevisionIds, quizSettings, setQuizSettings, generationScope,
         embeddedChats, openEmbeddedChat, closeEmbeddedChat, setActiveNodeIds, addLocalDraft
     } = useStore();
 
@@ -211,26 +211,6 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
         if (phase === 'initial') {
             return (
                 <div className="flex flex-col h-full overflow-hidden">
-                    <div className="border-b border-white/5 bg-white/[0.01]">
-                        <VersionTabs
-                            module="quiz"
-                            revisions={quizRevisions}
-                            activeRevisionId={activeRevisionId}
-                            onSwitch={(revId) => {
-                                switchRevision('quiz', revId);
-                                if (!revId) {
-                                    loadProjectModule('quizData');
-                                }
-                            }}
-                            onNew={() => {
-                                const draftId = addLocalDraft('quiz');
-                                switchRevision('quiz', draftId);
-                                setPhase('initial');
-                            }}
-                            onRename={async (revId, name) => renameRevision('quiz', revId, name)}
-                            onDelete={async (revId) => deleteRevision('quiz', revId)}
-                        />
-                    </div>
                     <div className="flex-1 overflow-y-auto custom-scrollbar">
                         <div className="p-10 max-w-2xl mx-auto w-full space-y-12">
                             <div className="text-center space-y-4 pt-8">
@@ -285,26 +265,6 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
         if (phase === 'setup') {
             return (
                 <div className="flex flex-col h-full overflow-hidden">
-                    <div className="border-b border-white/5 bg-white/[0.01]">
-                        <VersionTabs
-                            module="quiz"
-                            revisions={quizRevisions}
-                            activeRevisionId={activeRevisionId}
-                            onSwitch={(revId) => {
-                                switchRevision('quiz', revId);
-                                if (!revId) {
-                                    loadProjectModule('quizData');
-                                }
-                            }}
-                            onNew={() => {
-                                const draftId = addLocalDraft('quiz');
-                                switchRevision('quiz', draftId);
-                                setPhase('initial');
-                            }}
-                            onRename={async (revId, name) => renameRevision('quiz', revId, name)}
-                            onDelete={async (revId) => deleteRevision('quiz', revId)}
-                        />
-                    </div>
                     <div className="flex-1 overflow-y-auto custom-scrollbar">
                         <div className="p-10 max-w-4xl mx-auto w-full space-y-12">
                             <div className="text-center space-y-4 pt-8">
@@ -398,26 +358,6 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
         if (phase === 'selection') {
             return (
                 <div className="flex flex-col h-full overflow-hidden">
-                    <div className="border-b border-white/5 bg-white/[0.01]">
-                        <VersionTabs
-                            module="quiz"
-                            revisions={quizRevisions}
-                            activeRevisionId={activeRevisionId}
-                            onSwitch={(revId) => {
-                                switchRevision('quiz', revId);
-                                if (!revId) {
-                                    loadProjectModule('quizData');
-                                }
-                            }}
-                            onNew={() => {
-                                const draftId = addLocalDraft('quiz');
-                                switchRevision('quiz', draftId);
-                                setPhase('initial');
-                            }}
-                            onRename={async (revId, name) => renameRevision('quiz', revId, name)}
-                            onDelete={async (revId) => deleteRevision('quiz', revId)}
-                        />
-                    </div>
                     <div className="flex-1 overflow-y-auto custom-scrollbar">
                         <div className="p-10 max-w-2xl mx-auto w-full space-y-12">
                             <div className="text-center space-y-6 pt-8">
@@ -907,6 +847,7 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
 
     return (
         <div className="flex flex-col h-full bg-[#0a0a0a] rounded-xl border border-[#222] overflow-hidden">
+            <VersionTabs module="quiz" />
             {renderPhase()}
 
             {/* Embedded Chat Panels */}

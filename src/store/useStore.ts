@@ -204,7 +204,8 @@ interface AppState {
     summaryRevisions: Revision<SummaryData>[];
     flashcardsRevisions: Revision<FlashcardsData>[];
     quizRevisions: Revision<QuizData>[];
-    activeRevisionIds: Record<string, string | null>;
+    mindmapRevisions: Revision<MindmapData>[];
+    activeRevisionIds: Record<Mode, string>; // Strictly string now, no null
     chatHistory: { role: 'user' | 'assistant' | 'ai'; content: string; timestamp?: string }[];
     fileId: string | null;
     fileType: 'pdf' | 'pptx' | 'text' | null;
@@ -339,10 +340,11 @@ interface AppState {
     updateStats: (text: string, pageCount?: number) => void;
 
     // Revision Actions
-    switchRevision: (module: 'summary' | 'notes' | 'insights' | 'flashcards' | 'quiz', revisionId: string | null) => void;
+    switchRevision: (module: Mode, revisionId: string | null) => void;
     updateRevisionsFromSync: (updatedFields: any) => void;
-    deleteRevision: (module: 'summary' | 'notes' | 'insights' | 'flashcards' | 'quiz', revisionId: string) => Promise<void>;
-    renameRevision: (module: 'summary' | 'notes' | 'insights' | 'flashcards' | 'quiz', revisionId: string, name: string) => Promise<void>;
+    deleteRevision: (module: Mode, revisionId: string) => Promise<void>;
+    renameRevision: (module: Mode, revisionId: string, name: string) => Promise<void>;
+    deleteTab: (module: Mode, tabId: string) => Promise<void>;
 
     // Workspace Management
     resetWorkspace: () => void;
@@ -356,9 +358,13 @@ interface AppState {
 
     // Local Draft Management
     localDrafts: Record<string, { id: string; name: string; data: any | null }[]>;
-    addLocalDraft: (module: string) => string;
-    closeLocalDraft: (module: string, draftId: string) => void;
-    renameLocalDraft: (module: string, draftId: string, name: string) => void;
+    addLocalDraft: (module: Mode, name?: string) => string;
+    closeLocalDraft: (module: Mode, draftId: string) => void;
+    renameLocalDraft: (module: Mode, draftId: string, name: string) => void;
+
+    // Global Tab Accessor
+    getTabs: (module: Mode) => { id: string; name: string; type: 'draft' | 'revision'; data: any }[];
+    ensureTabInvariant: (module: Mode) => void;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -386,6 +392,7 @@ export const useStore = create<AppState>((set, get) => ({
     summaryRevisions: [],
     flashcardsRevisions: [],
     quizRevisions: [],
+    mindmapRevisions: [],
     studyActivity: [],
     logActivity: (count = 1) => {
         const today = new Date().toISOString().split('T')[0];
@@ -399,11 +406,15 @@ export const useStore = create<AppState>((set, get) => ({
         set({ studyActivity: activity });
     },
     activeRevisionIds: {
-        summary: null,
-        notes: null,
-        insights: null,
-        flashcards: null,
-        quiz: null
+        summary: '',
+        notes: '',
+        insights: '',
+        flashcards: '',
+        quiz: '',
+        mindmap: '',
+        editor: '',
+        chat: '',
+        slides: ''
     },
     chatHistory: [],
     fileId: null,
@@ -470,67 +481,97 @@ export const useStore = create<AppState>((set, get) => ({
     activeNotesToggles: {},
     activeInsightsToggles: {},
 
-    localDrafts: {
-        summary: [],
-        notes: [],
-        insights: [],
-        flashcards: [],
-        quiz: []
-    },
+    localDrafts: (() => {
+        try {
+            const saved = localStorage.getItem('pdfx_local_drafts');
+            return saved ? JSON.parse(saved) : {
+                summary: [],
+                notes: [],
+                insights: [],
+                flashcards: [],
+                quiz: [],
+                mindmap: []
+            };
+        } catch (e) {
+            console.error('Failed to load local drafts', e);
+            return {
+                summary: [],
+                notes: [],
+                insights: [],
+                flashcards: [],
+                quiz: [],
+                mindmap: []
+            };
+        }
+    })(),
 
-    addLocalDraft: (module) => {
+    addLocalDraft: (module, name) => {
         const id = `draft-${Date.now()}`;
         const existing = get().localDrafts[module] || [];
         const draftNumber = existing.length + 1;
-        const newDraft = { id, name: `Draft ${draftNumber}`, data: null };
+        const newDraft = { id, name: name || `Draft ${draftNumber}`, data: null };
 
-        set((state) => ({
-            localDrafts: {
-                ...state.localDrafts,
-                [module]: [...existing, newDraft]
-            }
-        }));
+        const newLocalDrafts = {
+            ...get().localDrafts,
+            [module]: [...existing, newDraft]
+        };
+
+        set({ localDrafts: newLocalDrafts });
+        localStorage.setItem('pdfx_local_drafts', JSON.stringify(newLocalDrafts));
+
+        // Use switchRevision to ensure module data and generation flags are updated (reset to null/false)
+        get().switchRevision(module, id);
         return id;
     },
 
-    closeLocalDraft: (module, draftId) => {
-        set((state) => {
-            const existing = state.localDrafts[module] || [];
-            const filtered = existing.filter(d => d.id !== draftId);
-            const newState: any = {
-                localDrafts: {
-                    ...state.localDrafts,
-                    [module]: filtered
-                }
-            };
-
-            // If we closed the active draft, switch to the 'main' session (null)
-            if (state.activeRevisionIds[module] === draftId) {
-                newState.activeRevisionIds = {
-                    ...state.activeRevisionIds,
-                    [module]: null
-                };
-
-                // Also clear the 'data' for that module if it was showing the draft data
-                const dataKey = `${module}Data`;
-                newState[dataKey] = null; // Revert to empty state for that module
+    ensureTabInvariant: (module) => {
+        const tabs = get().getTabs(module);
+        if (tabs.length === 0) {
+            get().addLocalDraft(module, `Draft 1`);
+        } else {
+            const currentActiveId = get().activeRevisionIds[module];
+            if (!currentActiveId || !tabs.find(t => t.id === currentActiveId)) {
+                // If active ID is missing or invalid, pick the first tab
+                get().switchRevision(module, tabs[0].id);
             }
+        }
+    },
 
-            return newState;
-        });
+    getTabs: (module) => {
+        const drafts = get().localDrafts[module] || [];
+        const revKey = `${module}Revisions` as keyof AppState;
+        const revisions = (get()[revKey] as Revision<any>[]) || [];
+
+        const unifiedDrafts = drafts.map(d => ({ id: d.id, name: d.name, type: 'draft' as const, data: d.data }));
+        const unifiedRevisions = revisions.map(r => ({ id: r.id, name: r.name, type: 'revision' as const, data: r.data }));
+
+        return [...unifiedDrafts, ...unifiedRevisions];
+    },
+
+    closeLocalDraft: (module, draftId) => {
+        const existing = get().localDrafts[module] || [];
+        const filtered = existing.filter(d => d.id !== draftId);
+        const newLocalDrafts = {
+            ...get().localDrafts,
+            [module]: filtered
+        };
+
+        set({ localDrafts: newLocalDrafts });
+        localStorage.setItem('pdfx_local_drafts', JSON.stringify(newLocalDrafts));
+
+        // Enforce invariant after deletion
+        get().ensureTabInvariant(module);
     },
 
     renameLocalDraft: (module, draftId, name) => {
-        set((state) => {
-            const existing = state.localDrafts[module] || [];
-            const updated = existing.map(d => d.id === draftId ? { ...d, name } : d);
-            return {
-                localDrafts: {
-                    ...state.localDrafts,
-                    [module]: updated
-                }
-            };
-        });
+        const existing = get().localDrafts[module] || [];
+        const updated = existing.map(d => d.id === draftId ? { ...d, name } : d);
+        const newLocalDrafts = {
+            ...get().localDrafts,
+            [module]: updated
+        };
+        set({ localDrafts: newLocalDrafts });
+        localStorage.setItem('pdfx_local_drafts', JSON.stringify(newLocalDrafts));
     },
 
     previewPreset: 'professional',
@@ -580,7 +621,10 @@ export const useStore = create<AppState>((set, get) => ({
     setIsGeneratingQuiz: (val) => set({ isGeneratingQuiz: val }),
     setIsGeneratingMindmap: (val) => set({ isGeneratingMindmap: val }),
     setView: (view) => set({ view: view }),
-    setMode: (mode) => set({ mode: mode }),
+    setMode: (mode) => {
+        set({ mode: mode });
+        get().ensureTabInvariant(mode);
+    },
     setLeftPanelView: (view) => set({ leftPanelView: view }),
     setMindmapData: (data) => set({ mindmapData: data }),
     setInsightsData: (data) => {
@@ -704,13 +748,10 @@ export const useStore = create<AppState>((set, get) => ({
         // Update activeRevisionIds map
         const newActiveRevisionIds = { ...state.activeRevisionIds, [module]: revisionId };
 
-        if (revisionId === null) {
-            // Re-load the latest "Current" content from the project data
-            // This is handled by components calling loadProjectModule(dataKey)
-            // but we can also set it to null here to trigger the fallback
-            return {
-                activeRevisionIds: newActiveRevisionIds
-            } as Partial<AppState>;
+        if (revisionId === null || revisionId === '') {
+            // No longer supporting null in the new architecture, but handling for safety
+            get().ensureTabInvariant(module);
+            return state;
         }
 
         if (revisionId && revisionId.startsWith('draft-')) {
@@ -747,7 +788,8 @@ export const useStore = create<AppState>((set, get) => ({
         try {
             const moduleKey = `${module}Data`;
             const response = await fetch(`/api/v1/documents/${fileId}/revisions/${revisionId}?module=${moduleKey}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: await apiService.getAuthHeaders()
             });
 
             if (!response.ok) throw new Error('Failed to delete revision');
@@ -758,9 +800,24 @@ export const useStore = create<AppState>((set, get) => ({
                 const filtered = revisions.filter((r) => r.id !== revisionId);
                 return { [revKey]: filtered } as Partial<AppState>;
             });
+
+            // Enforce invariant after deletion (will switch if active revision was deleted)
+            get().ensureTabInvariant(module);
         } catch (error) {
             toast.error('Failed to delete revision');
             throw error;
+        }
+    },
+
+    deleteTab: async (module, tabId) => {
+        const tabs = get().getTabs(module);
+        const tab = tabs.find(t => t.id === tabId);
+        if (!tab) return;
+
+        if (tab.type === 'draft') {
+            get().closeLocalDraft(module, tabId);
+        } else {
+            await get().deleteRevision(module, tabId);
         }
     },
 
@@ -772,7 +829,7 @@ export const useStore = create<AppState>((set, get) => ({
             const moduleKey = `${module}Data`;
             const response = await fetch(`/api/v1/documents/${fileId}/revisions/${revisionId}`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: await apiService.getAuthHeaders({ 'Content-Type': 'application/json' }),
                 body: JSON.stringify({ module: moduleKey, name })
             });
 
@@ -881,8 +938,12 @@ export const useStore = create<AppState>((set, get) => ({
                 notes: null,
                 insights: null,
                 flashcards: null,
-                quiz: null
-            }
+                quiz: null,
+                mindmap: null,
+                chat: null,
+                editor: null,
+                slides: null
+            } as any
         });
     },
 
@@ -941,8 +1002,12 @@ export const useStore = create<AppState>((set, get) => ({
                     notes: null,
                     insights: null,
                     flashcards: null,
-                    quiz: null
-                }
+                    quiz: null,
+                    mindmap: null,
+                    chat: null,
+                    editor: null,
+                    slides: null
+                } as any
             });
 
             // Recalculate stats for restored document

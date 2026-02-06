@@ -2,26 +2,30 @@ import React, { useState } from 'react';
 import { type Revision, useStore } from '../../store/useStore';
 
 interface VersionTabsProps {
-    module: 'summary' | 'notes' | 'insights' | 'flashcards' | 'quiz';
-    revisions: Revision<any>[];
-    activeRevisionId: string | null;
-    onSwitch: (revisionId: string | null) => void;
-    onNew: () => void;
+    module: 'summary' | 'notes' | 'insights' | 'flashcards' | 'quiz' | 'mindmap';
     onRename?: (revisionId: string, newName: string) => void;
     onDelete?: (revisionId: string) => void;
 }
 
 export const VersionTabs: React.FC<VersionTabsProps> = ({
     module,
-    revisions,
-    activeRevisionId,
-    onSwitch,
-    onNew,
     onRename,
     onDelete
 }) => {
-    const { localDrafts, closeLocalDraft, renameLocalDraft } = useStore();
-    const moduleDrafts = localDrafts[module] || [];
+    const {
+        activeRevisionIds,
+        switchRevision,
+        addLocalDraft,
+        getTabs,
+        closeLocalDraft,
+        renameLocalDraft,
+        deleteRevision,
+        renameRevision,
+        deleteTab
+    } = useStore();
+
+    const tabs = getTabs(module);
+    const activeRevisionId = activeRevisionIds[module];
 
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
@@ -53,76 +57,62 @@ export const VersionTabs: React.FC<VersionTabsProps> = ({
         setDeleteConfirm({ id: rev.id, name: rev.name || 'this version' });
     };
 
-    const confirmDelete = () => {
-        if (deleteConfirm && onDelete) {
-            onDelete(deleteConfirm.id);
+    const confirmDelete = async () => {
+        if (!deleteConfirm) return;
+
+        try {
+            await deleteTab(module, deleteConfirm.id);
             setDeleteConfirm(null);
+        } catch (error) {
+            console.error('Delete failed', error);
         }
     };
 
     return (
         <>
             <div className="flex items-center gap-2 px-6 py-3 border-b border-white/5 bg-[#0a0a0a]/50 overflow-x-auto no-scrollbar">
-                {/* Draft Tabs & Saved Revision Tabs merged into a single flow */}
-                {/* If revisions are empty, we still want to show at least one Draft tab if needed, 
-                    but the store handles the primary data. Let's make the 'null' activeRevisionId 
-                    appear as 'Draft 1' or simply 'Draft' */}
-                <button
-                    onClick={() => onSwitch(null)}
-                    onDoubleClick={() => {
-                        // Support renaming the primary 'Current' draft too
-                        setEditingId('primary');
-                        setEditName('Draft 1');
-                    }}
-                    className={`group relative px-4 py-2 rounded-t-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${activeRevisionId === null
-                        ? 'text-white bg-white/5'
-                        : 'text-white/40 hover:text-white/70 hover:bg-white/5'
-                        }`}
-                >
-                    {editingId === 'primary' ? (
-                        <input
-                            type="text"
-                            value={editName}
-                            onChange={(e) => setEditName(e.target.value)}
-                            onBlur={() => setEditingId(null)}
-                            className="bg-transparent border-b border-gemini-green outline-none w-24 text-white"
-                            autoFocus
-                        />
-                    ) : (
-                        <span>{revisions.length === 0 && moduleDrafts.length === 0 ? 'Draft 1' : 'Main Session'}</span>
-                    )}
-                    {activeRevisionId === null && (
-                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gemini-green rounded-full"></div>
-                    )}
-                </button>
-
-                {/* Local Draft Tabs */}
-                {moduleDrafts.map((draft) => (
+                {tabs.map((tab) => (
                     <div
-                        key={draft.id}
-                        onClick={() => onSwitch(draft.id)}
+                        key={tab.id}
+                        onClick={() => switchRevision(module, tab.id)}
                         onDoubleClick={(e) => {
                             e.stopPropagation();
-                            setEditingId(draft.id);
-                            setEditName(draft.name);
+                            setEditingId(tab.id);
+                            setEditName(tab.name);
                         }}
-                        className={`group relative px-4 py-2 pr-8 rounded-t-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap cursor-pointer ${activeRevisionId === draft.id
+                        className={`group relative px-4 py-2 pr-8 rounded-t-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap cursor-pointer ${activeRevisionId === tab.id
                             ? 'text-white bg-white/5'
                             : 'text-white/40 hover:text-white/70 hover:bg-white/5'
                             }`}
                     >
-                        {editingId === draft.id ? (
+                        {editingId === tab.id ? (
                             <input
                                 type="text"
                                 value={editName}
                                 onChange={(e) => setEditName(e.target.value)}
-                                onBlur={() => {
-                                    renameLocalDraft(module, draft.id, editName);
+                                onBlur={(e) => {
+                                    e.stopPropagation();
+                                    const trimmed = editName.trim();
+                                    if (trimmed && trimmed !== tab.name) {
+                                        if (tab.type === 'draft') {
+                                            renameLocalDraft(module, tab.id, trimmed);
+                                        } else {
+                                            renameRevision(module, tab.id, trimmed);
+                                        }
+                                    }
                                     setEditingId(null);
                                 }}
                                 onKeyDown={(e) => {
+                                    e.stopPropagation();
                                     if (e.key === 'Enter') {
-                                        renameLocalDraft(module, draft.id, editName);
+                                        const trimmed = editName.trim();
+                                        if (trimmed && trimmed !== tab.name) {
+                                            if (tab.type === 'draft') {
+                                                renameLocalDraft(module, tab.id, trimmed);
+                                            } else {
+                                                renameRevision(module, tab.id, trimmed);
+                                            }
+                                        }
                                         setEditingId(null);
                                     } else if (e.key === 'Escape') {
                                         setEditingId(null);
@@ -131,82 +121,35 @@ export const VersionTabs: React.FC<VersionTabsProps> = ({
                                 className="bg-transparent border-b border-gemini-green outline-none w-24 text-white"
                                 autoFocus
                                 onClick={(e) => e.stopPropagation()}
+                                onDoubleClick={(e) => e.stopPropagation()}
                             />
                         ) : (
-                            <span>{draft.name}</span>
+                            <span>{tab.name || `Draft ${tabs.length - tabs.indexOf(tab)}`}</span>
                         )}
 
-                        {/* Close button for draft - no popup as requested */}
+                        {/* Delete Button - All tabs are deletable */}
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
-                                closeLocalDraft(module, draft.id);
+                                setDeleteConfirm({ id: tab.id, name: tab.name || 'this version' });
                             }}
-                            className="absolute right-1.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-md bg-white/5 hover:bg-white/10 text-white/40 hover:text-white opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center"
-                            title="Close draft"
+                            className={`absolute right-1.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-md ${tab.type === 'draft' ? 'bg-white/5 hover:bg-white/10 text-white/40 hover:text-white' : 'bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300'} opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center`}
+                            title="Delete version"
                         >
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
 
-                        {activeRevisionId === draft.id && (
+                        {activeRevisionId === tab.id && (
                             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gemini-green rounded-full"></div>
                         )}
                     </div>
                 ))}
 
-                {/* Revision Tabs */}
-                {revisions.map((rev) => (
-                    <div
-                        key={rev.id}
-                        onClick={() => onSwitch(rev.id)}
-                        onDoubleClick={() => handleDoubleClick(rev)}
-                        className={`group relative px-4 py-2 pr-8 rounded-t-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap cursor-pointer ${activeRevisionId === rev.id
-                            ? 'text-white bg-white/5'
-                            : 'text-white/40 hover:text-white/70 hover:bg-white/5'
-                            }`}
-                    >
-                        {editingId === rev.id ? (
-                            <input
-                                type="text"
-                                value={editName}
-                                onChange={(e) => setEditName(e.target.value)}
-                                onBlur={() => handleRename(rev.id)}
-                                onKeyDown={(e) => handleKeyDown(e, rev.id)}
-                                className="bg-transparent border-b border-gemini-green outline-none w-24 text-white"
-                                autoFocus
-                                onClick={(e) => e.stopPropagation()}
-                            />
-                        ) : (
-                            <span>{rev.name || `Draft ${revisions.length - revisions.indexOf(rev)}`}</span>
-                        )}
-
-                        {/* Delete Button */}
-                        {onDelete && (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDelete(rev);
-                                }}
-                                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center"
-                                title="Delete version"
-                            >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        )}
-
-                        {activeRevisionId === rev.id && (
-                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gemini-green rounded-full"></div>
-                        )}
-                    </div>
-                ))}
-
-                {/* New Version Tab */}
+                {/* New Tab Button */}
                 <button
-                    onClick={onNew}
+                    onClick={() => addLocalDraft(module)}
                     className="group relative px-4 py-2 rounded-t-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap border border-dashed border-white/20 hover:border-gemini-green hover:text-gemini-green text-white/40"
                 >
                     <span className="flex items-center gap-1.5">

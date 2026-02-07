@@ -345,6 +345,6 @@ export interface AppState {
 
     // Global Tab Accessor
     getTabs: (module: Mode) => { id: string; name: string; type: 'draft' | 'revision'; data: any }[];
-    reconcileProjectTabs: (module: Mode, serverContent: any, serverRevisions: Revision<any>[]) => void;
+    reconcileProjectTabs: (module: Mode, serverContent: any, serverRevisions: Revision<any>[], forceSyncOnSwitch?: boolean) => void;
     ensureMinimumOneTab: (module: Mode) => void;
 }

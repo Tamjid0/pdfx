@@ -127,7 +127,8 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
 
         // Reconcile to ensure we always have at least ONE tab if revisions exist, 
         // or a new Draft 1 if we're now totally empty.
-        get().reconcileProjectTabs(module, null, revisions);
+        // forceSync: true ensures the server content is updated immediately after deletion.
+        get().reconcileProjectTabs(module, null, revisions, true);
         get().ensureMinimumOneTab(module);
     },
 
@@ -140,8 +141,8 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
         set({ localDrafts: newLocalDrafts });
     },
 
-    reconcileProjectTabs: (module, serverContent, serverRevisions) => {
-        console.trace('TAB WRITE: reconcileProjectTabs', { module, serverContent, serverRevisions });
+    reconcileProjectTabs: (module, serverContent, serverRevisions, forceSyncOnSwitch = false) => {
+        console.trace('TAB WRITE: reconcileProjectTabs', { module, serverContent, serverRevisions, forceSyncOnSwitch });
         const drafts = get().localDrafts[module] || [];
         const revisions = serverRevisions || [];
         const activeId = get().activeRevisionIds[module];
@@ -151,7 +152,7 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
         if (drafts.length > 0 || revisions.length > 0) {
             const allIds = [...drafts.map(d => d.id), ...revisions.map(r => r.id)];
             if (!activeId || !allIds.includes(activeId)) {
-                get().switchRevision(module, allIds[0], true);
+                get().switchRevision(module, allIds[0], !forceSyncOnSwitch);
             }
             return;
         }
@@ -239,7 +240,8 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
             });
 
             // Re-reconcile after revision deletion
-            get().reconcileProjectTabs(module, null, updatedRevisions);
+            // forceSync: true ensures the server content is updated immediately after deletion.
+            get().reconcileProjectTabs(module, null, updatedRevisions, true);
             get().ensureMinimumOneTab(module);
 
             // If the module is now totally empty, ensure server is wiped

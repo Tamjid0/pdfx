@@ -222,7 +222,7 @@ const Quiz: React.FC<QuizProps> = ({
         if (phase === 'initial') {
             return (
                 <div className="flex flex-col h-full overflow-hidden">
-                    <div className="flex-1 overflow-y-auto custom-scrollbar">
+                    <div className="flex-1">
                         <div className="p-10 max-w-2xl mx-auto w-full space-y-12">
                             <div className="text-center space-y-4 pt-8">
                                 <div className="w-20 h-20 bg-[#00ff88]/5 rounded-[2.5rem] flex items-center justify-center mx-auto border border-[#00ff88]/10 shadow-2xl">
@@ -276,7 +276,7 @@ const Quiz: React.FC<QuizProps> = ({
         if (phase === 'setup') {
             return (
                 <div className="flex flex-col h-full overflow-hidden">
-                    <div className="flex-1 overflow-y-auto custom-scrollbar">
+                    <div className="flex-1">
                         <div className="p-10 max-w-4xl mx-auto w-full space-y-12">
                             <div className="text-center space-y-4 pt-8">
                                 <h3 className="text-3xl font-black text-white tracking-tight uppercase italic">Generation Matrix</h3>
@@ -369,7 +369,7 @@ const Quiz: React.FC<QuizProps> = ({
         if (phase === 'selection') {
             return (
                 <div className="flex flex-col h-full overflow-hidden">
-                    <div className="flex-1 overflow-y-auto custom-scrollbar">
+                    <div className="flex-1">
                         <div className="p-10 max-w-2xl mx-auto w-full space-y-12">
                             <div className="text-center space-y-6 pt-8">
                                 <div className="w-20 h-20 bg-[#00ff88]/5 rounded-full flex items-center justify-center mx-auto border border-[#00ff88]/20 group">
@@ -520,7 +520,7 @@ const Quiz: React.FC<QuizProps> = ({
                             </button>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-12 custom-scrollbar">
+                        <div className="flex-1 p-12">
                             <div className="max-w-3xl mx-auto space-y-12">
                                 {quizData.quiz.map((q, qIdx) => (
                                     <div key={qIdx} className="space-y-6 p-8 bg-white/[0.02] border border-white/5 rounded-3xl hover:border-white/10 transition-all">
@@ -749,7 +749,7 @@ const Quiz: React.FC<QuizProps> = ({
 
             return (
                 <div className="flex flex-col h-full overflow-hidden">
-                    <div className="p-12 md:p-20 flex-1 overflow-y-auto custom-scrollbar">
+                    <div className="p-12 md:p-20 flex-1">
                         <div className="max-w-4xl mx-auto space-y-16">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                                 <div className="md:col-span-2 space-y-6">

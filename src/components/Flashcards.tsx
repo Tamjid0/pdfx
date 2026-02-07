@@ -197,7 +197,7 @@ const Flashcards: React.FC<FlashcardsProps> = ({
         >
 
             <DocumentPreview mode="flashcards">
-                <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar relative">
+                <div className="w-full h-full relative">
                     {!hasData ? (
                         <div className="flex flex-col items-center justify-center min-h-full text-center p-8 bg-[#0a0a0a] rounded-xl">
                             <div className="p-10 max-w-2xl mx-auto w-full space-y-12">

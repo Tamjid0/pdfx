@@ -64,7 +64,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ mode, children
         <div className="relative w-full h-full overflow-hidden">
             {/* Interactive Mode Content */}
             <div
-                className={`absolute inset-0 transition-all duration-500 ease-out 
+                className={`absolute inset-0 transition-all duration-500 ease-out overflow-y-auto custom-scrollbar
                     ${isPreviewMode
                         ? 'opacity-0 pointer-events-none invisible -z-10 scale-95'
                         : 'opacity-100 pointer-events-auto visible z-10 scale-100'
@@ -79,7 +79,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ mode, children
 
             {/* Preview Mode Content */}
             <div
-                className={`absolute inset-0 transition-all duration-500 ease-out 
+                className={`absolute inset-0 transition-all duration-500 ease-out overflow-y-auto custom-scrollbar
                     ${isPreviewMode
                         ? 'opacity-100 pointer-events-auto visible z-10 scale-100'
                         : 'opacity-0 pointer-events-none invisible -z-10 scale-95'

@@ -13,15 +13,15 @@ export interface TabSlice {
     mindmapRevisions: Revision<any>[];
     activeRevisionIds: Record<Mode, string>;
 
-    addLocalDraft: (module: Mode, name?: string, initialData?: any, skipSync?: boolean) => string;
+    addLocalDraft: (module: Mode, name?: string, initialData?: any, skipSync?: boolean) => Promise<string>;
     closeLocalDraft: (module: Mode, draftId: string) => Promise<void>;
     renameLocalDraft: (module: Mode, draftId: string, name: string) => void;
 
     getTabs: (module: Mode) => { id: string; name: string; type: 'draft' | 'revision'; data: any }[];
-    reconcileProjectTabs: (module: Mode, serverContent: any, serverRevisions: Revision<any>[]) => void;
-    ensureMinimumOneTab: (module: Mode) => void;
+    reconcileProjectTabs: (module: Mode, serverContent: any, serverRevisions: Revision<any>[], forceSyncOnSwitch?: boolean) => Promise<void>;
+    ensureMinimumOneTab: (module: Mode) => Promise<void>;
 
-    switchRevision: (module: Mode, revisionId: string, skipSync?: boolean) => void;
+    switchRevision: (module: Mode, revisionId: string, skipSync?: boolean) => Promise<void>;
     deleteRevision: (module: Mode, revisionId: string) => Promise<void>;
     renameRevision: (module: Mode, revisionId: string, name: string) => Promise<void>;
     deleteTab: (module: Mode, tabId: string) => Promise<void>;
@@ -54,7 +54,6 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
     },
 
     addLocalDraft: async (module, name, initialData = null, skipSync = false) => {
-        console.trace('TAB WRITE: addLocalDraft', { module, name, existingDrafts: get().localDrafts[module] });
         const existing = get().localDrafts[module] || [];
 
         // --- STRICT "NEW TAB" POLICY ---
@@ -139,7 +138,6 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
     },
 
     reconcileProjectTabs: async (module, serverContent, serverRevisions, forceSyncOnSwitch = false) => {
-        console.trace('TAB WRITE: reconcileProjectTabs', { module, serverContent, serverRevisions, forceSyncOnSwitch });
         const drafts = get().localDrafts[module] || [];
         const revisions = serverRevisions || [];
         const activeId = get().activeRevisionIds[module];
@@ -179,7 +177,6 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
 
         // Only create a default draft if there are absolutely NO tabs (no drafts, no revisions)
         if (drafts.length === 0 && revisions.length === 0) {
-            console.trace('TAB WRITE: ensureMinimumOneTab creating default draft', { module });
             await get().addLocalDraft(module, 'Draft 1', null, true);
         }
     },

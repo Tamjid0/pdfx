@@ -1,6 +1,7 @@
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import validate from '../../middleware/validate.js';
 import { getDocumentSchema, getDocumentPageSchema, getDocumentImageSchema } from '../../validations/document.validation.js';
 import { verifyToken, checkDocumentOwnership, optionalVerifyToken } from '../../middleware/authMiddleware.js';
@@ -363,6 +364,5 @@ router.delete('/:documentId', verifyToken, checkDocumentOwnership(Document), asy
     }
 });
 
-import crypto from 'crypto';
 
 export default router;

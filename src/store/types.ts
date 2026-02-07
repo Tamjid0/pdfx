@@ -340,7 +340,7 @@ export interface AppState {
     // Local Draft Management
     localDrafts: Record<string, { id: string; name: string; data: any | null }[]>;
     addLocalDraft: (module: Mode, name?: string, initialData?: any, skipSync?: boolean) => Promise<string>;
-    closeLocalDraft: (module: Mode, draftId: string) => void;
+    closeLocalDraft: (module: Mode, draftId: string) => Promise<void>;
     renameLocalDraft: (module: Mode, draftId: string, name: string) => void;
 
     // Global Tab Accessor

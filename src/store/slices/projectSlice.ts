@@ -133,7 +133,6 @@ export const createProjectSlice: StateCreator<AppState, [], [], ProjectSlice> = 
             for (const m of modules) {
                 const content = getContent(data[`${m}Data`]);
                 const revisions = (get()[`${m}Revisions` as keyof AppState] as any[]) || [];
-                console.trace('TAB WRITE: loadProject calling reconcileProjectTabs', { module: m, content, revisions });
                 await get().reconcileProjectTabs(m, content, revisions);
                 await get().ensureMinimumOneTab(m);
             }
@@ -184,7 +183,6 @@ export const createProjectSlice: StateCreator<AppState, [], [], ProjectSlice> = 
             const revisions = moduleData?.revisions || [];
 
             set({ [`${moduleKey}Revisions`]: revisions } as any);
-            console.trace('TAB WRITE: loadProjectModule calling reconcileProjectTabs', { module, content, revisions });
             await get().reconcileProjectTabs(module, content, revisions);
             await get().ensureMinimumOneTab(module);
         } catch (error) {

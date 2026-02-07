@@ -130,13 +130,13 @@ export const createProjectSlice: StateCreator<AppState, [], [], ProjectSlice> = 
             set({ localDrafts: {} });
 
             // Maintenance: Unified Hydration (Run exactly once)
-            modules.forEach(m => {
+            for (const m of modules) {
                 const content = getContent(data[`${m}Data`]);
                 const revisions = (get()[`${m}Revisions` as keyof AppState] as any[]) || [];
                 console.trace('TAB WRITE: loadProject calling reconcileProjectTabs', { module: m, content, revisions });
-                get().reconcileProjectTabs(m, content, revisions);
-                get().ensureMinimumOneTab(m);
-            });
+                await get().reconcileProjectTabs(m, content, revisions);
+                await get().ensureMinimumOneTab(m);
+            }
 
         } catch (error: any) {
             console.error('[Store] loadProject failed:', error);
@@ -185,8 +185,8 @@ export const createProjectSlice: StateCreator<AppState, [], [], ProjectSlice> = 
 
             set({ [`${moduleKey}Revisions`]: revisions } as any);
             console.trace('TAB WRITE: loadProjectModule calling reconcileProjectTabs', { module, content, revisions });
-            get().reconcileProjectTabs(module, content, revisions);
-            get().ensureMinimumOneTab(module);
+            await get().reconcileProjectTabs(module, content, revisions);
+            await get().ensureMinimumOneTab(module);
         } catch (error) {
             console.error('[Store] loadProjectModule failed:', error);
         }

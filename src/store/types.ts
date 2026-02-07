@@ -322,7 +322,7 @@ export interface AppState {
     updateStats: (text: string, pageCount?: number) => void;
 
     // Revision Actions
-    switchRevision: (module: Mode, revisionId: string, skipSync?: boolean) => void;
+    switchRevision: (module: Mode, revisionId: string, skipSync?: boolean) => Promise<void>;
     updateRevisionsFromSync: (updatedFields: any) => void;
     deleteRevision: (module: Mode, revisionId: string) => Promise<void>;
     renameRevision: (module: Mode, revisionId: string, name: string) => Promise<void>;
@@ -339,12 +339,12 @@ export interface AppState {
 
     // Local Draft Management
     localDrafts: Record<string, { id: string; name: string; data: any | null }[]>;
-    addLocalDraft: (module: Mode, name?: string, initialData?: any, skipSync?: boolean) => string;
+    addLocalDraft: (module: Mode, name?: string, initialData?: any, skipSync?: boolean) => Promise<string>;
     closeLocalDraft: (module: Mode, draftId: string) => void;
     renameLocalDraft: (module: Mode, draftId: string, name: string) => void;
 
     // Global Tab Accessor
     getTabs: (module: Mode) => { id: string; name: string; type: 'draft' | 'revision'; data: any }[];
-    reconcileProjectTabs: (module: Mode, serverContent: any, serverRevisions: Revision<any>[], forceSyncOnSwitch?: boolean) => void;
-    ensureMinimumOneTab: (module: Mode) => void;
+    reconcileProjectTabs: (module: Mode, serverContent: any, serverRevisions: Revision<any>[], forceSyncOnSwitch?: boolean) => Promise<void>;
+    ensureMinimumOneTab: (module: Mode) => Promise<void>;
 }

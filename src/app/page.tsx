@@ -168,8 +168,11 @@ const Home = () => {
                     setInsightsData(resultInsights);
                     setIsInsightsGenerated(true);
                     if (fileId) {
-                        const syncRes = await apiService.syncProjectContent(fileId, { insightsData: resultInsights }, { append: isAppendMode, scope: generationScope });
-                        if (syncRes.updatedFields) updateRevisionsFromSync(syncRes.updatedFields);
+                        await apiService.syncProjectContent(fileId, { insightsData: resultInsights }, { append: isAppendMode, scope: generationScope, preventSnapshot: true } as any)
+                            .then((res) => {
+                                if (res.updatedFields) updateRevisionsFromSync(res.updatedFields);
+                                toast.success('Insights synced and ready');
+                            });
                         await refreshCurrentProject(fileId);
                     }
                     break;
@@ -178,8 +181,11 @@ const Home = () => {
                     setNotesData(resultNotes);
                     setIsNotesGenerated(true);
                     if (fileId) {
-                        const syncRes = await apiService.syncProjectContent(fileId, { notesData: resultNotes }, { append: isAppendMode, scope: generationScope });
-                        if (syncRes.updatedFields) updateRevisionsFromSync(syncRes.updatedFields);
+                        await apiService.syncProjectContent(fileId, { notesData: resultNotes }, { append: isAppendMode, scope: generationScope, preventSnapshot: true } as any)
+                            .then((res) => {
+                                if (res.updatedFields) updateRevisionsFromSync(res.updatedFields);
+                                toast.success('Notes synced and ready');
+                            });
                         await refreshCurrentProject(fileId);
                     }
                     break;
@@ -188,8 +194,11 @@ const Home = () => {
                     setQuizData(quiz);
                     setIsQuizGenerated(true);
                     if (fileId) {
-                        const syncRes = await apiService.syncProjectContent(fileId, { quizData: quiz }, { append: isAppendMode, scope: generationScope });
-                        if (syncRes.updatedFields) updateRevisionsFromSync(syncRes.updatedFields);
+                        await apiService.syncProjectContent(fileId, { quizData: quiz }, { append: isAppendMode, scope: generationScope, preventSnapshot: true } as any)
+                            .then((res) => {
+                                if (res.updatedFields) updateRevisionsFromSync(res.updatedFields);
+                                toast.success('Quiz synced and ready');
+                            });
                         await refreshCurrentProject(fileId);
                     }
                     break;
@@ -198,8 +207,11 @@ const Home = () => {
                     setFlashcardsData(flashcards);
                     setIsFlashcardsGenerated(true);
                     if (fileId) {
-                        const syncRes = await apiService.syncProjectContent(fileId, { flashcardsData: flashcards }, { append: isAppendMode, scope: generationScope });
-                        if (syncRes.updatedFields) updateRevisionsFromSync(syncRes.updatedFields);
+                        await apiService.syncProjectContent(fileId, { flashcardsData: flashcards }, { append: isAppendMode, scope: generationScope, preventSnapshot: true } as any)
+                            .then((res) => {
+                                if (res.updatedFields) updateRevisionsFromSync(res.updatedFields);
+                                toast.success('Flashcards synced and ready');
+                            });
                         await refreshCurrentProject(fileId);
                     }
                     break;
@@ -208,8 +220,11 @@ const Home = () => {
                     setMindmapData(mindmap);
                     setIsMindmapGenerated(true);
                     if (fileId) {
-                        const syncRes = await apiService.syncProjectContent(fileId, { mindmapData: mindmap }, { append: isAppendMode, scope: generationScope });
-                        if (syncRes.updatedFields) updateRevisionsFromSync(syncRes.updatedFields);
+                        await apiService.syncProjectContent(fileId, { mindmapData: mindmap }, { append: isAppendMode, scope: generationScope, preventSnapshot: true } as any)
+                            .then((res) => {
+                                if (res.updatedFields) updateRevisionsFromSync(res.updatedFields);
+                                toast.success('Mindmap synced and ready');
+                            });
                         await refreshCurrentProject(fileId);
                     }
                     break;
@@ -218,8 +233,11 @@ const Home = () => {
                     setSummaryData(summary);
                     setIsSummaryGenerated(true);
                     if (fileId) {
-                        const syncRes = await apiService.syncProjectContent(fileId, { summaryData: summary }, { append: isAppendMode, scope: generationScope });
-                        if (syncRes.updatedFields) updateRevisionsFromSync(syncRes.updatedFields);
+                        await apiService.syncProjectContent(fileId, { summaryData: summary }, { append: isAppendMode, scope: generationScope, preventSnapshot: true } as any)
+                            .then((res) => {
+                                if (res.updatedFields) updateRevisionsFromSync(res.updatedFields);
+                                toast.success('Summary synced and ready');
+                            });
                         await refreshCurrentProject(fileId);
                     }
                     break;

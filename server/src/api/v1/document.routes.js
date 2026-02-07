@@ -207,7 +207,15 @@ router.post('/:documentId/sync', optionalVerifyToken, checkDocumentOwnership(Doc
 
                 let newData = fields[key];
 
-                // 1. Handle Merging (Append Mode)
+                // 1. Handle Revision List Updates (e.g. from tab management)
+                // If newData is an object with 'revisions', we update ONLY the revisions list
+                // and skip content update logic to avoid corruption.
+                if (newData && typeof newData === 'object' && Array.isArray(newData.revisions)) {
+                    updateData[`${key}.revisions`] = newData.revisions;
+                    continue;
+                }
+
+                // 2. Handle Merging (Append Mode)
                 if (append && oldData) {
                     newData = mergeContent(oldData, newData, moduleType);
                 }

@@ -53,20 +53,16 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
         return [...unifiedDrafts, ...unifiedRevisions];
     },
 
-    addLocalDraft: (module, name, initialData = null, skipSync = false) => {
+    addLocalDraft: async (module, name, initialData = null, skipSync = false) => {
         console.trace('TAB WRITE: addLocalDraft', { module, name, existingDrafts: get().localDrafts[module] });
         const existing = get().localDrafts[module] || [];
 
         // --- STRICT "NEW TAB" POLICY ---
-        // 2024-01-29 Fix: Clicking "+" MUST always create a new tab. 
-        // We do NOT reuse empty drafts. We do NOT check for duplicates of empty drafts.
-        // We only check for content duplicates if data is provided (to prevent "Imported Content" doubling).
-
         if (initialData) {
             const stringifiedData = JSON.stringify(initialData);
             const contentDup = existing.find(d => d.data && JSON.stringify(d.data) === stringifiedData);
             if (contentDup) {
-                get().switchRevision(module, contentDup.id, skipSync);
+                await get().switchRevision(module, contentDup.id, skipSync);
                 return contentDup.id;
             }
         }
@@ -96,7 +92,7 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
         const newLocalDrafts = { ...get().localDrafts, [module]: [...existing, newDraft] };
         set({ localDrafts: newLocalDrafts });
 
-        get().switchRevision(module, id, skipSync);
+        await get().switchRevision(module, id, skipSync);
         return id;
     },
 
@@ -124,12 +120,13 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
         }
 
         set({ localDrafts: newLocalDrafts });
+        toast.success('Version deleted');
 
         // Reconcile to ensure we always have at least ONE tab if revisions exist, 
         // or a new Draft 1 if we're now totally empty.
         // forceSync: true ensures the server content is updated immediately after deletion.
-        get().reconcileProjectTabs(module, null, revisions, true);
-        get().ensureMinimumOneTab(module);
+        await get().reconcileProjectTabs(module, null, revisions, true);
+        await get().ensureMinimumOneTab(module);
     },
 
     renameLocalDraft: (module, draftId, name) => {
@@ -141,7 +138,7 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
         set({ localDrafts: newLocalDrafts });
     },
 
-    reconcileProjectTabs: (module, serverContent, serverRevisions, forceSyncOnSwitch = false) => {
+    reconcileProjectTabs: async (module, serverContent, serverRevisions, forceSyncOnSwitch = false) => {
         console.trace('TAB WRITE: reconcileProjectTabs', { module, serverContent, serverRevisions, forceSyncOnSwitch });
         const drafts = get().localDrafts[module] || [];
         const revisions = serverRevisions || [];
@@ -152,7 +149,7 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
         if (drafts.length > 0 || revisions.length > 0) {
             const allIds = [...drafts.map(d => d.id), ...revisions.map(r => r.id)];
             if (!activeId || !allIds.includes(activeId)) {
-                get().switchRevision(module, allIds[0], !forceSyncOnSwitch);
+                await get().switchRevision(module, allIds[0], !forceSyncOnSwitch);
             }
             return;
         }
@@ -166,7 +163,7 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
         );
 
         if (hasValidContent) {
-            get().addLocalDraft(module, 'Imported Content', serverContent, true);
+            await get().addLocalDraft(module, 'Imported Content', serverContent, true);
             return;
         }
 
@@ -175,7 +172,7 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
         // It is now the responsibility of ensureMinimumOneTab()
     },
 
-    ensureMinimumOneTab: (module) => {
+    ensureMinimumOneTab: async (module) => {
         const drafts = get().localDrafts[module] || [];
         const revKey = `${module}Revisions` as keyof AppState;
         const revisions = (get()[revKey] as Revision<any>[]) || [];
@@ -183,41 +180,47 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
         // Only create a default draft if there are absolutely NO tabs (no drafts, no revisions)
         if (drafts.length === 0 && revisions.length === 0) {
             console.trace('TAB WRITE: ensureMinimumOneTab creating default draft', { module });
-            get().addLocalDraft(module, 'Draft 1', null, true);
+            await get().addLocalDraft(module, 'Draft 1', null, true);
         }
     },
 
-    switchRevision: (module, revisionId, skipSync = false) => set((state) => {
+    switchRevision: async (module, revisionId, skipSync = false) => {
         const dataKey = `${module}Data` as keyof AppState;
         const genKey = `is${module.charAt(0).toUpperCase() + module.slice(1)}Generated` as keyof AppState;
-        const newActiveRevisionIds = { ...state.activeRevisionIds, [module]: revisionId };
 
         if (!revisionId) {
             console.error('switchRevision called with null ID');
-            return state;
+            return;
         }
 
         let content = null;
         if (revisionId.startsWith('draft-')) {
-            const draft = state.localDrafts[module]?.find(d => d.id === revisionId);
+            const draft = get().localDrafts[module]?.find(d => d.id === revisionId);
             content = draft?.data || null;
         } else {
-            const revisions = state[`${module}Revisions` as keyof AppState] as Revision<any>[];
+            const revisions = get()[`${module}Revisions` as keyof AppState] as Revision<any>[];
             content = revisions?.find(r => r.id === revisionId)?.data || null;
         }
 
-        if (state.fileId && content && !skipSync) {
-            apiService.syncProjectContent(state.fileId, { [dataKey]: content })
-                .then(() => toast.success('Synced to Cloud', { id: `sync-${module}`, duration: 1500 }))
-                .catch(() => { });
-        }
-
-        return {
+        set((state) => ({
+            ...state,
             [dataKey]: content,
             [genKey]: !!content,
-            activeRevisionIds: newActiveRevisionIds
-        } as any;
-    }),
+            activeRevisionIds: { ...state.activeRevisionIds, [module]: revisionId }
+        } as any));
+
+        if (get().fileId && !skipSync) {
+            const state = get();
+            try {
+                // IMPORTANT: preventSnapshot: true stops the server from creating a backup 
+                // of the "previous" tab just because we switched to a new one.
+                await apiService.syncProjectContent(state.fileId, { [dataKey]: content }, { preventSnapshot: true } as any)
+                    .then(() => toast.success('Synced to Cloud', { id: `sync-${module}`, duration: 1500 }));
+            } catch (e) {
+                console.error('Switch sync failed', e);
+            }
+        }
+    },
 
     deleteRevision: async (module, revisionId) => {
         const { fileId } = get();
@@ -225,11 +228,8 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
         set({ isLoading: true });
         try {
             const moduleKey = `${module}Data`;
-            const response = await fetch(`/api/v1/documents/${fileId}/revisions/${revisionId}?module=${moduleKey}`, {
-                method: 'DELETE',
-                headers: await apiService.getAuthHeaders()
-            });
-            if (!response.ok) throw new Error('Failed to delete revision');
+            // 1. Backend Deletion using dedicated service
+            await apiService.deleteRevision(fileId, module, revisionId);
 
             let updatedRevisions: Revision<any>[] = [];
             set((state) => {
@@ -241,8 +241,8 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
 
             // Re-reconcile after revision deletion
             // forceSync: true ensures the server content is updated immediately after deletion.
-            get().reconcileProjectTabs(module, null, updatedRevisions, true);
-            get().ensureMinimumOneTab(module);
+            await get().reconcileProjectTabs(module, null, updatedRevisions, true);
+            await get().ensureMinimumOneTab(module);
 
             // If the module is now totally empty, ensure server is wiped
             // preventSnapshot: true stops the backend from creating a "zombie" revision
@@ -264,13 +264,8 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
         const { fileId } = get();
         if (!fileId) return;
         try {
-            const moduleKey = `${module}Data`;
-            const response = await fetch(`/api/v1/documents/${fileId}/revisions/${revisionId}`, {
-                method: 'PATCH',
-                headers: await apiService.getAuthHeaders({ 'Content-Type': 'application/json' }),
-                body: JSON.stringify({ module: moduleKey, name })
-            });
-            if (!response.ok) throw new Error('Failed to rename revision');
+            // Backend Rename using dedicated service
+            await apiService.renameRevision(fileId, module, revisionId, name);
 
             set((state) => {
                 const revKey = `${module}Revisions` as keyof AppState;

@@ -347,3 +347,33 @@ export async function deleteDocument(documentId: string): Promise<{ success: boo
     }
     return response.json();
 }
+/**
+ * Deletes a revision by its ID
+ */
+export async function deleteRevision(documentId: string, module: string, revisionId: string): Promise<{ success: boolean; message: string }> {
+    const response = await fetch(`/api/v1/documents/${documentId}/revisions/${revisionId}?module=${module}Data`, {
+        method: 'DELETE',
+        headers: await getAuthHeaders()
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete revision');
+    }
+    return response.json();
+}
+
+/**
+ * Renames a revision
+ */
+export async function renameRevision(documentId: string, module: string, revisionId: string, newName: string): Promise<{ success: boolean; message: string }> {
+    const response = await fetch(`/api/v1/documents/${documentId}/revisions/${revisionId}`, {
+        method: 'PATCH',
+        headers: await getAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ module: `${module}Data`, name: newName })
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to rename revision');
+    }
+    return response.json();
+}

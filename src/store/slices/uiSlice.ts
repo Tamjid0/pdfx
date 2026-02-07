@@ -16,6 +16,7 @@ export interface UISlice {
     exportContent: any;
     headersLoaded: boolean;
     authHeaders: Record<string, string>;
+    rightSidebarOpen: boolean;
 
     setHtmlPreview: (html: string | null) => void;
     setIsLoading: (loading: boolean) => void;
@@ -30,6 +31,7 @@ export interface UISlice {
     setAuthHeaders: (headers: Record<string, string>) => void;
     openExportModal: (mode: string, content: any) => void;
     closeExportModal: () => void;
+    setRightSidebarOpen: (open: boolean) => void;
     templates: any[];
     setTemplates: (templates: any[]) => void;
 }
@@ -49,6 +51,7 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set) => (
     exportContent: null,
     headersLoaded: false,
     authHeaders: {},
+    rightSidebarOpen: false,
     templates: [],
 
     setHtmlPreview: (html) => set({ htmlPreview: html }),
@@ -64,5 +67,6 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set) => (
     setAuthHeaders: (headers) => set({ authHeaders: headers }),
     openExportModal: (mode, content) => set({ showExportModal: true, exportMode: mode, exportContent: content }),
     closeExportModal: () => set({ showExportModal: false }),
+    setRightSidebarOpen: (open) => set({ rightSidebarOpen: open }),
     setTemplates: (templates) => set({ templates }),
 });

@@ -61,7 +61,8 @@ const Home = () => {
         summaryData, insightsData, notesData, quizData, flashcardsData,
         isSlideMode, setIsSlideMode, setSlides, fileType, updateStats,
         resetWorkspace, setIsPageLoading, setTopics, isAppendMode, generationScope,
-        updateRevisionsFromSync, refreshCurrentProject, loadProject
+        updateRevisionsFromSync, refreshCurrentProject, loadProject,
+        rightSidebarOpen, setRightSidebarOpen
     } = useStore();
 
     const backToImport = () => {
@@ -353,6 +354,8 @@ const Home = () => {
                     getHasGenerated={getHasGenerated}
                     fileType={fileType}
                     fileId={fileId}
+                    rightSidebarOpen={rightSidebarOpen}
+                    setRightSidebarOpen={setRightSidebarOpen}
                 />
                 <ExportModal />
             </div>

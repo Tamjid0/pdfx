@@ -61,6 +61,8 @@ interface MainLayoutProps {
     getHasGenerated: () => boolean;
     fileType?: string | null;
     fileId?: string | null;
+    rightSidebarOpen: boolean;
+    setRightSidebarOpen: (open: boolean) => void;
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({
@@ -70,7 +72,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     isQuizGenerated, isMindmapGenerated, isSlideMode, backToImport, setLeftPanelView, setMode,
     setPreviewMode, handleEditorChange, handleFileUpload, handlePasteContent,
     handleScrapeUrl, handleGenerate, handleExport, handleSendMessage, getHasGenerated,
-    fileType, fileId
+    fileType, fileId,
+    rightSidebarOpen, setRightSidebarOpen
 }) => {
     const router = useRouter();
     const [showExitConfirm, setShowExitConfirm] = React.useState(false);
@@ -190,6 +193,20 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                                             )}
                                         </>
                                     )}
+                                    {['summary', 'insights', 'notes', 'quiz', 'flashcards', 'mindmap'].includes(mode) && (
+                                        <button
+                                            onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
+                                            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all duration-300 ${rightSidebarOpen
+                                                ? 'bg-gemini-green text-black shadow-[0_0_15px_rgba(0,255,136,0.3)]'
+                                                : 'bg-gemini-dark-300 text-gemini-green border border-gemini-green/20 hover:bg-gemini-green/10'
+                                                }`}
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                                            </svg>
+                                            Tools
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
@@ -259,7 +276,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                             </div>
                         </main>
 
-                        <div className={`${isMounted ? 'transition-all duration-500 ease-in-out' : ''} overflow-hidden ${(mode !== 'editor' && mode !== 'chat') ? 'w-[320px]' : 'w-0'}`}>
+                        {/* Overlay for mobile/slide-over effect */}
+                        {rightSidebarOpen && (
+                            <div
+                                className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[100] transition-opacity duration-300"
+                                onClick={() => setRightSidebarOpen(false)}
+                            />
+                        )}
+
+                        <div
+                            className={`fixed top-0 right-0 bottom-0 z-[110] w-[320px] bg-gemini-dark-200 border-l border-gemini-dark-400 shadow-2xl transition-all duration-500 ease-in-out transform ${rightSidebarOpen ? 'translate-x-0' : 'translate-x-full'
+                                }`}
+                        >
                             <RightSidebar
                                 onApplyTools={handleGenerate}
                                 hasGenerated={getHasGenerated()}

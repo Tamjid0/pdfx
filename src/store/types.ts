@@ -203,6 +203,7 @@ export interface AppState {
     showExportModal: boolean;
     exportMode: string;
     exportContent: any;
+    rightSidebarOpen: boolean;
 
     // Slide State
     isSlideMode: boolean;
@@ -313,6 +314,7 @@ export interface AppState {
 
     openExportModal: (mode: string, content: any) => void;
     closeExportModal: () => void;
+    setRightSidebarOpen: (open: boolean) => void;
 
     setFileId: (id: string | null) => void;
     templates: any[];

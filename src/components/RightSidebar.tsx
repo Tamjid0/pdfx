@@ -46,7 +46,8 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         mindmapSettings, setMindmapSettings,
         flashcardsData,
         openExportModal: openGlobalExportModal,
-        insightsData, notesData, quizData, summaryData, mindmapData, htmlPreview
+        insightsData, notesData, quizData, summaryData, mindmapData, htmlPreview,
+        setRightSidebarOpen
     } = useStore();
     const [settingsChanged, setSettingsChanged] = useState(false);
 
@@ -412,10 +413,21 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     return (
         <aside className="sidebar-right w-[320px] bg-gemini-dark-200 border-l border-gemini-dark-400 flex flex-col overflow-hidden h-[100vh]">
             <div className="right-sidebar-header p-4 border-b border-gemini-dark-400 bg-gemini-dark-300 flex justify-between items-center">
-                <h3 className="right-sidebar-title text-base font-semibold text-white flex items-center gap-2">
-                    <IconCircle className="w-5 h-5 fill-gemini-green" />
-                    Tools
-                </h3>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setRightSidebarOpen(false)}
+                        className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-all border border-transparent hover:border-white/10"
+                        title="Close Tools"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                    <h3 className="right-sidebar-title text-base font-semibold text-white flex items-center gap-2">
+                        <IconCircle className="w-5 h-5 fill-gemini-green" />
+                        Tools
+                    </h3>
+                </div>
                 <button
                     className={`apply-btn px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-all flex items-center gap-1.5 ${isApplyDisabled ? 'bg-gemini-dark-500 text-gemini-gray cursor-not-allowed' : (isGuest ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-gemini-green text-black hover:bg-gemini-green-300')}`}
                     onClick={isGuest ? () => router.push('/login') : applyTools}

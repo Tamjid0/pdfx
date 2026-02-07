@@ -1,5 +1,5 @@
 import { StateCreator } from 'zustand';
-import { AppState, GenerationScope, PreviewPreset, Activity } from '../types';
+import { AppState, GenerationScope, PreviewPreset, Activity, Topic } from '../types';
 
 export interface SettingsSlice {
     summarySettings: any;
@@ -29,6 +29,10 @@ export interface SettingsSlice {
     openEmbeddedChat: (itemId: string, itemType: 'quiz' | 'flashcard', itemData: any) => void;
     closeEmbeddedChat: (itemId: string) => void;
     closeAllEmbeddedChats: () => void;
+    topics: Topic[];
+    setTopics: (topics: Topic[]) => void;
+    isAppendMode: boolean;
+    setIsAppendMode: (val: boolean) => void;
 }
 
 export const createSettingsSlice: StateCreator<AppState, [], [], SettingsSlice> = (set, get) => ({
@@ -49,16 +53,26 @@ export const createSettingsSlice: StateCreator<AppState, [], [], SettingsSlice> 
     notesSettings: {
         detailLevel: 'comprehensive',
         formatting: 'bullet_points',
-        includeExamples: true
+        includeExamples: true,
+        keyConcepts: true,
+        actionItems: false,
+        aiSummary: true
     },
     quizSettings: {
         questionCount: 5,
         difficulty: 'medium',
-        quizType: 'mixed'
+        quizType: 'mixed',
+        questionTypes: ['multiple-choice', 'true-false'],
+        timed: false,
+        timeLimit: 10
     },
     mindmapSettings: {
         layout: 'balanced',
-        depth: 2
+        depth: 2,
+        theme: 'default',
+        focusMode: false,
+        presentationMode: false,
+        searchTerm: ''
     },
     activeNotesToggles: {},
     activeInsightsToggles: {},
@@ -68,6 +82,8 @@ export const createSettingsSlice: StateCreator<AppState, [], [], SettingsSlice> 
     activeNodeIds: null,
     studyActivity: [],
     embeddedChats: {},
+    topics: [],
+    isAppendMode: false,
 
     setSummarySettings: (settings) => set({ summarySettings: settings }),
     setQuizSettings: (settings) => set({ quizSettings: settings }),
@@ -78,6 +94,8 @@ export const createSettingsSlice: StateCreator<AppState, [], [], SettingsSlice> 
     setPrompt: (prompt) => set({ prompt }),
     setGenerationScope: (scope) => set({ generationScope: scope }),
     setActiveNodeIds: (ids) => set({ activeNodeIds: ids }),
+    setTopics: (topics) => set({ topics }),
+    setIsAppendMode: (val) => set({ isAppendMode: val }),
 
     logActivity: (count = 1) => {
         const today = new Date().toISOString().split('T')[0];

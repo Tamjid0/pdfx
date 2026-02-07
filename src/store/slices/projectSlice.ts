@@ -1,8 +1,8 @@
 import { StateCreator } from 'zustand';
-import { AppState, Topic, Mode } from '../types';
+import { AppState, Mode, Revision } from '../types';
 import * as apiService from '../../services/apiService';
-import { getContent } from '../utils';
 import { toast } from 'react-hot-toast';
+import { getContent } from '../utils';
 
 export interface ProjectSlice {
     fileId: string | null;
@@ -14,52 +14,44 @@ export interface ProjectSlice {
         readTime: number;
         pageCount: number;
     };
-    topics: Topic[];
-    isAppendMode: boolean;
-    templates: any[];
-    pdfSearchText: string | null;
-
+    isLoading: boolean;
+    isHydrating: boolean;
     setFileId: (id: string | null) => void;
     setFileType: (type: 'pdf' | 'pptx' | 'text' | null) => void;
-    setTopics: (topics: Topic[]) => void;
-    setIsAppendMode: (val: boolean) => void;
-    setTemplates: (templates: any[]) => void;
-    setPdfSearchText: (text: string | null) => void;
+    setStats: (stats: any) => void;
     updateStats: (text: string, pageCount?: number) => void;
 
-    loadProject: (documentId: string) => Promise<void>;
     resetWorkspace: () => void;
-    deleteDocument: (documentId: string) => Promise<void>;
+    loadProject: (documentId: string) => Promise<void>;
+    refreshCurrentProject: (documentId?: string) => Promise<void>;
+    loadProjectModule: (moduleKey: string) => Promise<void>;
+    pdfSearchText: string | null;
+    setPdfSearchText: (text: string | null) => void;
 }
 
 export const createProjectSlice: StateCreator<AppState, [], [], ProjectSlice> = (set, get) => ({
     fileId: null,
     fileType: null,
     stats: { wordCount: 0, charCount: 0, lineCount: 0, readTime: 0, pageCount: 1 },
-    topics: [],
-    isAppendMode: false,
-    templates: [],
+    isLoading: false,
+    isHydrating: false,
     pdfSearchText: null,
 
     setFileId: (id) => set({ fileId: id }),
     setFileType: (type) => set({ fileType: type }),
-    setTopics: (topics) => set({ topics }),
-    setIsAppendMode: (val) => set({ isAppendMode: val }),
-    setTemplates: (templates) => set({ templates }),
-    setPdfSearchText: (text) => set({ pdfSearchText: text }),
     setStats: (stats) => set({ stats }),
+    setPdfSearchText: (text) => set({ pdfSearchText: text }),
 
     updateStats: (text, pageCount) => {
-        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        const words = text.trim().split(/\s+/).length;
         const chars = text.length;
-        const lines = text.split("\n").length;
         const readTime = Math.ceil(words / 200);
         set((state) => ({
             stats: {
+                ...state.stats,
                 wordCount: words,
                 charCount: chars,
-                lineCount: lines,
-                readTime: readTime,
+                readTime,
                 pageCount: pageCount !== undefined ? pageCount : state.stats.pageCount
             }
         }));
@@ -91,6 +83,15 @@ export const createProjectSlice: StateCreator<AppState, [], [], ProjectSlice> = 
             view: 'import',
             mode: 'editor',
             leftPanelView: 'editor',
+            localDrafts: {
+                summary: [], notes: [], insights: [], flashcards: [], quiz: [], mindmap: []
+            },
+            summaryRevisions: [],
+            notesRevisions: [],
+            insightsRevisions: [],
+            flashcardsRevisions: [],
+            quizRevisions: [],
+            mindmapRevisions: [],
             activeRevisionIds: {
                 summary: '', notes: '', insights: '', flashcards: '', quiz: '', mindmap: '', editor: '', chat: '', slides: ''
             }
@@ -98,123 +99,86 @@ export const createProjectSlice: StateCreator<AppState, [], [], ProjectSlice> = 
     },
 
     loadProject: async (documentId) => {
+        // Prevent concurrent hydration calls which cause tab doubling
+        if (get().isHydrating) return;
+        set({ isHydrating: true });
+
+        get().resetWorkspace();
         set({ isLoading: true });
         try {
             const data = await apiService.fetchDocument(documentId);
-            const typeStr = data.type || '';
-            const isPptx = typeStr.includes('presentation') || typeStr.includes('powerpoint') || typeStr.includes('pptx');
-            const isPdf = typeStr.includes('pdf');
-
             set({
-                fileId: data.documentId,
-                fileType: isPdf ? 'pdf' : (isPptx ? 'pptx' : 'text'),
-                htmlPreview: (isPdf || isPptx) ? null : (data.extractedText || ''),
-                summaryData: getContent(data.summaryData),
-                notesData: getContent(data.notesData),
-                flashcardsData: getContent(data.flashcardsData),
-                quizData: getContent(data.quizData),
-                insightsData: getContent(data.insightsData),
-                mindmapData: data.mindmapData,
-                chatHistory: data.chatHistory || [],
-                summaryRevisions: data.summaryData?.revisions || [],
-                notesRevisions: data.notesData?.revisions || [],
-                flashcardsRevisions: data.flashcardsData?.revisions || [],
-                quizRevisions: data.quizData?.revisions || [],
-                insightsRevisions: data.insightsData?.revisions || [],
-                isSummaryGenerated: !!getContent(data.summaryData),
-                isNotesGenerated: !!getContent(data.notesData),
-                isFlashcardsGenerated: !!getContent(data.flashcardsData),
-                isQuizGenerated: !!getContent(data.quizData),
-                isMindmapGenerated: !!data.mindmapData,
-                isInsightsGenerated: !!getContent(data.insightsData),
-                topics: data.topics || [],
-                view: 'viewer',
-                mode: (get().mode !== 'editor' && getContent(data[`${get().mode}Data`])) ? get().mode : (getContent(data.summaryData) ? 'summary' : 'editor'),
-                leftPanelView: isPptx ? 'slides' : 'editor',
-                isSlideMode: isPptx,
-                activeRevisionIds: {
-                    summary: '', notes: '', insights: '', flashcards: '', quiz: '', mindmap: '', editor: '', chat: '', slides: ''
-                }
+                fileId: data.documentId || data.fileId, // Use documentId as primary source
+                fileType: data.fileType || 'pdf',
+                stats: data.stats || { wordCount: 0, charCount: 0, lineCount: 0, readTime: 0, pageCount: 1 },
+                isPreviewMode: false,
+                htmlPreview: data.pdfUrl || data.originalFile?.url || null,
+                view: 'editor' // Restore view state to fix redirect to import
             });
 
-            get().updateStats(data.extractedText || "", data.metadata?.pageCount || 1);
+            // Hydrate Revisions from server
+            const modules: Mode[] = ['summary', 'notes', 'insights', 'flashcards', 'quiz', 'mindmap'];
+            modules.forEach(m => {
+                const revisions = data[`${m}Data`]?.revisions || [];
+                set({ [`${m}Revisions`]: revisions } as any);
+            });
 
-            if (isPptx && data.chunks && data.chunks.length > 0) {
-                const slides = data.chunks.map((chunk: any) => ({
-                    title: chunk.metadata?.slideTitle || `Slide ${chunk.metadata?.pageIndex || 1}`,
-                    content: chunk.content
-                }));
-                set({ slides, currentSlideIndex: 0 });
-            }
-
-            // Persistence: Load drafts
-            const savedDrafts = localStorage.getItem(`pdfx_drafts_${data.documentId}`);
+            // Rehydrate Local Drafts
+            const savedDrafts = localStorage.getItem(`pdfx_drafts_${documentId}`);
             if (savedDrafts) {
                 set({ localDrafts: JSON.parse(savedDrafts) });
             }
 
-            // Maintenance: Enforce invariants & Adoption
-            const modules: Mode[] = ['summary', 'notes', 'insights', 'flashcards', 'quiz', 'mindmap'];
+            // Maintenance: Unified Hydration (Run exactly once)
             modules.forEach(m => {
-                get().ensureTabInvariant(m);
                 const content = getContent(data[`${m}Data`]);
-                get().adoptServerContent(m, content);
+                const revisions = (get()[`${m}Revisions` as keyof AppState] as any[]) || [];
+                get().reconcileProjectTabs(m, content, revisions);
             });
-
-            get().ensureTabInvariant(get().mode);
 
         } catch (error) {
             console.error('[Store] loadProject failed:', error);
-            toast.error('Failed to load project.');
+            toast.error('Failed to load project');
         } finally {
-            set({ isLoading: false });
+            set({ isLoading: false, isHydrating: false });
         }
     },
 
     refreshCurrentProject: async (documentId) => {
         const id = documentId || get().fileId;
-        if (!id) return;
+        // Strict guard: Prevent 400 errors by validating ID is a UUID
+        if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+            return;
+        }
         try {
             const data = await apiService.fetchDocument(id);
-            set({
-                summaryRevisions: data.summaryData?.revisions || [],
-                notesRevisions: data.notesData?.revisions || [],
-                flashcardsRevisions: data.flashcardsData?.revisions || [],
-                quizRevisions: data.quizData?.revisions || [],
-                insightsRevisions: data.insightsData?.revisions || [],
+            const modules: Mode[] = ['summary', 'notes', 'insights', 'flashcards', 'quiz', 'mindmap'];
+            modules.forEach(m => {
+                const revisions = data[`${m}Data`]?.revisions || [];
+                set({ [`${m}Revisions`]: revisions } as any);
             });
         } catch (error) {
-            console.error('Refresh project failed', error);
+            console.error('[Store] refreshCurrentProject failed:', error);
         }
     },
 
     loadProjectModule: async (moduleKey) => {
-        const { fileId } = get();
-        if (!fileId) return;
+        const fileId = get().fileId;
+        // Strict guard: Prevent 400 errors by validating ID is a UUID
+        if (!fileId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(fileId)) {
+            return;
+        }
         try {
             const data = await apiService.fetchDocument(fileId);
-            const moduleData = data[moduleKey];
+            const moduleData = data[`${moduleKey}Data`];
+            const content = getContent(moduleData);
+            const module = moduleKey as Mode;
             const revisions = moduleData?.revisions || [];
-            const module = moduleKey.replace('Data', '') as Mode;
 
-            set({
-                [`${module}Revisions`]: revisions
-            } as any);
-
-            // Re-enforce invariant for this module
-            get().ensureTabInvariant(module);
+            set({ [`${moduleKey}Revisions`]: revisions } as any);
+            get().reconcileProjectTabs(module, content, revisions);
         } catch (error) {
-            console.error('Load project module failed', error);
-        }
-    },
-
-    deleteDocument: async (documentId) => {
-        try {
-            await apiService.deleteDocument(documentId);
-            toast.success('Project discarded successfully');
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to delete project');
-            throw error;
+            console.error('[Store] loadProjectModule failed:', error);
         }
     }
 });

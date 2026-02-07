@@ -14,12 +14,11 @@ export interface TabSlice {
     activeRevisionIds: Record<Mode, string>;
 
     addLocalDraft: (module: Mode, name?: string, initialData?: any, skipSync?: boolean) => string;
-    closeLocalDraft: (module: Mode, draftId: string) => void;
+    closeLocalDraft: (module: Mode, draftId: string) => Promise<void>;
     renameLocalDraft: (module: Mode, draftId: string, name: string) => void;
 
     getTabs: (module: Mode) => { id: string; name: string; type: 'draft' | 'revision'; data: any }[];
-    ensureTabInvariant: (module: Mode) => void;
-    adoptServerContent: (module: Mode, content: any) => void;
+    reconcileProjectTabs: (module: Mode, serverContent: any, serverRevisions: Revision<any>[]) => void;
 
     switchRevision: (module: Mode, revisionId: string, skipSync?: boolean) => void;
     deleteRevision: (module: Mode, revisionId: string) => Promise<void>;
@@ -54,10 +53,31 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
     },
 
     addLocalDraft: (module, name, initialData = null, skipSync = false) => {
-        const id = `draft-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`;
         const existing = get().localDrafts[module] || [];
-        const draftNumber = existing.length + 1;
-        const newDraft = { id, name: name || `Draft ${draftNumber}`, data: initialData };
+
+        // --- DEFENSIVE DUPLICATION GUARD ---
+        // 1. Check by Name only if both have NO data (empty drafts)
+        const defaultName = name || `Draft ${existing.length + 1}`;
+        if (!initialData && existing.some(d => !d.data && d.name === defaultName)) {
+            const dup = existing.find(d => !d.data && d.name === defaultName);
+            if (dup) {
+                get().switchRevision(module, dup.id, skipSync);
+                return dup.id;
+            }
+        }
+
+        // 2. Deep equality check for content (prevent doubling "Imported Content")
+        if (initialData) {
+            const stringifiedData = JSON.stringify(initialData);
+            const contentDup = existing.find(d => d.data && JSON.stringify(d.data) === stringifiedData);
+            if (contentDup) {
+                get().switchRevision(module, contentDup.id, skipSync);
+                return contentDup.id;
+            }
+        }
+
+        const id = `draft-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`;
+        const newDraft = { id, name: defaultName, data: initialData };
 
         const newLocalDrafts = { ...get().localDrafts, [module]: [...existing, newDraft] };
         set({ localDrafts: newLocalDrafts });
@@ -71,7 +91,7 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
         return id;
     },
 
-    closeLocalDraft: (module, draftId) => {
+    closeLocalDraft: async (module, draftId) => {
         const existing = get().localDrafts[module] || [];
         const filtered = existing.filter(d => d.id !== draftId);
         const revisions = (get()[`${module}Revisions` as keyof AppState] as any[]) || [];
@@ -79,13 +99,18 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
         const fileId = get().fileId;
         const newLocalDrafts = { ...get().localDrafts, [module]: filtered };
 
-        // Atomic wipe if last tab
+        // --- TOTAL SERVER WIPE ON LAST TAB ---
         if (filtered.length === 0 && revisions.length === 0) {
             const dataKey = `${module}Data` as keyof AppState;
             const genKey = `is${module.charAt(0).toUpperCase() + module.slice(1)}Generated` as keyof AppState;
+
+            // Set local state to null
             set({ [dataKey]: null, [genKey]: false } as any);
+
             if (fileId) {
-                apiService.syncProjectContent(fileId, { [dataKey]: { content: null } }).catch(() => { });
+                // ABSOLUTE WIPE: Send null for the entire module object to MongoDB
+                // This prevents the "resurrecting" bug where a refresh brings back content.
+                await apiService.syncProjectContent(fileId, { [dataKey]: null }).catch(() => { });
             }
         }
 
@@ -94,7 +119,9 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
             localStorage.setItem(`pdfx_drafts_${fileId}`, JSON.stringify(newLocalDrafts));
         }
 
-        get().ensureTabInvariant(module);
+        // Reconcile to ensure we always have at least ONE tab if revisions exist, 
+        // or a new Draft 1 if we're now totally empty.
+        get().reconcileProjectTabs(module, null, revisions);
     },
 
     renameLocalDraft: (module, draftId, name) => {
@@ -110,30 +137,30 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
         }
     },
 
-    ensureTabInvariant: (module) => {
-        const tabs = get().getTabs(module);
-        if (tabs.length === 0) {
-            get().addLocalDraft(module, `Draft 1`, null, true);
-        } else {
-            const currentActiveId = get().activeRevisionIds[module];
-            if (!currentActiveId || !tabs.find(t => t.id === currentActiveId)) {
-                get().switchRevision(module, tabs[0].id, true);
+    reconcileProjectTabs: (module, serverContent, serverRevisions) => {
+        const drafts = get().localDrafts[module] || [];
+        const revisions = serverRevisions || [];
+        const activeId = get().activeRevisionIds[module];
+
+        // 1. If we ALREADY have tabs, just ensure one is active or switched correctly.
+        // We do NOT add more tabs here to prevent the "doubling" bug.
+        if (drafts.length > 0 || revisions.length > 0) {
+            const allIds = [...drafts.map(d => d.id), ...revisions.map(r => r.id)];
+            if (!activeId || !allIds.includes(activeId)) {
+                get().switchRevision(module, allIds[0], true);
             }
+            return;
         }
-    },
 
-    adoptServerContent: (module, content) => {
-        if (!content) return;
-        const tabs = get().getTabs(module);
-        const hasRevisions = (get()[`${module}Revisions` as keyof AppState] as any[])?.length > 0;
-
-        if (tabs.length === 0) {
-            get().addLocalDraft(module, `Imported Content`, content, true);
-        } else if (!hasRevisions && tabs.length === 1 && tabs[0].type === 'draft' && !tabs[0].data) {
-            // Use specific setter to ensure localStorage sync
-            const setterKey = `set${module.charAt(0).toUpperCase() + module.slice(1)}Data` as keyof AppState;
-            (get()[setterKey] as Function)(content);
+        // 2. If NO tabs exist at all (not in LocalStorage, not in revisions):
+        // Check for orphan server content (Legacy data that wasn't previously wrapped in a revision)
+        if (serverContent) {
+            get().addLocalDraft(module, 'Imported Content', serverContent, true);
+            return;
         }
+
+        // 3. Absolute fallback: Create the first Draft
+        get().addLocalDraft(module, 'Draft 1', null, true);
     },
 
     switchRevision: (module, revisionId, skipSync = false) => set((state) => {
@@ -142,7 +169,8 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
         const newActiveRevisionIds = { ...state.activeRevisionIds, [module]: revisionId };
 
         if (!revisionId) {
-            get().ensureTabInvariant(module);
+            // Self-repair if somehow triggered with null ID
+            setTimeout(() => get().reconcileProjectTabs(module, null, state[`${module}Revisions` as keyof AppState] as any), 0);
             return state;
         }
 
@@ -169,6 +197,7 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
     deleteRevision: async (module, revisionId) => {
         const { fileId } = get();
         if (!fileId) return;
+        set({ isLoading: true });
         try {
             const moduleKey = `${module}Data`;
             const response = await fetch(`/api/v1/documents/${fileId}/revisions/${revisionId}?module=${moduleKey}`, {
@@ -177,20 +206,27 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
             });
             if (!response.ok) throw new Error('Failed to delete revision');
 
+            let updatedRevisions: Revision<any>[] = [];
             set((state) => {
                 const revKey = `${module}Revisions` as keyof AppState;
                 const revisions = state[revKey] as Revision<any>[];
-                return { [revKey]: revisions.filter(r => r.id !== revisionId) } as any;
+                updatedRevisions = revisions.filter(r => r.id !== revisionId);
+                return { [revKey]: updatedRevisions } as any;
             });
 
-            get().ensureTabInvariant(module);
+            // Re-reconcile after revision deletion
+            get().reconcileProjectTabs(module, null, updatedRevisions);
 
-            if (!get()[`${module}Data` as keyof AppState]) {
-                await apiService.syncProjectContent(fileId, { [moduleKey]: { content: null } });
+            // If the module is now totally empty, ensure server is wiped
+            // (Note: reconcileProjectTabs might have created a "Draft 1", which is fine)
+            if (updatedRevisions.length === 0 && (get().localDrafts[module] || []).length === 0) {
+                await apiService.syncProjectContent(fileId, { [moduleKey]: null });
             }
         } catch (error) {
             console.error('Delete revision failed', error);
             toast.error('Failed to delete version');
+        } finally {
+            set({ isLoading: false });
         }
     },
 
@@ -220,10 +256,18 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
         const tabs = get().getTabs(module);
         const tab = tabs.find(t => t.id === tabId);
         if (!tab) return;
-        if (tab.type === 'draft') {
-            get().closeLocalDraft(module, tabId);
-        } else {
-            await get().deleteRevision(module, tabId);
+
+        set({ isLoading: true });
+        try {
+            if (tab.type === 'draft') {
+                await get().closeLocalDraft(module, tabId);
+            } else {
+                await get().deleteRevision(module, tabId);
+            }
+        } catch (error) {
+            console.error('Delete tab failed', error);
+        } finally {
+            setTimeout(() => set({ isLoading: false }), 300);
         }
     },
 

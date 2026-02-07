@@ -2,6 +2,7 @@ import { StateCreator } from 'zustand';
 import { AppState, Mode, PreviewPreset } from '../types';
 
 export interface UISlice {
+    htmlPreview: string | null;
     isLoading: boolean;
     isPageLoading: boolean;
     isDocumentLoading: boolean;
@@ -16,6 +17,7 @@ export interface UISlice {
     headersLoaded: boolean;
     authHeaders: Record<string, string>;
 
+    setHtmlPreview: (html: string | null) => void;
     setIsLoading: (loading: boolean) => void;
     setIsPageLoading: (loading: boolean) => void;
     setIsDocumentLoading: (loading: boolean) => void;
@@ -28,9 +30,12 @@ export interface UISlice {
     setAuthHeaders: (headers: Record<string, string>) => void;
     openExportModal: (mode: string, content: any) => void;
     closeExportModal: () => void;
+    templates: any[];
+    setTemplates: (templates: any[]) => void;
 }
 
 export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set) => ({
+    htmlPreview: null,
     isLoading: false,
     isPageLoading: false,
     isDocumentLoading: false,
@@ -44,7 +49,9 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set) => (
     exportContent: null,
     headersLoaded: false,
     authHeaders: {},
+    templates: [],
 
+    setHtmlPreview: (html) => set({ htmlPreview: html }),
     setIsLoading: (loading) => set({ isLoading: loading }),
     setIsPageLoading: (loading) => set({ isPageLoading: loading }),
     setIsDocumentLoading: (loading) => set({ isDocumentLoading: loading }),
@@ -57,4 +64,5 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set) => (
     setAuthHeaders: (headers) => set({ authHeaders: headers }),
     openExportModal: (mode, content) => set({ showExportModal: true, exportMode: mode, exportContent: content }),
     closeExportModal: () => set({ showExportModal: false }),
+    setTemplates: (templates) => set({ templates }),
 });

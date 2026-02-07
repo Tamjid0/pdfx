@@ -39,7 +39,7 @@ const Insights: React.FC<InsightsProps> = ({
             toolsAction={toolsAction}
         >
             <DocumentPreview mode="insights">
-                <div className="w-full h-full relative">
+                <div className="w-full relative">
                     {!hasData ? (
                         <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-[#0a0a0a] rounded-xl">
                             {isGeneratingInsights ? (

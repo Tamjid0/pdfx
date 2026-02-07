@@ -26,6 +26,7 @@ import Mindmap from "./Mindmap";
 import Chat from "./Chat";
 import { RevisionSwitcher } from "./dashboard/RevisionSwitcher";
 import HideContentToggle from "./HideContentToggle";
+import CollapsibleChatPanel from './CollapsibleChatPanel';
 
 interface MainLayoutProps {
     view: string;
@@ -112,6 +113,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({
         router.replace('/');
         setShowExitConfirm(false);
     };
+
+    const embeddedChats = useStore(state => state.embeddedChats);
+    const closeEmbeddedChat = useStore(state => state.closeEmbeddedChat);
 
     return (
         <div className="flex flex-1 overflow-hidden">
@@ -384,6 +388,17 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                     </div>
                 )
             }
+            {((mode === 'quiz' || mode === 'flashcards') && Object.entries(embeddedChats).map(([itemId, chat]) => (
+                chat.isOpen && (
+                    <CollapsibleChatPanel
+                        key={itemId}
+                        itemId={itemId}
+                        itemType={chat.itemType}
+                        itemData={chat.itemData}
+                        onClose={() => closeEmbeddedChat(itemId)}
+                    />
+                )
+            )))}
         </div >
     );
 };

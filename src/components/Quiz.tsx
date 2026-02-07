@@ -221,7 +221,7 @@ const Quiz: React.FC<QuizProps> = ({
 
         if (phase === 'initial') {
             return (
-                <div className="flex flex-col h-full overflow-hidden">
+                <div className="flex flex-col">
                     <div className="flex-1">
                         <div className="p-10 max-w-2xl mx-auto w-full space-y-12">
                             <div className="text-center space-y-4 pt-8">
@@ -275,7 +275,7 @@ const Quiz: React.FC<QuizProps> = ({
 
         if (phase === 'setup') {
             return (
-                <div className="flex flex-col h-full overflow-hidden">
+                <div className="flex flex-col">
                     <div className="flex-1">
                         <div className="p-10 max-w-4xl mx-auto w-full space-y-12">
                             <div className="text-center space-y-4 pt-8">
@@ -368,7 +368,7 @@ const Quiz: React.FC<QuizProps> = ({
 
         if (phase === 'selection') {
             return (
-                <div className="flex flex-col h-full overflow-hidden">
+                <div className="flex flex-col">
                     <div className="flex-1">
                         <div className="p-10 max-w-2xl mx-auto w-full space-y-12">
                             <div className="text-center space-y-6 pt-8">
@@ -506,7 +506,7 @@ const Quiz: React.FC<QuizProps> = ({
             if (!isExamMode) {
                 // NORMAL MODE: List Rendering
                 return (
-                    <div className="flex flex-col h-full overflow-hidden">
+                    <div className="flex flex-col">
                         <div className="p-6 bg-white/[0.02] border-b border-white/5 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="w-1.5 h-1.5 rounded-full bg-[#00ff88]"></div>
@@ -616,7 +616,7 @@ const Quiz: React.FC<QuizProps> = ({
             const progress = ((currentIndex + 1) / quizData.quiz.length) * 100;
 
             return (
-                <div className="flex flex-col h-full overflow-hidden">
+                <div className="flex flex-col">
                     <div className="p-4 bg-white/[0.02] border-b border-white/5 flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <div className="px-3 py-1 bg-[#00ff88]/10 border border-[#00ff88]/20 rounded-full text-[9px] font-black text-[#00ff88] uppercase tracking-widest">
@@ -748,7 +748,7 @@ const Quiz: React.FC<QuizProps> = ({
             const accuracy = Math.round((examResults.score / quizData.quiz.length) * 100);
 
             return (
-                <div className="flex flex-col h-full overflow-hidden">
+                <div className="flex flex-col">
                     <div className="p-12 md:p-20 flex-1">
                         <div className="max-w-4xl mx-auto space-y-16">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -871,18 +871,6 @@ const Quiz: React.FC<QuizProps> = ({
             <DocumentPreview mode="quiz">
                 {renderPhase()}
             </DocumentPreview>
-
-            {Object.entries(embeddedChats).map(([itemId, chat]) => (
-                chat.isOpen && chat.itemType === 'quiz' && (
-                    <CollapsibleChatPanel
-                        key={itemId}
-                        itemId={itemId}
-                        itemType={chat.itemType}
-                        itemData={chat.itemData}
-                        onClose={() => closeEmbeddedChat(itemId)}
-                    />
-                )
-            ))}
         </ModeContainer>
     );
 };

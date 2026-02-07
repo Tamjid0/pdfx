@@ -121,7 +121,7 @@ const CollapsibleChatPanel: React.FC<CollapsibleChatPanelProps> = ({
 
     if (isMinimized) {
         return (
-            <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
+            <div className="fixed bottom-4 right-4 z-[210] animate-in slide-in-from-bottom-4 fade-in duration-300">
                 <button
                     onClick={() => setIsMinimized(false)}
                     className="flex items-center gap-3 px-4 py-3 bg-[#1a1a1a] border border-[#00ff88]/30 rounded-2xl shadow-2xl hover:bg-[#222] transition-all group"
@@ -139,7 +139,7 @@ const CollapsibleChatPanel: React.FC<CollapsibleChatPanelProps> = ({
     }
 
     return (
-        <div className="fixed right-0 top-0 bottom-0 w-96 bg-[#0a0a0a] border-l border-[#222] shadow-2xl z-40 flex flex-col animate-in slide-in-from-right duration-300">
+        <div className="fixed right-0 top-0 bottom-0 w-96 bg-[#0a0a0a] border-l border-[#222] shadow-2xl z-[200] flex flex-col animate-in slide-in-from-right duration-300">
             {/* Header */}
             <div className="p-4 border-b border-[#222] bg-[#111] flex items-center justify-between">
                 <div className="flex items-center gap-3">

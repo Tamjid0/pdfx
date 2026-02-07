@@ -197,7 +197,7 @@ const Flashcards: React.FC<FlashcardsProps> = ({
         >
 
             <DocumentPreview mode="flashcards">
-                <div className="w-full h-full relative">
+                <div className="w-full relative">
                     {!hasData ? (
                         <div className="flex flex-col items-center justify-center min-h-full text-center p-8 bg-[#0a0a0a] rounded-xl">
                             <div className="p-10 max-w-2xl mx-auto w-full space-y-12">
@@ -367,19 +367,6 @@ const Flashcards: React.FC<FlashcardsProps> = ({
                     )}
                 </div>
             </DocumentPreview>
-
-
-            {Object.entries(embeddedChats).map(([itemId, chat]) => (
-                chat.isOpen && chat.itemType === 'flashcard' && (
-                    <CollapsibleChatPanel
-                        key={itemId}
-                        itemId={itemId}
-                        itemType={chat.itemType}
-                        itemData={chat.itemData}
-                        onClose={() => closeEmbeddedChat(itemId)}
-                    />
-                )
-            ))}
         </ModeContainer>
     );
 };

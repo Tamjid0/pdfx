@@ -3,6 +3,7 @@ import { AppState, Mode, Revision } from '../types';
 import * as apiService from '../../services/apiService';
 import { toast } from 'react-hot-toast';
 import { getContent } from '../utils';
+import { getInitialTabbingState } from './tabSlice';
 
 export interface ProjectSlice {
     fileId: string | null;
@@ -83,18 +84,13 @@ export const createProjectSlice: StateCreator<AppState, [], [], ProjectSlice> = 
             view: 'import',
             mode: 'editor',
             leftPanelView: 'editor',
-            localDrafts: {
-                summary: [], notes: [], insights: [], flashcards: [], quiz: [], mindmap: []
-            },
+            ...getInitialTabbingState(),
             summaryRevisions: [],
             notesRevisions: [],
             insightsRevisions: [],
             flashcardsRevisions: [],
             quizRevisions: [],
             mindmapRevisions: [],
-            activeRevisionIds: {
-                summary: '', notes: '', insights: '', flashcards: '', quiz: '', mindmap: '', editor: '', chat: '', slides: ''
-            }
         });
     },
 

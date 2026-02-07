@@ -70,10 +70,22 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
     };
 
     return (
-        <div className="chat-container flex flex-col h-full w-full bg-[#0f0f0f] text-[#e5e5e5]">
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 bg-[#1a1a1a] border-b border-[#2f2f2f] sticky top-0 z-20">
-                <h1 className="text-xl font-bold bg-gradient-to-r from-gemini-green to-teal-400 bg-clip-text text-transparent uppercase tracking-wider">AI Assistant</h1>
+        <div className="chat-container flex flex-col h-full w-full bg-[#0b0b0b] text-[#e5e5e5]">
+            {/* Consistent Pane Header */}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gemini-dark-400 bg-gemini-dark-200 backdrop-blur-md relative z-20">
+                <div className="flex items-center gap-4">
+                    <div className="flex space-x-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-gemini-green/40"></div>
+                        <div className="w-1.5 h-1.5 rounded-full bg-gemini-green/40"></div>
+                        <div className="w-1.5 h-1.5 rounded-full bg-gemini-green/40"></div>
+                    </div>
+                    <div className="flex flex-col">
+                        <h3 className="text-[10px] font-bold text-white uppercase tracking-[0.3em] font-mono leading-none">
+                            Intelligence Node
+                        </h3>
+                        <span className="text-[8px] text-gemini-gray uppercase tracking-widest mt-1 font-bold">Conversational Analysis</span>
+                    </div>
+                </div>
             </div>
 
             <div className="main-content flex-1 flex flex-col overflow-hidden relative">

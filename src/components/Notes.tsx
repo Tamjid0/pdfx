@@ -5,81 +5,46 @@ import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
 import { VersionTabs } from './dashboard/VersionTabs';
 import { toast } from 'react-hot-toast';
 import { NoteBlockRenderer } from './notes/NoteBlockRenderer';
-
+import { ModeContainer } from './shared/ModeContainer';
 
 interface NotesProps {
     onGenerate: (mode: Mode) => void;
+    historyActions?: React.ReactNode;
+    interactiveAction?: React.ReactNode;
+    toolsAction?: React.ReactNode;
 }
 
-const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
+const Notes: React.FC<NotesProps> = ({
+    onGenerate,
+    historyActions,
+    interactiveAction,
+    toolsAction
+}) => {
     const {
         notesData, setNotesData, openExportModal, isGeneratingNotes,
         generationScope, switchRevision, loadProjectModule,
         activeRevisionIds, notesSettings, setNotesSettings
     } = useStore();
 
-    const [showRegenerateScope, setShowRegenerateScope] = useState(false);
-    const [showHistory, setShowHistory] = useState(false);
-
-    const activeRevisionId = activeRevisionIds['notes'];
-
     const categories = [
         { id: 'study', title: 'Study Notes', desc: 'Academic depth, definitions, formulas & self-quizzes.', icon: '📚', color: '#00ff88' },
-        // { id: 'meeting', title: 'Meeting Notes', desc: 'Context, decisions, @action items & parking lots.', icon: '🤝', color: '#3b82f6' },
-        // { id: 'project', title: 'Project Notes', desc: 'Scope, milestones, resources & blockers.', icon: '🚀', color: '#a855f7' },
         { id: 'presentation', title: 'Presentation', desc: 'Narrative flow, slide structure & key talking points.', icon: '🎙️', color: '#f59e0b' }
     ];
 
     const hasData = (notesData?.blocks && notesData.blocks.length > 0) || (notesData?.notes && notesData.notes.length > 0);
 
     return (
-        <div className="flex flex-col h-full w-full bg-[#0a0a0a] rounded-xl border border-[#222] overflow-hidden shadow-2xl relative">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-[#222] bg-[#111] relative z-20">
-                <div className="flex items-center gap-3">
-                    <svg className="w-5 h-5 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-                    <h3 className="text-xs font-black text-white uppercase tracking-[0.3em]">{hasData ? 'Module Overview' : 'Setup Required'}</h3>
-                </div>
-
-                <div className="flex gap-2 relative text-left">
-                    <div className="relative">
-                        <button
-                            onClick={() => setShowRegenerateScope(!showRegenerateScope)}
-                            disabled={isGeneratingNotes}
-                            className="px-4 py-2 bg-[#1a1a1a] text-[#00ff88] border border-[#00ff88]/20 rounded-lg text-xs font-bold hover:bg-[#00ff88]/10 transition-all flex items-center gap-2 disabled:opacity-50"
-                        >
-                            {isGeneratingNotes ? (
-                                <div className="w-3 h-3 border-2 border-[#00ff88] border-t-transparent rounded-full animate-spin"></div>
-                            ) : (
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                            )}
-                            {isGeneratingNotes ? 'SYNTHESIZING...' : (hasData ? 'REGENERATE' : 'SETUP')}
-                        </button>
-
-                        {showRegenerateScope && !isGeneratingNotes && (
-                            <div className="absolute top-full right-0 mt-3 w-80 bg-[#111] border border-[#222] rounded-3xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[100] animate-in fade-in zoom-in-95 duration-200 text-left">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h4 className="text-[10px] font-black text-white/60 uppercase tracking-[0.2em]">Select Scope</h4>
-                                    <button onClick={() => setShowRegenerateScope(false)} className="text-white/20 hover:text-white transition-colors">
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                    </button>
-                                </div>
-                                <GenerationScopeSelector className="!space-y-4" />
-                                <button
-                                    onClick={() => {
-                                        setShowRegenerateScope(false);
-                                        onGenerate('notes');
-                                    }}
-                                    className="w-full mt-6 py-3 bg-[#00ff88] text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#00dd77] transition-all shadow-[0_10px_20px_rgba(0,255,136,0.2)]"
-                                >
-                                    Confirm & {hasData ? 'Regenerate' : 'Generate'}
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            <VersionTabs module="notes" />
+        <ModeContainer
+            module="notes"
+            title="Module Overview"
+            isGenerating={isGeneratingNotes}
+            hasData={hasData}
+            onGenerate={onGenerate}
+            onExport={() => hasData && openExportModal('notes', notesData)}
+            historyActions={historyActions}
+            interactiveAction={interactiveAction}
+            toolsAction={toolsAction}
+        >
 
             <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
                 {!hasData ? (
@@ -204,7 +169,7 @@ const Notes: React.FC<NotesProps> = ({ onGenerate }) => {
                     EXPORT NOTES
                 </button>
             </div>
-        </div>
+        </ModeContainer>
     );
 };
 

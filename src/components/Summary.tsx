@@ -2,25 +2,27 @@ import React, { useState } from 'react';
 import { useStore, type Mode } from '../store/useStore';
 import TiptapEditor from './TiptapEditor';
 import { marked } from 'marked';
+import { ModeContainer } from './shared/ModeContainer';
 
 interface SummaryProps {
     onGenerate: (mode: Mode) => void;
+    historyActions?: React.ReactNode;
+    interactiveAction?: React.ReactNode;
+    toolsAction?: React.ReactNode;
 }
 
-import LocalizedShimmer from './LocalizedShimmer';
-import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
-import { VersionTabs } from './dashboard/VersionTabs';
-import { toast } from 'react-hot-toast';
-
-const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
+const Summary: React.FC<SummaryProps> = ({
+    onGenerate,
+    historyActions,
+    interactiveAction,
+    toolsAction
+}) => {
     const {
         summaryData, setSummaryData, openExportModal, isGeneratingSummary,
         generationScope, switchRevision, loadProjectModule,
         activeRevisionIds
     } = useStore();
     const [copied, setCopied] = useState(false);
-    const [showRegenerateScope, setShowRegenerateScope] = useState(false);
-    const [showHistory, setShowHistory] = useState(false);
 
     const activeRevisionId = activeRevisionIds['summary'];
 
@@ -79,56 +81,17 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
     };
 
     return (
-        <div className="flex flex-col h-full w-full bg-gemini-dark rounded-xl border border-gemini-dark-400 overflow-hidden shadow-2xl relative">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-gemini-dark-400 bg-gemini-dark-200 backdrop-blur-md relative z-20">
-                <div className="flex items-center gap-3">
-                    <div className="flex space-x-1">
-                        <div className="w-1.5 h-1.5 bg-gemini-green rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                        <div className="w-1.5 h-1.5 bg-gemini-green rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                        <div className="w-1.5 h-1.5 bg-gemini-green rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                    </div>
-                    <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] font-mono">
-                        {summaryData ? 'Analysis Ready' : 'System Idle'}
-                    </h3>
-                </div>
-                <div className="flex gap-2 relative">
-                    <button
-                        onClick={() => setShowRegenerateScope(!showRegenerateScope)}
-                        disabled={isGeneratingSummary}
-                        className="px-4 py-2 bg-gemini-dark-300 text-gemini-green border border-gemini-green/20 rounded-lg text-xs font-bold hover:bg-gemini-green/10 transition-all flex items-center gap-2 disabled:opacity-50"
-                    >
-                        {isGeneratingSummary ? (
-                            <div className="w-3 h-3 border-2 border-gemini-green border-t-transparent rounded-full animate-spin"></div>
-                        ) : (
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                        )}
-                        {isGeneratingSummary ? 'REGENERATING...' : (summaryData ? 'REGENERATE' : 'SETUP')}
-                    </button>
-
-                    {showRegenerateScope && !isGeneratingSummary && (
-                        <div className="absolute top-full right-0 mt-3 w-80 bg-gemini-dark-300 border border-gemini-dark-500 rounded-3xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[100] animate-in fade-in zoom-in-95 duration-200">
-                            <div className="flex items-center justify-between mb-4">
-                                <h4 className="text-[10px] font-black text-white/60 uppercase tracking-[0.2em]">Select Scope</h4>
-                                <button onClick={() => setShowRegenerateScope(false)} className="text-white/20 hover:text-white transition-colors">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                </button>
-                            </div>
-                            <GenerationScopeSelector className="!space-y-4" />
-                            <button
-                                onClick={() => {
-                                    setShowRegenerateScope(false);
-                                    onGenerate('summary');
-                                }}
-                                className="w-full mt-6 py-3 bg-gemini-green text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gemini-green-300 transition-all shadow-[0_10px_20px_rgba(0,255,136,0.2)]"
-                            >
-                                Confirm & {summaryData ? 'Regenerate' : 'Generate'}
-                            </button>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            <VersionTabs module="summary" />
+        <ModeContainer
+            module="summary"
+            title="Executive Brief"
+            isGenerating={isGeneratingSummary}
+            hasData={!!summaryData}
+            onGenerate={onGenerate}
+            onExport={() => summaryData && openExportModal('summary', summaryData)}
+            historyActions={historyActions}
+            interactiveAction={interactiveAction}
+            toolsAction={toolsAction}
+        >
 
             <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar relative">
                 {!summaryData ? (
@@ -269,7 +232,7 @@ const Summary: React.FC<SummaryProps> = ({ onGenerate }) => {
                     </button>
                 </div>
             </div>
-        </div>
+        </ModeContainer>
     );
 };
 

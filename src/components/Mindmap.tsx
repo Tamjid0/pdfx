@@ -1,13 +1,18 @@
-import React, { useEffect } from 'react';
-import { useStore, type MindmapData, type MindmapNode, type MindmapEdge } from '../store/useStore';
+import React, { useEffect, useState } from 'react';
+import { useStore, type MindmapData, type MindmapNode, type MindmapEdge, type Mode } from '../store/useStore';
 import ReactFlow, { useNodesState, useEdgesState, MiniMap, Controls, Background, MarkerType } from 'reactflow';
 import 'reactflow/dist/style.css';
-import ELK from 'elkjs/lib/elk.bundled.js';
-import { VersionTabs } from './dashboard/VersionTabs';
+import ELK from 'elkjs/lib/elk.bundled';
+import { ModeContainer } from './shared/ModeContainer';
+import LocalizedShimmer from './LocalizedShimmer';
+import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
 
 interface MindmapProps {
     data: MindmapData | null;
-    onGenerate: (mode: 'mindmap') => void;
+    onGenerate: (mode: Mode) => void;
+    historyActions?: React.ReactNode;
+    interactiveAction?: React.ReactNode;
+    toolsAction?: React.ReactNode;
 }
 
 const elk = new ELK();
@@ -43,11 +48,14 @@ const getLayoutedElements = (nodes: any[], edges: any[], options = {}) => {
 };
 
 
-import LocalizedShimmer from './LocalizedShimmer';
-import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
-
-const Mindmap: React.FC<MindmapProps> = ({ data, onGenerate }) => {
-    const { isGeneratingMindmap, addLocalDraft, switchRevision } = useStore();
+const Mindmap: React.FC<MindmapProps> = ({
+    data,
+    onGenerate,
+    historyActions,
+    interactiveAction,
+    toolsAction
+}) => {
+    const { isGeneratingMindmap, addLocalDraft, switchRevision, openExportModal } = useStore();
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
@@ -88,39 +96,18 @@ const Mindmap: React.FC<MindmapProps> = ({ data, onGenerate }) => {
     const hasData = data && data.nodes && data.nodes.length > 0;
 
     return (
-        <div className="flex flex-col h-full w-full bg-[#0a0a0a] rounded-xl border border-[#222] overflow-hidden shadow-2xl relative">
-            <div className="flex items-center justify-between p-5 border-b border-[#222] bg-[#111]">
-                <div className="flex items-center gap-3">
-                    <svg className="w-5 h-5 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
-                    <h3 className="text-xs font-black text-white uppercase tracking-[0.3em]">{hasData ? 'Neural Network' : 'Graph Sync'}</h3>
-                </div>
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => {
-                            if (hasData) {
-                                if (window.confirm('Are you sure you want to regenerate? This will start a new session.')) {
-                                    onGenerate('mindmap');
-                                }
-                            } else {
-                                onGenerate('mindmap');
-                            }
-                        }}
-                        disabled={isGeneratingMindmap}
-                        className="px-4 py-2 bg-[#1a1a1a] text-[#00ff88] border border-[#00ff88]/20 rounded-lg text-xs font-bold hover:bg-[#00ff88]/10 transition-all flex items-center gap-2 disabled:opacity-50"
-                    >
-                        {isGeneratingMindmap ? (
-                            <div className="w-3 h-3 border-2 border-[#00ff88] border-t-transparent rounded-full animate-spin"></div>
-                        ) : (
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                        )}
-                        {isGeneratingMindmap ? 'MAPPING...' : (hasData ? 'REGENERATE' : 'SETUP')}
-                    </button>
-                </div>
-            </div>
-
-            <VersionTabs module="mindmap" />
-
-            <div className="flex-1 min-h-0 relative">
+        <ModeContainer
+            module="mindmap"
+            title="Neural Network"
+            isGenerating={isGeneratingMindmap}
+            hasData={hasData}
+            onGenerate={onGenerate}
+            onExport={() => hasData && openExportModal('mindmap', data)}
+            historyActions={historyActions}
+            interactiveAction={interactiveAction}
+            toolsAction={toolsAction}
+        >
+            <div className="w-full h-full relative">
                 {!hasData ? (
                     <div className="flex flex-col items-center justify-center min-h-full text-center p-8 bg-[#0a0a0a] rounded-xl overflow-y-auto custom-scrollbar">
                         <div className="p-10 max-w-2xl mx-auto w-full space-y-12">
@@ -182,7 +169,7 @@ const Mindmap: React.FC<MindmapProps> = ({ data, onGenerate }) => {
                     </div>
                 )}
             </div>
-        </div>
+        </ModeContainer>
     );
 };
 

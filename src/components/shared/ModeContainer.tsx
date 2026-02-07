@@ -17,6 +17,9 @@ interface ModeContainerProps {
     icon?: React.ReactNode;
     additionalHeaderActions?: React.ReactNode;
     footerActions?: React.ReactNode;
+    historyActions?: React.ReactNode;
+    interactiveAction?: React.ReactNode;
+    toolsAction?: React.ReactNode;
 }
 
 export const ModeContainer: React.FC<ModeContainerProps> = ({
@@ -31,7 +34,10 @@ export const ModeContainer: React.FC<ModeContainerProps> = ({
     children,
     icon,
     additionalHeaderActions,
-    footerActions
+    footerActions,
+    historyActions,
+    interactiveAction,
+    toolsAction
 }) => {
     const [showRegenerateScope, setShowRegenerateScope] = useState(false);
 
@@ -57,18 +63,29 @@ export const ModeContainer: React.FC<ModeContainerProps> = ({
                 </div>
 
                 <div className="flex items-center gap-3 relative">
+                    {historyActions && (
+                        <div className="flex items-center gap-2 pr-3 border-r border-gemini-dark-400">
+                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30">History</span>
+                            {historyActions}
+                        </div>
+                    )}
+
                     {additionalHeaderActions}
 
-                    <StandardButton
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => setShowRegenerateScope(!showRegenerateScope)}
-                        loading={isGenerating}
-                        disabled={isGenerating}
-                        icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>}
-                    >
-                        {isGenerating ? 'SYNCING...' : (hasData ? 'REGENERATE' : 'SETUP')}
-                    </StandardButton>
+                    <div className="flex items-center gap-2">
+                        {interactiveAction}
+                        {toolsAction}
+                        <StandardButton
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setShowRegenerateScope(!showRegenerateScope)}
+                            loading={isGenerating}
+                            disabled={isGenerating}
+                            icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>}
+                        >
+                            {isGenerating ? 'SYNCING...' : (hasData ? 'REGENERATE' : 'SETUP')}
+                        </StandardButton>
+                    </div>
 
                     {showRegenerateScope && !isGenerating && (
                         <div className="absolute top-full right-0 mt-3 w-80 bg-gemini-dark-300 border border-gemini-dark-500 rounded-3xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[100] animate-in fade-in zoom-in-95 duration-200">

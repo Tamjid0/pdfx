@@ -4,22 +4,31 @@ import LocalizedShimmer from './LocalizedShimmer';
 import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
 import { VersionTabs } from './dashboard/VersionTabs';
 import { toast } from 'react-hot-toast';
-
 import { analyzeQuizContent } from '../services/apiService';
 import CollapsibleChatPanel from './CollapsibleChatPanel';
+import { ModeContainer } from './shared/ModeContainer';
 
 interface QuizProps {
     onGenerate: (mode: Mode) => void;
+    historyActions?: React.ReactNode;
+    interactiveAction?: React.ReactNode;
+    toolsAction?: React.ReactNode;
 }
 
 type QuizPhase = 'initial' | 'analysis' | 'setup' | 'selection' | 'exam' | 'results';
 
-const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
+const Quiz: React.FC<QuizProps> = ({
+    onGenerate,
+    historyActions,
+    interactiveAction,
+    toolsAction
+}) => {
     const {
         quizData, setQuizData, isGeneratingQuiz,
         switchRevision, loadProjectModule,
-        activeRevisionIds, quizSettings, setQuizSettings, generationScope,
-        embeddedChats, openEmbeddedChat, closeEmbeddedChat, setActiveNodeIds, addLocalDraft
+        activeRevisionIds, quizSettings, setQuizSettings, generationScope, openExportModal,
+        embeddedChats, openEmbeddedChat, closeEmbeddedChat, setActiveNodeIds, addLocalDraft,
+        fileId
     } = useStore();
 
     const activeRevisionId = activeRevisionIds['quiz'];
@@ -846,11 +855,20 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#0a0a0a] rounded-xl border border-[#222] overflow-hidden">
-            <VersionTabs module="quiz" />
+        <ModeContainer
+            module="quiz"
+            title="Quiz Laboratory"
+            isGenerating={isGeneratingQuiz}
+            hasData={quizData?.quiz && quizData.quiz.length > 0}
+            onGenerate={onGenerate}
+            onExport={() => quizData && openExportModal('quiz', quizData)}
+            historyActions={historyActions}
+            interactiveAction={interactiveAction}
+            toolsAction={toolsAction}
+            additionalHeaderActions={null}
+        >
             {renderPhase()}
 
-            {/* Embedded Chat Panels */}
             {Object.entries(embeddedChats).map(([itemId, chat]) => (
                 chat.isOpen && chat.itemType === 'quiz' && (
                     <CollapsibleChatPanel
@@ -862,7 +880,7 @@ const Quiz: React.FC<QuizProps> = ({ onGenerate }) => {
                     />
                 )
             ))}
-        </div>
+        </ModeContainer>
     );
 };
 

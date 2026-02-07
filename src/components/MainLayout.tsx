@@ -213,30 +213,26 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                                                                 <RevisionSwitcher module={mode as any} />
                                                             ) : null;
 
-                                                            const interactiveAction = ['summary', 'insights', 'notes', 'quiz', 'flashcards'].includes(mode) ? (
+                                                            const interactiveAction = (
                                                                 <button
                                                                     onClick={() => setPreviewMode(!isPreviewMode)}
-                                                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${isPreviewMode
-                                                                        ? 'bg-gemini-green text-black shadow-[0_0_20px_rgba(0,255,136,0.3)]'
-                                                                        : 'bg-[#1a1a1a] text-white/60 hover:text-white border border-white/5 hover:border-white/20'
+                                                                    className={`px-4 py-2 border rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${isPreviewMode
+                                                                        ? 'bg-gemini-green/10 text-gemini-green border-gemini-green/30'
+                                                                        : 'bg-[#1a1a1a] text-white border-white/10 hover:bg-white/5'
                                                                         }`}
-                                                                    title="Toggle Interactive/Preview Mode"
                                                                 >
-                                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        {isPreviewMode ? (
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                                        ) : (
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                                        )}
-                                                                    </svg>
-                                                                    {isPreviewMode ? 'Review' : 'Interactive'}
+                                                                    {isPreviewMode ? (
+                                                                        <><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>INTERACTIVE</>
+                                                                    ) : (
+                                                                        <><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>REVIEW</>
+                                                                    )}
                                                                 </button>
-                                                            ) : null;
+                                                            );
 
-                                                            const toolsAction = ['summary', 'insights', 'notes', 'quiz', 'flashcards', 'mindmap'].includes(mode) ? (
+                                                            const toolsAction = mode !== 'chat' && mode !== 'quiz' && mode !== 'mindmap' ? (
                                                                 <button
                                                                     onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
-                                                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] transition-all duration-300 ${rightSidebarOpen
+                                                                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${rightSidebarOpen
                                                                         ? 'bg-gemini-green text-black shadow-[0_0_20px_rgba(0,255,136,0.3)]'
                                                                         : 'bg-gemini-dark-300 text-gemini-green border border-gemini-green/20 hover:bg-gemini-green/10'
                                                                         }`}
@@ -269,7 +265,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                                                             }
 
                                                             return (
-                                                                <DocumentPreview mode={mode}>
+                                                                <>
                                                                     {mode === 'summary' && (
                                                                         <Summary
                                                                             onGenerate={() => handleGenerate('summary')}
@@ -319,7 +315,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                                                                             toolsAction={toolsAction}
                                                                         />
                                                                     )}
-                                                                </DocumentPreview>
+                                                                </>
                                                             );
                                                         })()}
                                                     </div>

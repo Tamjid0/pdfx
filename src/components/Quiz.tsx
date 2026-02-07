@@ -7,6 +7,8 @@ import { toast } from 'react-hot-toast';
 import { analyzeQuizContent } from '../services/apiService';
 import CollapsibleChatPanel from './CollapsibleChatPanel';
 import { ModeContainer } from './shared/ModeContainer';
+import { DocumentPreview } from './DocumentPreview/DocumentPreview';
+
 
 interface QuizProps {
     onGenerate: (mode: Mode) => void;
@@ -857,17 +859,18 @@ const Quiz: React.FC<QuizProps> = ({
     return (
         <ModeContainer
             module="quiz"
-            title="Quiz Laboratory"
+            title="Exam Simulator"
             isGenerating={isGeneratingQuiz}
-            hasData={quizData?.quiz && quizData.quiz.length > 0}
+            hasData={!!quizData?.quiz?.length}
             onGenerate={onGenerate}
             onExport={() => quizData && openExportModal('quiz', quizData)}
             historyActions={historyActions}
             interactiveAction={interactiveAction}
             toolsAction={toolsAction}
-            additionalHeaderActions={null}
         >
-            {renderPhase()}
+            <DocumentPreview mode="quiz">
+                {renderPhase()}
+            </DocumentPreview>
 
             {Object.entries(embeddedChats).map(([itemId, chat]) => (
                 chat.isOpen && chat.itemType === 'quiz' && (

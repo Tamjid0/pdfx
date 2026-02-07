@@ -2,11 +2,9 @@ import React, { useState } from 'react';
 import { useStore, type Mode, type Insight } from '../store/useStore';
 import LocalizedShimmer from './LocalizedShimmer';
 import GenerationScopeSelector from './dashboard/GenerationScopeSelector';
-import { VersionTabs } from './dashboard/VersionTabs';
-import { toast } from 'react-hot-toast';
-import { DynamicBlockRenderer } from './dashboard/DynamicBlockRenderer';
 import { InsightBlockRenderer } from './insights/InsightBlockRenderer';
 import { ModeContainer } from './shared/ModeContainer';
+import { DocumentPreview } from './DocumentPreview/DocumentPreview';
 
 interface InsightsProps {
     onGenerate: (mode: Mode) => void;
@@ -22,9 +20,8 @@ const Insights: React.FC<InsightsProps> = ({
     toolsAction
 }) => {
     const {
-        insightsData, setInsightsData, openExportModal, isGeneratingInsights,
-        generationScope, switchRevision, loadProjectModule,
-        activeRevisionIds, insightsSettings, setInsightsSettings
+        insightsData, openExportModal, isGeneratingInsights,
+        activeRevisionIds
     } = useStore();
 
     const hasData = (insightsData?.blocks && insightsData.blocks.length > 0) || (insightsData?.insights && insightsData.insights.length > 0);
@@ -41,83 +38,69 @@ const Insights: React.FC<InsightsProps> = ({
             interactiveAction={interactiveAction}
             toolsAction={toolsAction}
         >
-
-            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar relative">
-                {!hasData ? (
-                    <div className="flex flex-col items-center justify-center min-h-full text-center p-8 bg-[#0a0a0a] rounded-xl">
-                        {isGeneratingInsights ? (
-                            <div className="w-full max-w-md">
-                                <div className="flex flex-col items-center mb-8">
-                                    <div className="w-12 h-12 bg-gemini-green/5 rounded-2xl flex items-center justify-center mb-4 border border-gemini-green/10">
-                                        <div className="w-6 h-6 border-2 border-gemini-green border-t-transparent rounded-full animate-spin"></div>
-                                    </div>
-                                    <h3 className="text-sm font-bold text-white uppercase tracking-[0.3em]">Extracting Insights...</h3>
-                                </div>
-                                <LocalizedShimmer blocks={3} />
-                            </div>
-                        ) : (
-                            <>
-                                <div className="w-20 h-20 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-6 border border-[#333] shadow-inner text-[#00ff88]">
-                                    <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                    </svg>
-                                </div>
-                                <h3 className="text-2xl font-bold text-white mb-3">Core Insights</h3>
-                                <p className="text-gray-400 mb-8 max-w-sm leading-relaxed text-sm">
-                                    Extract deep patterns, hidden connections, and high-value conclusions from your reading material.
-                                </p>
-
-                                <div className="w-full max-w-sm mb-10 bg-black/20 p-6 rounded-[2rem] border border-white/5 shadow-inner">
-                                    <GenerationScopeSelector />
-                                </div>
-
-                                <button
-                                    onClick={() => onGenerate('insights')}
-                                    className="px-8 py-3.5 bg-[#00ff88] text-black rounded-xl text-sm font-black transition-all hover:bg-[#00dd77] active:scale-95 shadow-[0_5px_15px_rgba(0,255,136,0.3)]"
-                                >
-                                    EXTRACT INSIGHTS
-                                </button>
-                            </>
-                        )}
-                    </div>
-                ) : (
-                    <div className="p-8">
-                        <div className="max-w-4xl mx-auto text-left">
-                            {insightsData?.blocks ? (
-                                <InsightBlockRenderer blocks={insightsData.blocks as any} />
-                            ) : (
-                                <div className="grid grid-cols-1 gap-4">
-                                    {insightsData?.insights?.map((insight: Insight, index: number) => (
-                                        <div key={index} className="group relative bg-[#111]/50 border border-[#222] rounded-xl p-5 transition-all hover:bg-[#111] hover:border-[#00ff88]/30 hover:-translate-y-1">
-                                            <h4 className="text-base font-bold text-white mb-2 mr-8">
-                                                {insight.title}
-                                            </h4>
-                                            <p className="text-sm text-[#999] leading-relaxed">
-                                                {insight.description}
-                                            </p>
+            <DocumentPreview mode="insights">
+                <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar relative">
+                    {!hasData ? (
+                        <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-[#0a0a0a] rounded-xl">
+                            {isGeneratingInsights ? (
+                                <div className="w-full max-w-md">
+                                    <div className="flex flex-col items-center mb-8">
+                                        <div className="w-12 h-12 bg-gemini-green/5 rounded-2xl flex items-center justify-center mb-4 border border-gemini-green/10">
+                                            <div className="w-6 h-6 border-2 border-gemini-green border-t-transparent rounded-full animate-spin"></div>
                                         </div>
-                                    ))}
+                                        <h3 className="text-sm font-bold text-white uppercase tracking-[0.3em]">Extracting Insights...</h3>
+                                    </div>
+                                    <LocalizedShimmer blocks={3} />
                                 </div>
+                            ) : (
+                                <>
+                                    <div className="w-20 h-20 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-6 border border-[#333] shadow-inner text-[#00ff88]">
+                                        <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                        </svg>
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-white mb-3">Core Insights</h3>
+                                    <p className="text-gray-400 mb-8 max-w-sm leading-relaxed text-sm">
+                                        Extract deep patterns, hidden connections, and high-value conclusions from your reading material.
+                                    </p>
+
+                                    <div className="w-full max-w-sm mb-10 bg-black/20 p-6 rounded-[2rem] border border-white/5 shadow-inner">
+                                        <GenerationScopeSelector />
+                                    </div>
+
+                                    <button
+                                        onClick={() => onGenerate('insights')}
+                                        className="px-8 py-3.5 bg-[#00ff88] text-black rounded-xl text-sm font-black transition-all hover:bg-[#00dd77] active:scale-95 shadow-[0_5px_15px_rgba(0,255,136,0.3)]"
+                                    >
+                                        EXTRACT INSIGHTS
+                                    </button>
+                                </>
                             )}
                         </div>
-                    </div>
-                )}
-            </div>
-
-            <div className="p-6 bg-[#0f0f0f] border-t border-[#222] flex justify-between items-center">
-                <div className="flex gap-2">
-                    <span className="w-2 h-2 bg-[#00ff88]/20 rounded-full"></span>
-                    <span className="w-2 h-2 bg-[#00ff88]/20 rounded-full"></span>
-                    <span className="w-2 h-2 bg-[#00ff88]/20 rounded-full"></span>
+                    ) : (
+                        <div className="p-8">
+                            <div className="max-w-4xl mx-auto text-left">
+                                {insightsData?.blocks ? (
+                                    <InsightBlockRenderer blocks={insightsData.blocks as any} />
+                                ) : (
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {insightsData?.insights?.map((insight: Insight, index: number) => (
+                                            <div key={index} className="group relative bg-[#111]/50 border border-[#222] rounded-xl p-5 transition-all hover:bg-[#111] hover:border-[#00ff88]/30 hover:-translate-y-1">
+                                                <h4 className="text-base font-bold text-white mb-2 mr-8">
+                                                    {insight.title}
+                                                </h4>
+                                                <p className="text-sm text-[#999] leading-relaxed">
+                                                    {insight.description}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
-                <button
-                    onClick={() => hasData && openExportModal('insights', insightsData)}
-                    className={`px-6 py-2.5 bg-[#00ff88] text-black rounded-xl text-xs font-bold hover:bg-[#00dd77] transition-all shadow-xl active:scale-95 ${!hasData ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    disabled={!hasData}
-                >
-                    EXPORT INSIGHTS
-                </button>
-            </div>
+            </DocumentPreview>
         </ModeContainer>
     );
 };

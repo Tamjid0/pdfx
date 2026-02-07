@@ -214,7 +214,8 @@ router.post('/:documentId/sync', optionalVerifyToken, checkDocumentOwnership(Doc
 
                 // 2. Handle Revisions (Snapshot)
                 // We create a revision from the PREVIOUS active content before updating
-                if (oldData) {
+                // FIX: Skip snapshotting if newData is null (explicit wipe) or if preventSnapshot is requested
+                if (oldData && newData !== null && !req.body.preventSnapshot) {
                     const revisions = doc[key]?.revisions || [];
                     const prevScope = doc[key]?.activeScope || { type: 'all' };
 

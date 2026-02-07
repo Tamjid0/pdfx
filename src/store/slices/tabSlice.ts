@@ -19,6 +19,7 @@ export interface TabSlice {
 
     getTabs: (module: Mode) => { id: string; name: string; type: 'draft' | 'revision'; data: any }[];
     reconcileProjectTabs: (module: Mode, serverContent: any, serverRevisions: Revision<any>[]) => void;
+    ensureMinimumOneTab: (module: Mode) => void;
 
     switchRevision: (module: Mode, revisionId: string, skipSync?: boolean) => void;
     deleteRevision: (module: Mode, revisionId: string) => Promise<void>;
@@ -53,20 +54,14 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
     },
 
     addLocalDraft: (module, name, initialData = null, skipSync = false) => {
+        console.trace('TAB WRITE: addLocalDraft', { module, name, existingDrafts: get().localDrafts[module] });
         const existing = get().localDrafts[module] || [];
 
-        // --- DEFENSIVE DUPLICATION GUARD ---
-        // 1. Check by Name only if both have NO data (empty drafts)
-        const defaultName = name || `Draft ${existing.length + 1}`;
-        if (!initialData && existing.some(d => !d.data && d.name === defaultName)) {
-            const dup = existing.find(d => !d.data && d.name === defaultName);
-            if (dup) {
-                get().switchRevision(module, dup.id, skipSync);
-                return dup.id;
-            }
-        }
+        // --- STRICT "NEW TAB" POLICY ---
+        // 2024-01-29 Fix: Clicking "+" MUST always create a new tab. 
+        // We do NOT reuse empty drafts. We do NOT check for duplicates of empty drafts.
+        // We only check for content duplicates if data is provided (to prevent "Imported Content" doubling).
 
-        // 2. Deep equality check for content (prevent doubling "Imported Content")
         if (initialData) {
             const stringifiedData = JSON.stringify(initialData);
             const contentDup = existing.find(d => d.data && JSON.stringify(d.data) === stringifiedData);
@@ -76,16 +71,30 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
             }
         }
 
+        // Check revision count too for accurate "Draft X" numbering
+        const revisions = get()[`${module}Revisions` as keyof AppState] as any[] || [];
+        const totalTabs = existing.length + revisions.length;
+
+        // Ensure name is unique if not provided
+        let finalName = name;
+        if (!finalName) {
+            let counter = totalTabs + 1;
+            finalName = `Draft ${counter}`;
+            // Simple overlap check
+            while (
+                existing.some(d => d.name === finalName) ||
+                revisions.some(r => r.name === finalName)
+            ) {
+                counter++;
+                finalName = `Draft ${counter}`;
+            }
+        }
+
         const id = `draft-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`;
-        const newDraft = { id, name: defaultName, data: initialData };
+        const newDraft = { id, name: finalName, data: initialData };
 
         const newLocalDrafts = { ...get().localDrafts, [module]: [...existing, newDraft] };
         set({ localDrafts: newLocalDrafts });
-
-        const fileId = get().fileId;
-        if (fileId) {
-            localStorage.setItem(`pdfx_drafts_${fileId}`, JSON.stringify(newLocalDrafts));
-        }
 
         get().switchRevision(module, id, skipSync);
         return id;
@@ -109,19 +118,17 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
 
             if (fileId) {
                 // ABSOLUTE WIPE: Send null for the entire module object to MongoDB
-                // This prevents the "resurrecting" bug where a refresh brings back content.
-                await apiService.syncProjectContent(fileId, { [dataKey]: null }).catch(() => { });
+                // preventSnapshot: true stops the backend from creating a "zombie" revision
+                await apiService.syncProjectContent(fileId, { [dataKey]: null }, { preventSnapshot: true } as any).catch(() => { });
             }
         }
 
         set({ localDrafts: newLocalDrafts });
-        if (fileId) {
-            localStorage.setItem(`pdfx_drafts_${fileId}`, JSON.stringify(newLocalDrafts));
-        }
 
         // Reconcile to ensure we always have at least ONE tab if revisions exist, 
         // or a new Draft 1 if we're now totally empty.
         get().reconcileProjectTabs(module, null, revisions);
+        get().ensureMinimumOneTab(module);
     },
 
     renameLocalDraft: (module, draftId, name) => {
@@ -131,13 +138,10 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
             [module]: existing.map(d => d.id === draftId ? { ...d, name } : d)
         };
         set({ localDrafts: newLocalDrafts });
-        const fileId = get().fileId;
-        if (fileId) {
-            localStorage.setItem(`pdfx_drafts_${fileId}`, JSON.stringify(newLocalDrafts));
-        }
     },
 
     reconcileProjectTabs: (module, serverContent, serverRevisions) => {
+        console.trace('TAB WRITE: reconcileProjectTabs', { module, serverContent, serverRevisions });
         const drafts = get().localDrafts[module] || [];
         const revisions = serverRevisions || [];
         const activeId = get().activeRevisionIds[module];
@@ -154,13 +158,32 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
 
         // 2. If NO tabs exist at all (not in LocalStorage, not in revisions):
         // Check for orphan server content (Legacy data that wasn't previously wrapped in a revision)
-        if (serverContent) {
+        // STRICTER CHECK: Ensure content is not just an empty object or string
+        const hasValidContent = serverContent && (
+            (typeof serverContent === 'string' && serverContent.trim().length > 0) ||
+            (typeof serverContent === 'object' && Object.keys(serverContent).length > 0)
+        );
+
+        if (hasValidContent) {
             get().addLocalDraft(module, 'Imported Content', serverContent, true);
             return;
         }
 
-        // 3. Absolute fallback: Create the first Draft
-        get().addLocalDraft(module, 'Draft 1', null, true);
+
+        // 3. Absolute fallback is NO LONGER handled here.
+        // It is now the responsibility of ensureMinimumOneTab()
+    },
+
+    ensureMinimumOneTab: (module) => {
+        const drafts = get().localDrafts[module] || [];
+        const revKey = `${module}Revisions` as keyof AppState;
+        const revisions = (get()[revKey] as Revision<any>[]) || [];
+
+        // Only create a default draft if there are absolutely NO tabs (no drafts, no revisions)
+        if (drafts.length === 0 && revisions.length === 0) {
+            console.trace('TAB WRITE: ensureMinimumOneTab creating default draft', { module });
+            get().addLocalDraft(module, 'Draft 1', null, true);
+        }
     },
 
     switchRevision: (module, revisionId, skipSync = false) => set((state) => {
@@ -169,8 +192,7 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
         const newActiveRevisionIds = { ...state.activeRevisionIds, [module]: revisionId };
 
         if (!revisionId) {
-            // Self-repair if somehow triggered with null ID
-            setTimeout(() => get().reconcileProjectTabs(module, null, state[`${module}Revisions` as keyof AppState] as any), 0);
+            console.error('switchRevision called with null ID');
             return state;
         }
 
@@ -184,7 +206,9 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
         }
 
         if (state.fileId && content && !skipSync) {
-            apiService.syncProjectContent(state.fileId, { [dataKey]: content }).catch(() => { });
+            apiService.syncProjectContent(state.fileId, { [dataKey]: content })
+                .then(() => toast.success('Synced to Cloud', { id: `sync-${module}`, duration: 1500 }))
+                .catch(() => { });
         }
 
         return {
@@ -216,11 +240,15 @@ export const createTabSlice: StateCreator<AppState, [], [], TabSlice> = (set, ge
 
             // Re-reconcile after revision deletion
             get().reconcileProjectTabs(module, null, updatedRevisions);
+            get().ensureMinimumOneTab(module);
 
             // If the module is now totally empty, ensure server is wiped
-            // (Note: reconcileProjectTabs might have created a "Draft 1", which is fine)
+            // preventSnapshot: true stops the backend from creating a "zombie" revision
             if (updatedRevisions.length === 0 && (get().localDrafts[module] || []).length === 0) {
-                await apiService.syncProjectContent(fileId, { [moduleKey]: null });
+                await apiService.syncProjectContent(fileId, { [moduleKey]: null }, { preventSnapshot: true } as any);
+                toast.success('Project content wiped permanently');
+            } else {
+                toast.success('Version deleted');
             }
         } catch (error) {
             console.error('Delete revision failed', error);

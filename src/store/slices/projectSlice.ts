@@ -123,21 +123,29 @@ export const createProjectSlice: StateCreator<AppState, [], [], ProjectSlice> = 
                 set({ [`${m}Revisions`]: revisions } as any);
             });
 
-            // Rehydrate Local Drafts
-            const savedDrafts = localStorage.getItem(`pdfx_drafts_${documentId}`);
-            if (savedDrafts) {
-                set({ localDrafts: JSON.parse(savedDrafts) });
-            }
+            // Rehydrate Local Drafts with Sanitization
+            // SERVER AUTHORITY: Disable LocalStorage Hydration
+            // We do NOT load from localStorage to prevent "resurrecting" deleted tabs.
+            // The server is the single source of truth.
+            set({ localDrafts: {} });
 
             // Maintenance: Unified Hydration (Run exactly once)
             modules.forEach(m => {
                 const content = getContent(data[`${m}Data`]);
                 const revisions = (get()[`${m}Revisions` as keyof AppState] as any[]) || [];
+                console.trace('TAB WRITE: loadProject calling reconcileProjectTabs', { module: m, content, revisions });
                 get().reconcileProjectTabs(m, content, revisions);
+                get().ensureMinimumOneTab(m);
             });
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('[Store] loadProject failed:', error);
+            // Graceful Failure: If 403/401, do NOT redirect to import which causes a loop.
+            // Just stop loading and let the UI show an error state if needed.
+            if (error?.status === 403 || error?.status === 401) {
+                set({ isLoading: false, isHydrating: false });
+                return;
+            }
             toast.error('Failed to load project');
         } finally {
             set({ isLoading: false, isHydrating: false });
@@ -176,7 +184,9 @@ export const createProjectSlice: StateCreator<AppState, [], [], ProjectSlice> = 
             const revisions = moduleData?.revisions || [];
 
             set({ [`${moduleKey}Revisions`]: revisions } as any);
+            console.trace('TAB WRITE: loadProjectModule calling reconcileProjectTabs', { module, content, revisions });
             get().reconcileProjectTabs(module, content, revisions);
+            get().ensureMinimumOneTab(module);
         } catch (error) {
             console.error('[Store] loadProjectModule failed:', error);
         }

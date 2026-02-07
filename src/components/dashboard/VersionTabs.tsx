@@ -80,6 +80,12 @@ export const VersionTabs: React.FC<VersionTabsProps> = ({
                             setEditingId(tab.id);
                             setEditName(tab.name);
                         }}
+                        onContextMenu={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setEditingId(tab.id);
+                            setEditName(tab.name);
+                        }}
                         className={`group relative px-4 py-2 pr-8 rounded-t-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap cursor-pointer ${activeRevisionId === tab.id
                             ? 'text-white bg-white/5'
                             : 'text-white/40 hover:text-white/70 hover:bg-white/5'

@@ -162,6 +162,7 @@ export interface AppState {
     isLoading: boolean;
     isPageLoading: boolean;
     isDocumentLoading: boolean;
+    isHydrating: boolean;
 
     // Generation Status
     isGeneratingSummary: boolean;
@@ -344,6 +345,6 @@ export interface AppState {
 
     // Global Tab Accessor
     getTabs: (module: Mode) => { id: string; name: string; type: 'draft' | 'revision'; data: any }[];
-    ensureTabInvariant: (module: Mode) => void;
-    adoptServerContent: (module: Mode, content: any) => void;
+    reconcileProjectTabs: (module: Mode, serverContent: any, serverRevisions: Revision<any>[]) => void;
+    ensureMinimumOneTab: (module: Mode) => void;
 }

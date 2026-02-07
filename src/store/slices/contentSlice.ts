@@ -78,9 +78,6 @@ export const createContentSlice: StateCreator<AppState, [], [], ContentSlice> = 
                 const drafts = state.localDrafts.summary || [];
                 const newDrafts = drafts.map(d => d.id === activeId ? { ...d, data } : d);
                 nextLocalDrafts = { ...state.localDrafts, summary: newDrafts };
-                if (state.fileId) {
-                    localStorage.setItem(`pdfx_drafts_${state.fileId}`, JSON.stringify(nextLocalDrafts));
-                }
             }
             return { summaryData: data, localDrafts: nextLocalDrafts };
         });
@@ -93,9 +90,6 @@ export const createContentSlice: StateCreator<AppState, [], [], ContentSlice> = 
                 const drafts = state.localDrafts.notes || [];
                 const newDrafts = drafts.map(d => d.id === activeId ? { ...d, data } : d);
                 nextLocalDrafts = { ...state.localDrafts, notes: newDrafts };
-                if (state.fileId) {
-                    localStorage.setItem(`pdfx_drafts_${state.fileId}`, JSON.stringify(nextLocalDrafts));
-                }
             }
             return { notesData: data, localDrafts: nextLocalDrafts };
         });
@@ -108,9 +102,6 @@ export const createContentSlice: StateCreator<AppState, [], [], ContentSlice> = 
                 const drafts = state.localDrafts.insights || [];
                 const newDrafts = drafts.map(d => d.id === activeId ? { ...d, data } : d);
                 nextLocalDrafts = { ...state.localDrafts, insights: newDrafts };
-                if (state.fileId) {
-                    localStorage.setItem(`pdfx_drafts_${state.fileId}`, JSON.stringify(nextLocalDrafts));
-                }
             }
             return { insightsData: data, localDrafts: nextLocalDrafts };
         });
@@ -123,9 +114,6 @@ export const createContentSlice: StateCreator<AppState, [], [], ContentSlice> = 
                 const drafts = state.localDrafts.flashcards || [];
                 const newDrafts = drafts.map(d => d.id === activeId ? { ...d, data } : d);
                 nextLocalDrafts = { ...state.localDrafts, flashcards: newDrafts };
-                if (state.fileId) {
-                    localStorage.setItem(`pdfx_drafts_${state.fileId}`, JSON.stringify(nextLocalDrafts));
-                }
             }
             return { flashcardsData: data, localDrafts: nextLocalDrafts };
         });
@@ -138,9 +126,6 @@ export const createContentSlice: StateCreator<AppState, [], [], ContentSlice> = 
                 const drafts = state.localDrafts.quiz || [];
                 const newDrafts = drafts.map(d => d.id === activeId ? { ...d, data } : d);
                 nextLocalDrafts = { ...state.localDrafts, quiz: newDrafts };
-                if (state.fileId) {
-                    localStorage.setItem(`pdfx_drafts_${state.fileId}`, JSON.stringify(nextLocalDrafts));
-                }
             }
             return { quizData: data, localDrafts: nextLocalDrafts };
         });
@@ -153,9 +138,6 @@ export const createContentSlice: StateCreator<AppState, [], [], ContentSlice> = 
                 const drafts = state.localDrafts.mindmap || [];
                 const newDrafts = drafts.map(d => d.id === activeId ? { ...d, data } : d);
                 nextLocalDrafts = { ...state.localDrafts, mindmap: newDrafts };
-                if (state.fileId) {
-                    localStorage.setItem(`pdfx_drafts_${state.fileId}`, JSON.stringify(nextLocalDrafts));
-                }
             }
             return { mindmapData: data, localDrafts: nextLocalDrafts };
         });

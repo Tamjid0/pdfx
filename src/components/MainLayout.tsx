@@ -84,6 +84,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 
     const handleBackClick = () => {
         if (isDocumentMode) {
+            // NEW: Exit slide mode (which is just a leftPanelView state)
+            if (leftPanelView === 'slides') {
+                setLeftPanelView('editor');
+                useStore.getState().setIsSlideMode(false);
+                return;
+            }
+
             if (mode !== 'editor') {
                 // If in a study/mode view, go back to editor mode first
                 setMode('editor');

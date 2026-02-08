@@ -8,7 +8,7 @@ export const quizSchema = {
             questionCount: z.number().min(1).max(50).optional(),
             difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
             questionTypes: z.array(z.string()).optional(),
-            quizType: z.enum(['multiple-choice', 'true-false', 'short-answer']).optional(),
+            quizType: z.enum(['multiple-choice', 'true-false', 'short-answer', 'mixed']).optional(),
         }).optional(),
         scope: z.object({
             type: z.enum(['all', 'pages', 'topics']),

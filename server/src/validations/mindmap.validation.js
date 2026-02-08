@@ -5,7 +5,7 @@ export const mindmapSchema = {
         text: z.string().optional(),
         fileId: z.string().optional(),
         settings: z.object({
-            layout: z.enum(['organic', 'hierarchical', 'circular']).optional(),
+            layout: z.enum(['organic', 'hierarchical', 'circular', 'balanced', 'radial', 'linear']).optional(),
         }).optional(),
     }).refine((data) => data.text || data.fileId, {
         message: "Either text or fileId must be provided",

@@ -238,6 +238,8 @@ export async function chatWithDocumentStream(
         body: JSON.stringify({ message, fileId, selectionContext }),
     });
 
+    console.log(`[ApiService] Stream Request - Selection Context:`, selectionContext ? `Sent (${selectionContext.length} items)` : 'None');
+
     if (!response.ok) {
         throw new Error('Failed to initiate streaming chat');
     }

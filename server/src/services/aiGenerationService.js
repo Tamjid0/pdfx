@@ -139,10 +139,26 @@ User Query: "${query}"
     }
 }
 
-export async function* generateChunkBasedStreamingTransformation(fileId, query, topN = 10, selectionContext = []) {
-    const searchResults = await vectorStoreService.similaritySearch(fileId, query, topN);
+export async function* generateChunkBasedStreamingTransformation(fileId, query, topN = 10, inputSelectionContext = []) {
+    // DEBUG: Trace raw input
+    console.log(`[AI-Service] Raw Input Context:`, typeof inputSelectionContext, Array.isArray(inputSelectionContext), JSON.stringify(inputSelectionContext).substring(0, 200));
 
-    if (searchResults.length === 0 && (!selectionContext || selectionContext.length === 0)) {
+    // 1. Validate Selection Context
+    let selectionContext = Array.isArray(inputSelectionContext) ? inputSelectionContext : (inputSelectionContext ? [inputSelectionContext] : []);
+
+    console.log(`[AI-Service] Normalised Selection Context: ${selectionContext.length} items`);
+
+    // 2. Vector Search with Fallback
+    let searchResults = [];
+    try {
+        searchResults = await vectorStoreService.similaritySearch(fileId, query, topN);
+    } catch (err) {
+        console.error(`[AI-Service] Vector search failed (continuing with selection only): ${err.message}`);
+        // Non-fatal: Proceed so we can at least answer from selection
+    }
+
+    // 3. Early Exit if NO Context at all
+    if (searchResults.length === 0 && selectionContext.length === 0) {
         yield "Information not found in document.";
         return;
     }
@@ -156,12 +172,24 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
 
     let visualSelectionPrompt = "";
     if (selectionContext && selectionContext.length > 0) {
+        // Sanitize selection context to handle potential object/string mismatches
+        const sanitizedContext = selectionContext.map(item => {
+            if (typeof item === 'string') return item;
+            if (typeof item === 'object' && item !== null) {
+                // Handle case where frontend sends { text: "..." } or similar
+                return item.text || item.content || JSON.stringify(item);
+            }
+            return String(item);
+        });
+
+        console.log(`[AI-Service] Sanitized Context Content:`, JSON.stringify(sanitizedContext));
+        console.log(`[AI-Service] Injecting Visual Selection Prompt (${sanitizedContext.length} items)`);
         visualSelectionPrompt = `
 ### 🎯 USER HAS SELECTED CONTENT
 The user has MANUALLY SELECTED the following text on the document page.
 
 """
-${selectionContext.join('\n')}
+${sanitizedContext.join('\n')}
 """
 
 ✅ **INSTRUCTION:**
@@ -171,63 +199,49 @@ ${selectionContext.join('\n')}
 `;
     }
 
+    console.log(`[AI-Service] Visual Prompt Generated: ${!!visualSelectionPrompt}, Length: ${visualSelectionPrompt.length}`);
+
     const systemPrompt = `
 You are a conversational AI assistant named pdfx.
-${visualSelectionPrompt}
-
 
 You should answer in well structured markdown.
 Your response should be well structured like in the gemini app.
 structuring should be based on the question.
-Use table, bullet points, emojis, code blocks etc only when needed 
-(think like when it needs you must do it and when dont need dont need to do it)
-avoid nested table and list if not needed .
-
-the the format must be bug free and not broken. it will be rendered on a next js app. 
-
-if the code is mor than one keyword put it on a fenced code block
-
-
-
+Use table, bullet points, emojis, code blocks etc only when needed.
 
 STYLE:
 - Natural, human-like explanation
 - Clean flow, no over-formatting
 - Explain things the way you would in a normal chat
-- explain in multiple structured section
-- Use numarical emojis, or emojis like tick when nedded note necesirily always
+- Use numerical emojis, or emojis like tick when needed
 
-- Rules:
--Don't greet the user
--Don't say anything else other than the answer
--Dont ever expose your real identity(Gemini)
-- Don't share your any personal information.
-- Only say you'r an ai assistant who can help with the given context 
-- Never ever answer to general questions.
-- Never ever answer to questions that are not related to the context.
+Rules:
+- Don't greet the user
+- Don't say anything else other than the answer
+- Don't ever expose your real identity (Gemini)
+- Don't share your any personal information
+- **CRITICAL:** Answer ONLY based on the provided **Selected Content** (above) and **Document Context** (below).
+- If the user asks about the "selected area", USE THE "USER HAS SELECTED CONTENT" SECTION.
+- Never answer general questions unrelated to the context.
 
 REFERENTIAL CITATIONS:
-- Each text block in the context is prepended with [[UUID]] where UUID is a unique identifier.
-- When you reference a specific fact, you MUST cite it using the EXACT UUID from the context.
-- Format: [keyword](#UUID) - Copy the EXACT UUID from between [[ and ]].
-- Example: If context shows "[[a1b2-c3d4-5678]]: Revenue increased"
-  Then cite as: "The [revenue increased](#a1b2-c3d4-5678)"
-- CRITICAL: DO NOT OUTPUT THE RAW "[[UUID]]" FORMAT. ALWAYS USE THE MARKDOWN LINK FORMAT.
-- CRITICAL: Use the EXACT UUID - do NOT make up IDs like "node_1".
-- DO NOT use footnotes or citation bubbles.
-- DO NOT mention "UUID" in the visible text.
+- Each text block in the context is prepended with [[UUID]].
+- When referring to the Document Context, cite using [keyword](#UUID).
+- Do NOT cite the Selected Content section.
 
+Document Context:
+"""
+${context || "No additional document matches found."}
+"""
 
-Context:
-"""
-${context}
-"""
+${visualSelectionPrompt}
 
 User Query: "${query}"
 `;
 
 
     try {
+        console.log(`[AI-Service] Prompt TAIL:\n...${systemPrompt.slice(-1000)}`);
         const result = await retryOperation(() => aiModel.generateContentStream(systemPrompt));
 
         for await (const chunk of result.stream) {

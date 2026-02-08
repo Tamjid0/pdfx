@@ -47,6 +47,16 @@ export const useChat = () => {
 
             const selectionContext = activeSelection?.textNodes || [];
 
+            console.log(`[useChat] About to send - Selection Context:`, selectionContext, `Type:`, typeof selectionContext, `Array:`, Array.isArray(selectionContext));
+
+            if (activeSelection && selectionContext.length === 0) {
+                setChatHistory(prev => [...prev, {
+                    role: 'ai',
+                    content: "⚠️ **No text detected in this selection.**\n\nThis specific area might be an image, or the document needs to be **re-uploaded** to apply the latest text extraction updates.",
+                    timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                }]);
+            }
+
             // Clear selection immediately so it doesn't persist in UI while streaming
             setActiveSelection(null);
 

@@ -125,17 +125,23 @@ const SlideViewer: React.FC = () => {
             if (!node.position) return false;
 
             // Check intersection (all units are percentages)
-            return (
+            const intersects = (
                 node.position.x < rect.x + rect.width &&
                 node.position.x + node.position.width > rect.x &&
                 node.position.y < rect.y + rect.height &&
                 node.position.y + node.position.height > rect.y
             );
+            return intersects;
         });
+
+        console.log(`[SlideViewer] Selection Attempt: Rect:`, rect, `Page Nodes:`, currentPage.nodes?.length, `Matches:`, selectedNodes.length);
+        if (selectedNodes.length > 0) {
+            console.log(`[SlideViewer] First Match:`, selectedNodes[0].content);
+        }
 
         const textNodes = selectedNodes
             .filter((n: any) => n.type === 'text')
-            .map((n: any) => n.content);
+            .map((n: any) => typeof n.content === 'string' ? n.content : n.content?.text || "");
 
         setActiveSelection({
             ...rect,

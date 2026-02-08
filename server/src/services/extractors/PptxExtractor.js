@@ -134,10 +134,10 @@ export class PptxExtractor {
                         const ext = findChild(xfrm, 'ext');
                         const chOff = findChild(xfrm, 'chOff');
                         const chExt = findChild(xfrm, 'chExt');
-                        if (off && off.$) { x = parseInt(off.$.x); y = parseInt(off.$.y); }
-                        if (ext && ext.$) { cx = parseInt(ext.$.cx); cy = parseInt(ext.$.cy); }
-                        if (chOff && chOff.$) { chOffX = parseInt(chOff.$.x); chOffY = parseInt(chOff.$.y); }
-                        if (chExt && chExt.$) { chExtX = parseInt(chExt.$.cx); chExtY = parseInt(chExt.$.cy); }
+                        if (off && off.$) { x = parseInt(off.$.x || 0); y = parseInt(off.$.y || 0); }
+                        if (ext && ext.$) { cx = parseInt(ext.$.cx || 0); cy = parseInt(ext.$.cy || 0); }
+                        if (chOff && chOff.$) { chOffX = parseInt(chOff.$.x || 0); chOffY = parseInt(chOff.$.y || 0); }
+                        if (chExt && chExt.$) { chExtX = parseInt(chExt.$.cx || 0); chExtY = parseInt(chExt.$.cy || 0); }
                     }
 
                     const scaleX = (chExtX && cx) ? (cx / chExtX) : 1;
@@ -154,14 +154,14 @@ export class PptxExtractor {
                     if (xfrm) {
                         const off = findChild(xfrm, 'off');
                         const ext = findChild(xfrm, 'ext');
-                        if (off && off.$) { x = parseInt(off.$.x); y = parseInt(off.$.y); }
-                        if (ext && ext.$) { cx = parseInt(ext.$.cx); cy = parseInt(ext.$.cy); }
+                        if (off && off.$) { x = parseInt(off.$.x || 0); y = parseInt(off.$.y || 0); }
+                        if (ext && ext.$) { cx = parseInt(ext.$.cx || 0); cy = parseInt(ext.$.cy || 0); }
                     }
 
                     const finalX = groupOffsetX + (x * groupScaleX);
                     const finalY = groupOffsetY + (y * groupScaleY);
-                    const finalW = cx * groupScaleX;
-                    const finalH = cy * groupScaleY;
+                    const finalW = Math.max(cx * groupScaleX, 1);
+                    const finalH = Math.max(cy * groupScaleY, 1);
 
                     const pctX = (finalX / slideWidth) * 100;
                     const pctY = (finalY / slideHeight) * 100;
@@ -208,8 +208,8 @@ export class PptxExtractor {
                     if (xfrm) {
                         const off = findChild(xfrm, 'off');
                         const ext = findChild(xfrm, 'ext');
-                        if (off && off.$) { x = parseInt(off.$.x); y = parseInt(off.$.y); }
-                        if (ext && ext.$) { cx = parseInt(ext.$.cx); cy = parseInt(ext.$.cy); }
+                        if (off && off.$) { x = parseInt(off.$.x || 0); y = parseInt(off.$.y || 0); }
+                        if (ext && ext.$) { cx = parseInt(ext.$.cx || 0); cy = parseInt(ext.$.cy || 0); }
                     }
 
                     const finalX = groupOffsetX + (x * groupScaleX);

@@ -139,34 +139,31 @@ User Query: "${query}"
     }
 }
 
-export async function* generateChunkBasedStreamingTransformation(fileId, query, topN = 10, inputSelectionContext = []) {
-    // DEBUG: Trace raw input
-    console.log(`[AI-Service] Raw Input Context:`, typeof inputSelectionContext, Array.isArray(inputSelectionContext), JSON.stringify(inputSelectionContext).substring(0, 200));
-
-    // 1. Validate Selection Context
-    let selectionContext = Array.isArray(inputSelectionContext) ? inputSelectionContext : (inputSelectionContext ? [inputSelectionContext] : []);
-
-    console.log(`[AI-Service] Normalised Selection Context: ${selectionContext.length} items`);
+export async function* generateChunkBasedStreamingTransformation(fileId, query, topN = 10, inputSelectionNodeIds = []) {
+    // Validate Selection Node IDs
+    let selectionNodeIds = Array.isArray(inputSelectionNodeIds) ? inputSelectionNodeIds : (inputSelectionNodeIds ? [inputSelectionNodeIds] : []);
 
     // Vector Search with Smart Intersection Strategy
     let searchResults = [];
+    let selectionChunks = [];
     try {
-        if (selectionContext.length > 0) {
-            // Dual search: Query + Selected text
-            const queryResults = await vectorStoreService.similaritySearch(fileId, query, topN);
-            const selectionQuery = selectionContext.join(' ');
-            const selectionResults = await vectorStoreService.similaritySearch(fileId, selectionQuery, topN);
+        if (selectionNodeIds.length > 0) {
+            // Retrieve selection chunks directly by node IDs (no re-embedding!)
+            selectionChunks = await vectorStoreService.getChunksByNodeIds(fileId, selectionNodeIds);
 
-            // Find intersection: chunks that appear in BOTH searches
-            const queryIds = new Set(queryResults.map(doc => doc.metadata?.chunkId || doc.pageContent));
-            searchResults = selectionResults.filter(doc => {
-                const id = doc.metadata?.chunkId || doc.pageContent;
-                return queryIds.has(id);
+            // Perform query-based vector search
+            const queryResults = await vectorStoreService.similaritySearch(fileId, query, topN);
+
+            // Find intersection: chunks that appear in BOTH selection and query results
+            const selectionIds = new Set(selectionChunks.map(doc => doc.metadata?.nodeId || doc.pageContent));
+            searchResults = queryResults.filter(doc => {
+                const id = doc.metadata?.nodeId || doc.pageContent;
+                return selectionIds.has(id);
             });
 
-            // Fallback: If no intersection, use selection results (more relevant than query alone)
+            // Fallback: If no intersection, use selection chunks (more relevant than query alone)
             if (searchResults.length === 0) {
-                searchResults = selectionResults.slice(0, 5); // Limit to 5 to save cost
+                searchResults = selectionChunks; // Use all selection chunks
             }
         } else {
             // No selection: Standard vector search
@@ -174,6 +171,7 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
         }
     } catch (err) {
         // Non-fatal: Proceed with selection context if available
+        logger.warn(`[AI-Service] Vector search or selection chunk retrieval failed: ${err.message}`);
     }
 
     // Early Exit if NO Context at all
@@ -190,23 +188,15 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
     }).join('\n\n---\n\n');
 
     let visualSelectionPrompt = "";
-    if (selectionContext && selectionContext.length > 0) {
-        // Sanitize selection context to handle potential object/string mismatches
-        const sanitizedContext = selectionContext.map(item => {
-            if (typeof item === 'string') return item;
-            if (typeof item === 'object' && item !== null) {
-                // Handle case where frontend sends { text: "..." } or similar
-                return item.text || item.content || JSON.stringify(item);
-            }
-            return String(item);
-        });
+    if (selectionChunks && selectionChunks.length > 0) {
+        const selectionText = selectionChunks.map(chunk => chunk.pageContent).join('\n');
 
         visualSelectionPrompt = `
 ### 🎯 USER HAS SELECTED CONTENT
 The user has MANUALLY SELECTED the following text on the document page.
 
 """
-${sanitizedContext.join('\n')}
+${selectionText}
 """
 
 ✅ **INSTRUCTION:**
@@ -229,6 +219,7 @@ STYLE:
 - Clean flow, no over-formatting
 - Explain things the way you would in a normal chat
 - Use numerical emojis, or emojis like tick when needed
+- Avoid nested lists unless absolutely necessary
 
 Rules:
 - Don't greet the user
@@ -239,7 +230,6 @@ Rules:
 - If the user asks about the "selected area", USE THE "USER HAS SELECTED CONTENT" SECTION.
 - Never answer general questions unrelated to the context.
 
-REFERENTIAL CITATIONS:
 - Each text block in the context is prepended with [[UUID]].
 - When referring to the Document Context, cite using [keyword](#UUID).
 - Do NOT cite the Selected Content section.

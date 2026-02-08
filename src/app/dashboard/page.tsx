@@ -11,6 +11,7 @@ import LoadingOverlay from '../../components/LoadingOverlay';
 import ProjectExportAction from '../../components/dashboard/ProjectExportAction';
 import ProjectStylePreviewPopup from '../../components/dashboard/ProjectStylePreviewPopup';
 import { ProjectSkeletonGrid } from '../../components/dashboard/ProjectSkeleton';
+import { hasProjectContent } from '../../utils/contentVisibility';
 
 const ProjectsPage = () => {
     const { user, loading: authLoading } = useAuth();
@@ -399,24 +400,30 @@ const ProjectsPage = () => {
                                 <div className="flex flex-wrap gap-2 items-center z-30">
 
 
-                                    {['Summary', 'Notes', 'Insights', 'Flashcards', 'Quiz', 'Mindmap'].map(mode => {
-                                        const moduleKey = `${mode.toLowerCase()}Data`;
-                                        const moduleData = selectedProject[moduleKey];
-                                        const revisions = moduleData?.revisions || [];
+                                    {['Summary', 'Notes', 'Insights', 'Flashcards', 'Quiz', 'Mindmap']
+                                        .filter(mode => {
+                                            const moduleKey = `${mode.toLowerCase()}Data`;
+                                            const moduleData = selectedProject[moduleKey];
+                                            return hasProjectContent(mode, moduleData);
+                                        })
+                                        .map(mode => {
+                                            const moduleKey = `${mode.toLowerCase()}Data`;
+                                            const moduleData = selectedProject[moduleKey];
+                                            const revisions = moduleData?.revisions || [];
 
-                                        return (
-                                            <ProjectExportAction
-                                                key={mode}
-                                                mode={mode}
-                                                documentId={selectedProject.documentId}
-                                                data={moduleData}
-                                                revisions={revisions}
-                                                filename={selectedProject.originalFile?.name?.split('.')[0] || 'project'}
-                                                activeDropdown={activeExportDropdown}
-                                                setActiveDropdown={setActiveExportDropdown}
-                                            />
-                                        );
-                                    })}
+                                            return (
+                                                <ProjectExportAction
+                                                    key={mode}
+                                                    mode={mode}
+                                                    documentId={selectedProject.documentId}
+                                                    data={moduleData}
+                                                    revisions={revisions}
+                                                    filename={selectedProject.originalFile?.name?.split('.')[0] || 'project'}
+                                                    activeDropdown={activeExportDropdown}
+                                                    setActiveDropdown={setActiveExportDropdown}
+                                                />
+                                            );
+                                        })}
                                 </div>
 
                             </div>
@@ -470,7 +477,7 @@ const ProjectsPage = () => {
                                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                                 Mastery Test
                                             </h4>
-                                            {selectedProject.quizData ? (
+                                            {hasProjectContent('quiz', selectedProject.quizData) ? (
                                                 <div className="flex items-end justify-between">
                                                     <span className="text-xl font-bold text-white">{(selectedProject.quizData as any).quiz?.length || 0}</span>
                                                     <span className="text-[10px] text-white/40 font-medium">Questions</span>
@@ -485,7 +492,7 @@ const ProjectsPage = () => {
                                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
                                                 Knowledge Deck
                                             </h4>
-                                            {selectedProject.flashcardsData ? (
+                                            {hasProjectContent('flashcards', selectedProject.flashcardsData) ? (
                                                 <div className="flex items-end justify-between">
                                                     <span className="text-xl font-bold text-white">{(selectedProject.flashcardsData as any).flashcards?.length || 0}</span>
                                                     <span className="text-[10px] text-white/40 font-medium">Flashcards</span>
@@ -500,7 +507,7 @@ const ProjectsPage = () => {
                                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                                                 Core Insights
                                             </h4>
-                                            {selectedProject.insightsData ? (
+                                            {hasProjectContent('insights', selectedProject.insightsData) ? (
                                                 <div className="flex flex-wrap gap-2">
                                                     {((selectedProject.insightsData as any).topics || []).slice(0, 5).map((t: string, i: number) => (
                                                         <span key={i} className="px-2 py-1 bg-white/5 rounded-md text-[9px] text-white/60 font-bold uppercase tracking-tight">{t}</span>
@@ -528,9 +535,9 @@ const ProjectsPage = () => {
                                             <div className="bg-white/[0.02] border border-white/5 rounded-xl p-4 flex justify-between items-center group hover:bg-white/[0.03]">
                                                 <span className="text-gemini-gray text-[10px] font-bold uppercase tracking-widest">Study Assets</span>
                                                 <div className="flex gap-2">
-                                                    {selectedProject.notesData && <span className="text-gemini-green text-[9px] font-bold px-2 py-0.5 bg-gemini-green/10 rounded">NOTES</span>}
-                                                    {selectedProject.flashcardsData && <span className="text-gemini-green text-[9px] font-bold px-2 py-0.5 bg-gemini-green/10 rounded">CARDS</span>}
-                                                    {selectedProject.quizData && <span className="text-gemini-green text-[9px] font-bold px-2 py-0.5 bg-gemini-green/10 rounded">QUIZ</span>}
+                                                    {hasProjectContent('notes', selectedProject.notesData) && <span className="text-gemini-green text-[9px] font-bold px-2 py-0.5 bg-gemini-green/10 rounded">NOTES</span>}
+                                                    {hasProjectContent('flashcards', selectedProject.flashcardsData) && <span className="text-gemini-green text-[9px] font-bold px-2 py-0.5 bg-gemini-green/10 rounded">CARDS</span>}
+                                                    {hasProjectContent('quiz', selectedProject.quizData) && <span className="text-gemini-green text-[9px] font-bold px-2 py-0.5 bg-gemini-green/10 rounded">QUIZ</span>}
                                                 </div>
                                             </div>
                                         </div>

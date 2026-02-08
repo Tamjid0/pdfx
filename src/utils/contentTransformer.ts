@@ -255,10 +255,10 @@ export function transformModeContent(mode: Mode | string, data: any): PreviewDat
     // Robustness: If data is a revision wrapper, extract the latest content
     let activeData = data;
     if (data && typeof data === 'object' && 'revisions' in data && Array.isArray(data.revisions)) {
-        if (data.revisions.length > 0 && data.revisions[0].content) {
-            activeData = data.revisions[0].content;
+        if (data.revisions.length > 0 && data.revisions[0].data) {
+            activeData = data.revisions[0].data;
         } else {
-            return null; // No revisions or no content in latest revision
+            return null; // No revisions or no data in latest revision
         }
     }
 

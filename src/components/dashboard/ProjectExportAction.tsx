@@ -8,6 +8,8 @@ import { getTemplate } from '../../templates';
 import { transformModeContent } from '../../utils/contentTransformer';
 import { toast } from 'react-hot-toast';
 
+import { hasProjectContent } from '../../utils/contentVisibility';
+
 interface ProjectExportActionProps {
     mode: string;
     data: SummaryData | NotesData | InsightsData | FlashcardsData | QuizData | MindmapData | string | null;
@@ -160,40 +162,26 @@ const ProjectExportAction: React.FC<ProjectExportActionProps> = ({
         }
     };
 
-    const hasContent = (d: any): boolean => {
-        if (!d) return false;
-        if (typeof d === 'string') return d.trim().length > 0;
-
-        // Handle specific types
-        if (mode === 'summary') return !!(d.summary || (d.keyPoints && d.keyPoints.length > 0));
-        if (mode === 'notes') return !!((d.notes && d.notes.length > 0) || (d.blocks && d.blocks.length > 0));
-        if (mode === 'insights') return !!((d.insights && d.insights.length > 0) || (d.blocks && d.blocks.length > 0));
-        if (mode === 'flashcards') return !!(d.flashcards && d.flashcards.length > 0);
-        if (mode === 'quiz') return !!(d.quiz && d.quiz.length > 0);
-        if (mode === 'mindmap') return !!(d.nodes && d.nodes.length > 0);
-
-        return true;
-    };
-
     return (
         <div className="relative inline-block z-10">
             <button
-                onClick={toggleDropdown}
-                disabled={!hasContent(data) || isExporting}
                 className={`flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white font-bold px-4 py-3 rounded-xl text-[9px] uppercase tracking-widest transition-all border border-white/5 disabled:opacity-20 active:scale-95 ${isOpen ? 'bg-white/15 border-white/20' : ''}`}
+                onClick={toggleDropdown}
+                disabled={!hasProjectContent(mode, data) || isExporting}
             >
-                {isExporting ? (
-                    <div className="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                )}
+                {
+                    isExporting ? (
+                        <div className="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin" ></div>
+                    ) : (
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                    )}
                 Export {mode}
                 <svg className={`w-3 h-3 ml-1 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                 </svg>
-            </button>
+            </button >
 
             {isOpen && (
                 <div className="absolute top-full right-0 mt-3 w-64 bg-[#181818] border border-white/10 rounded-2xl shadow-2xl z-[200] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
@@ -270,7 +258,7 @@ const ProjectExportAction: React.FC<ProjectExportActionProps> = ({
                     </div>
                 </div>
             )}
-        </div>
+        </div >
     );
 };
 

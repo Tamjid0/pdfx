@@ -139,10 +139,10 @@ User Query: "${query}"
     }
 }
 
-export async function* generateChunkBasedStreamingTransformation(fileId, query, topN = 10) {
+export async function* generateChunkBasedStreamingTransformation(fileId, query, topN = 10, selectionContext = []) {
     const searchResults = await vectorStoreService.similaritySearch(fileId, query, topN);
 
-    if (searchResults.length === 0) {
+    if (searchResults.length === 0 && (!selectionContext || selectionContext.length === 0)) {
         yield "Information not found in document.";
         return;
     }
@@ -154,8 +154,21 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
         return `[Source: ${type} ${displayIndex}]\n${doc.pageContent}`;
     }).join('\n\n---\n\n');
 
+    let visualSelectionPrompt = "";
+    if (selectionContext && selectionContext.length > 0) {
+        visualSelectionPrompt = `
+### VISUAL SELECTION CONTEXT (PRIORITY)
+The user has manually selected a specific area on the page. Here is the text extracted from that selection:
+"""
+${selectionContext.join('\n')}
+"""
+Please prioritize answering based on the text above if it relates to the user's question.
+`;
+    }
+
     const systemPrompt = `
-You are a conversational AI assistant similar to ChatGPT, Claude, and Gemini here your name is pdfx.
+You are a conversational AI assistant named pdfx.
+${visualSelectionPrompt}
 
 
 You should answer in well structured markdown.

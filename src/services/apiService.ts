@@ -223,13 +223,19 @@ export async function chatWithDocument(message: string, fileId: string) {
     return response.json();
 }
 
-export async function chatWithDocumentStream(message: string, fileId: string, onChunk: (text: string) => void, onComplete: (fullText: string) => void) {
+export async function chatWithDocumentStream(
+    message: string,
+    fileId: string,
+    onChunk: (text: string) => void,
+    onComplete: (fullText: string) => void,
+    selectionContext?: string[]
+) {
     const response = await fetch('/api/v1/chat/stream', {
         method: 'POST',
         headers: await getAuthHeaders({
             'Content-Type': 'application/json',
         }),
-        body: JSON.stringify({ message, fileId }),
+        body: JSON.stringify({ message, fileId, selectionContext }),
     });
 
     if (!response.ok) {

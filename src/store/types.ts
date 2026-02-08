@@ -211,6 +211,15 @@ export interface AppState {
     renderingProgress: number;
     slides: any[];
     currentSlideIndex: number;
+    selectionMode: boolean;
+    activeSelection: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        pageIndex: number;
+        textNodes: string[];
+    } | null;
 
     // Settings
     summarySettings: any;
@@ -306,6 +315,15 @@ export interface AppState {
     setCurrentSlideIndex: (index: number) => void;
     nextSlide: () => void;
     prevSlide: () => void;
+    setSelectionMode: (mode: boolean) => void;
+    setActiveSelection: (selection: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        pageIndex: number;
+        textNodes: string[];
+    } | null) => void;
 
     // Preview Actions
     setPreviewPreset: (preset: PreviewPreset) => void;

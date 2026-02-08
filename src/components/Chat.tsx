@@ -18,7 +18,9 @@ interface ChatProps {
 
 const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
     const {
-        setActiveNodeIds
+        setActiveNodeIds,
+        activeSelection,
+        setActiveSelection
     } = useStore();
     const [inputValue, setInputValue] = useState('');
     const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -223,8 +225,29 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                     </div>
                 </div>
 
-                <div className="input-container bg-transparent border-t border-[#2f2f2f] p-4">
+                <div className="input-container bg-transparent border-t border-[#2f2f2f] p-4 relative">
                     <div className="input-wrapper max-w-3xl mx-auto">
+                        {activeSelection && (
+                            <div className="mb-3 px-4 py-2 bg-[#00ff88]/10 border border-[#00ff88]/20 rounded-xl flex items-center justify-between animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-[#00ff88]/20 flex items-center justify-center border border-[#00ff88]/30">
+                                        <svg className="w-4 h-4 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 010 2H6v3a1 1 0 01-2 0V5zM14 4a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-2 0V6h-3a1 1 0 01-1-1zM4 14a1 1 0 012 0v3h3a1 1 0 010 2H5a1 1 0 01-1-1v-4zM19 14a1 1 0 012 0v4a1 1 0 01-1 1h-4a1 1 0 010-2h3v-3a1 1 0 01-1-1z" />
+                                        </svg>
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-bold text-[#00ff88] uppercase tracking-widest">Visual Selection Active</span>
+                                        <span className="text-[9px] text-white/40 uppercase tracking-tighter">Slide {activeSelection.pageIndex + 1} • {activeSelection.textNodes.length} nodes found</span>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setActiveSelection(null)}
+                                    className="p-1 hover:bg-white/5 rounded-md text-white/40 hover:text-white transition-all"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+                        )}
                         <div className="input-box bg-[#1a1a1a] border border-[#3f3f3f] rounded-[24px] p-2 pl-6 flex items-end gap-3 transition-all focus-within:border-[#4f4f4f] focus-within:ring-4 focus-within:ring-[#4f4f4f]/10">
                             <textarea
                                 ref={textareaRef}

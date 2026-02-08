@@ -6,6 +6,8 @@ export const useChat = () => {
         fileId,
         setChatHistory,
         setIsTyping,
+        activeSelection,
+        setActiveSelection
     } = useStore();
 
     const handleSendMessage = async (message: string) => {
@@ -13,6 +15,8 @@ export const useChat = () => {
             role: 'user' as const,
             content: message,
             timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            // Optional: attach selection info to the local message for UI reference if needed
+            selection: activeSelection ? { pageIndex: activeSelection.pageIndex, nodesCount: activeSelection.textNodes.length } : undefined
         };
 
         setChatHistory(prev => [...prev, newUserMessage]);
@@ -40,6 +44,8 @@ export const useChat = () => {
                 content: '',
                 timestamp: 'streaming...'
             }]);
+
+            const selectionContext = activeSelection?.textNodes || [];
 
             await apiService.chatWithDocumentStream(
                 message,
@@ -77,8 +83,12 @@ export const useChat = () => {
                         return newHistory;
                     });
                     setIsTyping(false);
-                }
+                },
+                selectionContext
             );
+
+            // Clear selection after sending
+            setActiveSelection(null);
         } catch (error) {
             console.error("Error sending message:", error);
             setIsTyping(false);

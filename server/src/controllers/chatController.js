@@ -25,7 +25,7 @@ export const chatWithDocument = async (req, res) => {
  * Stream-based chat using Server-Sent Events (SSE)
  */
 export const chatWithDocumentStream = async (req, res) => {
-    const { fileId, message } = req.body;
+    const { fileId, message, selectionContext } = req.body;
 
     if (!fileId || !message) {
         return res.status(400).json({ error: 'fileId and message are required.' });
@@ -37,7 +37,7 @@ export const chatWithDocumentStream = async (req, res) => {
     res.setHeader('Connection', 'keep-alive');
 
     try {
-        const stream = generateChunkBasedStreamingTransformation(fileId, message);
+        const stream = generateChunkBasedStreamingTransformation(fileId, message, 10, selectionContext);
 
         for await (const chunk of stream) {
             res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);

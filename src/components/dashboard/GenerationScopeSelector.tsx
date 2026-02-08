@@ -58,13 +58,8 @@ const GenerationScopeSelector: React.FC<GenerationScopeSelectorProps> = ({ class
     };
 
     return (
-        <div className={`space-y-6 ${className}`}>
-            <div className="flex items-center gap-3 mb-2">
-                <span className="w-6 h-0.5 bg-gemini-green rounded-full"></span>
-                <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Generation Scope</h4>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
+        <div className={`space-y-4 ${className}`}>
+            <div className="grid grid-cols-3 gap-2">
                 {scopeTypes.map((scope) => (
                     <button
                         key={scope.id}
@@ -125,8 +120,8 @@ const GenerationScopeSelector: React.FC<GenerationScopeSelectorProps> = ({ class
                                     key={topic.id}
                                     onClick={() => toggleTopic(topic.id)}
                                     className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${(generationScope.type === 'topics' && Array.isArray(generationScope.value) && (generationScope.value as string[]).includes(topic.id))
-                                            ? 'bg-gemini-green/10 border-gemini-green/30 text-white'
-                                            : 'bg-white/5 border-white/5 text-white/60 hover:bg-white/10'
+                                        ? 'bg-gemini-green/10 border-gemini-green/30 text-white'
+                                        : 'bg-white/5 border-white/5 text-white/60 hover:bg-white/10'
                                         }`}
                                 >
                                     <div className="flex flex-col items-start gap-0.5">

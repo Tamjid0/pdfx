@@ -96,7 +96,7 @@ const Summary: React.FC<SummaryProps> = ({
             toolsAction={toolsAction}
         >
             <DocumentPreview mode="summary">
-                <div className="p-8 space-y-12 max-w-4xl mx-auto">
+                <div className="pt-2 px-8 pb-8 space-y-6 max-w-4xl mx-auto">
                     {!summaryData ? (
                         <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-gemini-dark rounded-xl">
                             {isGeneratingSummary ? (
@@ -111,28 +111,26 @@ const Summary: React.FC<SummaryProps> = ({
                                 </div>
                             ) : (
                                 <>
-                                    <div className="w-20 h-20 bg-gemini-dark-300 rounded-full flex items-center justify-center mb-6 border border-gemini-dark-500 shadow-inner">
-                                        <svg className="w-10 h-10 text-gemini-green drop-shadow-[0_0_8px_rgba(0,255,136,0.5)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div className="w-16 h-16 bg-gemini-dark-300 rounded-full flex items-center justify-center mb-4 border border-gemini-dark-500 shadow-inner">
+                                        <svg className="w-8 h-8 text-gemini-green drop-shadow-[0_0_8px_rgba(0,255,136,0.5)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                         </svg>
                                     </div>
-                                    <h3 className="text-2xl font-bold text-white mb-3">Intelligent Summary</h3>
-                                    <p className="text-gemini-gray mb-8 max-w-sm leading-relaxed text-sm">
+                                    <h3 className="text-2xl font-bold text-white mb-2">Intelligent Summary</h3>
+                                    <p className="text-gemini-gray mb-6 max-w-sm leading-relaxed text-sm">
                                         Let our AI analyze your document to extract core concepts, main narratives, and actionable insights.
                                     </p>
 
-                                    <div className="w-full max-w-sm mb-10 bg-black/20 p-6 rounded-[2rem] border border-white/5 shadow-inner">
+                                    <div className="w-full max-w-sm mx-auto mb-6 bg-black/20 p-6 rounded-[2.5rem] border border-white/5 shadow-inner text-left">
                                         <GenerationScopeSelector />
                                     </div>
 
                                     <button
                                         onClick={() => onGenerate('summary')}
-                                        className="group relative px-8 py-3.5 bg-gemini-green text-black rounded-xl text-sm font-black transition-all hover:bg-gemini-green-300 active:scale-95 shadow-[0_5px_15px_rgba(0,255,136,0.3)] overflow-hidden"
+                                        className="px-12 py-4 bg-[#00ff88] text-black rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 active:scale-95 shadow-[0_5px_15px_rgba(0,255,136,0.3)] flex items-center justify-center gap-3 w-full max-w-sm mx-auto"
                                     >
-                                        <span className="relative z-10 flex items-center gap-2">
-                                            GENERATE SUMMARY
-                                            <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                                        </span>
+                                        GENERATE SUMMARY
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                                     </button>
                                 </>
                             )}

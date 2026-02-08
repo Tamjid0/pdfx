@@ -199,15 +199,15 @@ const Flashcards: React.FC<FlashcardsProps> = ({
             <DocumentPreview mode="flashcards">
                 <div className="w-full relative">
                     {!hasData ? (
-                        <div className="flex flex-col items-center justify-center min-h-full text-center p-8 bg-[#0a0a0a] rounded-xl">
-                            <div className="p-10 max-w-2xl mx-auto w-full space-y-12">
-                                <div className="text-center space-y-4 pt-8">
-                                    <div className="w-20 h-20 bg-[#00ff88]/5 rounded-[2.5rem] flex items-center justify-center mx-auto border border-[#00ff88]/10 shadow-2xl">
-                                        <svg className="w-10 h-10 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="flex flex-col items-center justify-center min-h-full text-center pt-2 px-8 pb-8 bg-[#0a0a0a] rounded-xl space-y-6">
+                            <div className="p-4 max-w-2xl mx-auto w-full space-y-6">
+                                <div className="text-center space-y-4 pt-2">
+                                    <div className="w-16 h-16 bg-[#00ff88]/5 rounded-[2.5rem] flex items-center justify-center mx-auto border border-[#00ff88]/10 shadow-2xl">
+                                        <svg className="w-8 h-8 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                                         </svg>
                                     </div>
-                                    <h3 className="text-3xl font-black text-white tracking-tight uppercase italic">Flashcard Laboratory</h3>
+                                    <h3 className="text-2xl font-black text-white tracking-tight uppercase italic">Flashcard Laboratory</h3>
                                     <p className="text-gray-400 max-w-sm mx-auto leading-relaxed text-sm">
                                         Isolate specific material to synthesize high-retention smart decks.
                                     </p>
@@ -222,20 +222,19 @@ const Flashcards: React.FC<FlashcardsProps> = ({
                                         <LocalizedShimmer blocks={2} />
                                     </div>
                                 ) : (
-                                    <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-8 space-y-8">
-                                        <div className="space-y-4 text-left">
-                                            <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Select Target Scope</h4>
+                                    <>
+                                        <div className="w-full max-w-sm mx-auto mb-10 bg-black/20 p-6 rounded-[2.5rem] border border-white/5 shadow-inner text-left">
                                             <GenerationScopeSelector />
                                         </div>
 
                                         <button
                                             onClick={() => onGenerate('flashcards')}
-                                            className="w-full py-5 bg-[#00ff88] text-black rounded-2xl text-xs font-black transition-all hover:bg-[#00dd77] active:scale-95 shadow-2xl flex items-center justify-center gap-3 uppercase tracking-widest"
+                                            className="px-12 py-4 bg-[#00ff88] text-black rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 active:scale-95 shadow-[0_5px_15px_rgba(0,255,136,0.3)] flex items-center justify-center gap-3 w-full max-w-sm mx-auto"
                                         >
-                                            Generate Flashcards
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                                            GENERATE FLASHCARDS
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                                         </button>
-                                    </div>
+                                    </>
                                 )}
                             </div>
                         </div>

@@ -223,33 +223,30 @@ const Quiz: React.FC<QuizProps> = ({
             return (
                 <div className="flex flex-col">
                     <div className="flex-1">
-                        <div className="p-10 max-w-2xl mx-auto w-full space-y-12">
-                            <div className="text-center space-y-4 pt-8">
-                                <div className="w-20 h-20 bg-[#00ff88]/5 rounded-[2.5rem] flex items-center justify-center mx-auto border border-[#00ff88]/10 shadow-2xl">
-                                    <svg className="w-10 h-10 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="pt-2 px-8 pb-8 max-w-2xl mx-auto w-full space-y-6">
+                            <div className="text-center space-y-2 pt-2">
+                                <div className="w-16 h-16 bg-[#00ff88]/5 rounded-full flex items-center justify-center mx-auto border border-[#00ff88]/10 shadow-2xl">
+                                    <svg className="w-8 h-8 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                                     </svg>
                                 </div>
-                                <h3 className="text-3xl font-black text-white tracking-tight uppercase italic">Adaptive Exam Engine</h3>
+                                <h3 className="text-2xl font-black text-white tracking-tight uppercase italic">Adaptive Exam Engine</h3>
                                 <p className="text-gray-500 max-w-sm mx-auto leading-relaxed text-sm">
                                     Target specific sections to engineer a custom assessment grid.
                                 </p>
                             </div>
 
-                            <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-8 space-y-8">
-                                <div className="space-y-4">
-                                    <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Select Scope</h4>
-                                    <GenerationScopeSelector />
-                                </div>
-
-                                <button
-                                    onClick={handleAnalyze}
-                                    className="w-full py-5 bg-[#00ff88] text-black rounded-2xl text-xs font-black transition-all hover:bg-[#00dd77] active:scale-95 shadow-2xl flex items-center justify-center gap-3 uppercase tracking-widest"
-                                >
-                                    Analyze Selected Scope
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                                </button>
+                            <div className="w-full max-w-sm mx-auto mb-6 bg-black/20 p-6 rounded-[2.5rem] border border-white/5 shadow-inner text-left">
+                                <GenerationScopeSelector />
                             </div>
+
+                            <button
+                                onClick={handleAnalyze}
+                                className="px-12 py-4 bg-[#00ff88] text-black rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 active:scale-95 shadow-[0_5px_15px_rgba(0,255,136,0.3)] flex items-center justify-center gap-3 w-full max-w-sm mx-auto"
+                            >
+                                ANALYZE MATERIAL
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -346,9 +343,9 @@ const Quiz: React.FC<QuizProps> = ({
 
                                     <button
                                         onClick={() => onGenerate('quiz')}
-                                        className="w-full py-5 bg-[#ffffff] text-black rounded-2xl text-[10px] font-black transition-all hover:bg-[#00ff88] shadow-2xl flex items-center justify-center gap-3 uppercase tracking-widest"
+                                        className="px-12 py-4 bg-[#00ff88] text-black rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 active:scale-95 shadow-[0_5px_15px_rgba(0,255,136,0.3)] flex items-center justify-center gap-3 w-full max-w-sm mx-auto"
                                     >
-                                        Generate Questions
+                                        GENERATE QUESTIONS
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                                     </button>
 

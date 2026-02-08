@@ -41,7 +41,7 @@ const Insights: React.FC<InsightsProps> = ({
             <DocumentPreview mode="insights">
                 <div className="w-full relative">
                     {!hasData ? (
-                        <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-[#0a0a0a] rounded-xl">
+                        <div className="flex flex-col items-center justify-center min-h-[400px] text-center pt-2 px-8 pb-8 bg-[#0a0a0a] rounded-xl space-y-6">
                             {isGeneratingInsights ? (
                                 <div className="w-full max-w-md">
                                     <div className="flex flex-col items-center mb-8">
@@ -54,25 +54,26 @@ const Insights: React.FC<InsightsProps> = ({
                                 </div>
                             ) : (
                                 <>
-                                    <div className="w-20 h-20 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-6 border border-[#333] shadow-inner text-[#00ff88]">
-                                        <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div className="w-16 h-16 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-4 border border-[#333] shadow-inner text-[#00ff88]">
+                                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                         </svg>
                                     </div>
-                                    <h3 className="text-2xl font-bold text-white mb-3">Core Insights</h3>
-                                    <p className="text-gray-400 mb-8 max-w-sm leading-relaxed text-sm">
+                                    <h3 className="text-xl font-bold text-white mb-2">Core Insights</h3>
+                                    <p className="text-gray-400 mb-6 max-w-sm leading-relaxed text-sm">
                                         Extract deep patterns, hidden connections, and high-value conclusions from your reading material.
                                     </p>
 
-                                    <div className="w-full max-w-sm mb-10 bg-black/20 p-6 rounded-[2rem] border border-white/5 shadow-inner">
+                                    <div className="w-full max-w-sm mx-auto mb-6 bg-black/20 p-6 rounded-[2.5rem] border border-white/5 shadow-inner">
                                         <GenerationScopeSelector />
                                     </div>
 
                                     <button
                                         onClick={() => onGenerate('insights')}
-                                        className="px-8 py-3.5 bg-[#00ff88] text-black rounded-xl text-sm font-black transition-all hover:bg-[#00dd77] active:scale-95 shadow-[0_5px_15px_rgba(0,255,136,0.3)]"
+                                        className="px-12 py-4 bg-[#00ff88] text-black rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 active:scale-95 shadow-[0_5px_15px_rgba(0,255,136,0.3)] flex items-center justify-center gap-3 w-full max-w-sm mx-auto"
                                     >
                                         EXTRACT INSIGHTS
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                                     </button>
                                 </>
                             )}

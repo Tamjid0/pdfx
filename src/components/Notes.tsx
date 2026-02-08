@@ -46,7 +46,7 @@ const Notes: React.FC<NotesProps> = ({
             <DocumentPreview mode="notes">
                 <div className="w-full relative">
                     {!hasData ? (
-                        <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-[#0a0a0a] rounded-xl">
+                        <div className="flex flex-col items-center justify-center min-h-[400px] text-center pt-2 px-8 pb-8 bg-[#0a0a0a] rounded-xl space-y-6">
                             {isGeneratingNotes ? (
                                 <div className="w-full max-w-md">
                                     <div className="flex flex-col items-center mb-8">
@@ -60,14 +60,14 @@ const Notes: React.FC<NotesProps> = ({
                                 </div>
                             ) : (
                                 <div className="w-full max-w-4xl animate-in fade-in slide-in-from-bottom-8 duration-700">
-                                    <div className="mb-10">
-                                        <h3 className="text-3xl font-black text-white mb-3 tracking-tighter uppercase">What are we building?</h3>
+                                    <div className="mb-6">
+                                        <h3 className="text-2xl font-black text-white mb-2 tracking-tighter uppercase">What are we building?</h3>
                                         <p className="text-gray-400 max-w-md mx-auto leading-relaxed text-sm">
                                             Choose a category to transform your document into a specialized knowledge base.
                                         </p>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
                                         {categories.map((cat) => (
                                             <button
                                                 key={cat.id}
@@ -100,19 +100,16 @@ const Notes: React.FC<NotesProps> = ({
                                         ))}
                                     </div>
 
-                                    <div className="w-full max-w-sm mx-auto mb-10 bg-black/20 p-6 rounded-[2.5rem] border border-white/5 shadow-inner">
-                                        <div className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-4">Target Context</div>
+                                    <div className="w-full max-w-sm mx-auto mb-6 bg-black/20 p-6 rounded-[2.5rem] border border-white/5 shadow-inner">
                                         <GenerationScopeSelector />
                                     </div>
 
                                     <button
                                         onClick={() => onGenerate('notes')}
-                                        className="group relative px-12 py-4 bg-white text-black rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 active:scale-95 shadow-2xl"
+                                        className="px-12 py-4 bg-[#00ff88] text-black rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 active:scale-95 shadow-[0_5px_15px_rgba(0,255,136,0.3)] flex items-center justify-center gap-3 w-full max-w-sm mx-auto"
                                     >
-                                        <span className="relative z-10 flex items-center gap-2">
-                                            Start Generation
-                                            <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                                        </span>
+                                        START GENERATION
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                                     </button>
                                 </div>
                             )}

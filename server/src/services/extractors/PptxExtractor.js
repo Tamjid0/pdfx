@@ -172,10 +172,19 @@ export class PptxExtractor {
                         let fullText = "";
 
                         for (const p of paragraphs) {
-                            const runs = getChildren(p).filter(c => c['#name'] === 'r');
-                            for (const r of runs) {
-                                const t = findChild(r, 't');
-                                if (t && t._) fullText += t._;
+                            // Extract runs (r) and line breaks (br)
+                            // We need to preserve order, so iterate over all children
+                            const children = getChildren(p);
+                            for (const child of children) {
+                                if (child['#name'] === 'r') {
+                                    const t = findChild(child, 't');
+                                    if (t) {
+                                        if (t._) fullText += t._;
+                                        // Sometimes text might be in $$ if mixed? Unlikely for a:t but safe to check
+                                    }
+                                } else if (child['#name'] === 'br') {
+                                    fullText += "\n";
+                                }
                             }
                             fullText += "\n";
                         }

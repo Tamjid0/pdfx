@@ -157,12 +157,17 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
     let visualSelectionPrompt = "";
     if (selectionContext && selectionContext.length > 0) {
         visualSelectionPrompt = `
-### VISUAL SELECTION CONTEXT (PRIORITY)
-The user has manually selected a specific area on the page. Here is the text extracted from that selection:
+### 🎯 USER HAS SELECTED CONTENT
+The user has MANUALLY SELECTED the following text on the document page.
+
 """
 ${selectionContext.join('\n')}
 """
-Please prioritize answering based on the text above if it relates to the user's question.
+
+✅ **INSTRUCTION:**
+- **IF** the user's question refers to "this", "here", "selected text", or asks about specific details found in the selection -> **Focus strictly on the selection above.**
+- **IF** the user asks a GENERAL question (e.g., "Summarize the document", "What is the main topic") -> Answer based on the full document context below, but you may mention how the selected part fits in.
+- **DEFAULT:** Assume the user is interested in the selected text unless clearly stated otherwise.
 `;
     }
 

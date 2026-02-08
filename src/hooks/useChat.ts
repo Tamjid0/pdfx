@@ -47,6 +47,9 @@ export const useChat = () => {
 
             const selectionContext = activeSelection?.textNodes || [];
 
+            // Clear selection immediately so it doesn't persist in UI while streaming
+            setActiveSelection(null);
+
             await apiService.chatWithDocumentStream(
                 message,
                 fileId,

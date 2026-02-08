@@ -188,7 +188,7 @@ export interface AppState {
     quizRevisions: Revision<QuizData>[];
     mindmapRevisions: Revision<MindmapData>[];
     activeRevisionIds: Record<Mode, string>;
-    chatHistory: { role: 'user' | 'assistant' | 'ai'; content: string; timestamp?: string }[];
+    chatHistory: { role: 'user' | 'assistant' | 'ai'; content: string; timestamp?: string; selection?: { pageIndex: number; nodesCount: number; textPreview?: string } }[];
     fileId: string | null;
     fileType: 'pdf' | 'pptx' | 'text' | null;
     stats: {

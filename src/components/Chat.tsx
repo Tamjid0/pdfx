@@ -10,7 +10,12 @@ import { useStore } from '../store/useStore';
 // Local interface removed, using store types implicitly via Props
 
 interface ChatProps {
-    history: { role: 'user' | 'assistant' | 'ai'; content: string; timestamp?: string }[];
+    history: {
+        role: 'user' | 'assistant' | 'ai';
+        content: string;
+        timestamp?: string;
+        selection?: { pageIndex: number; nodesCount: number; textPreview?: string };
+    }[];
     onSendMessage: (message: string) => void;
     isTyping?: boolean;
     onCitationClick?: (pageIndex: number, searchText?: string) => void;
@@ -120,7 +125,23 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                         ) : (
                             <div className="flex flex-col space-y-8">
                                 {history.map((msg, index) => (
-                                    <div key={index} className={`message flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 duration-300`}>
+                                    <div key={index} className={`message flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} animate-in slide-in-from-bottom-2 duration-300`}>
+
+                                        {/* Render Active Selection Attachment for User Messages */}
+                                        {msg.role === 'user' && msg.selection && (
+                                            <div className="mb-2 mr-1 px-3 py-2 bg-[#00ff88]/5 border border-[#00ff88]/20 rounded-lg flex items-center gap-3 w-fit backdrop-blur-sm shadow-lg">
+                                                <div className="w-6 h-6 rounded bg-[#00ff88]/20 flex items-center justify-center border border-[#00ff88]/30 mt-0.5">
+                                                    <svg className="w-3 h-3 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 010 2H6v3a1 1 0 01-2 0V5zM14 4a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-2 0V6h-3a1 1 0 01-1-1zM4 14a1 1 0 012 0v3h3a1 1 0 010 2H5a1 1 0 01-1-1v-4zM19 14a1 1 0 012 0v4a1 1 0 01-1 1h-4a1 1 0 010-2h3v-3a1 1 0 01-1-1z" />
+                                                    </svg>
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[9px] font-bold text-[#00ff88] uppercase tracking-wider">Visual Context</span>
+                                                    <span className="text-[8px] text-white/50">Slide {msg.selection.pageIndex + 1} Selected</span>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         <div className={`max-w-[85%] ${msg.role === 'user' ? 'user' : 'assistant-message w-full'}`}>
                                             <div className={`message-content leading-relaxed ${msg.role === 'user'
                                                 ? 'bg-[#2f2f2f] px-5 py-3 rounded-2xl text-white'

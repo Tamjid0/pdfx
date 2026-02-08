@@ -25,12 +25,7 @@ export const chatWithDocument = async (req, res) => {
  * Stream-based chat using Server-Sent Events (SSE)
  */
 export const chatWithDocumentStream = async (req, res) => {
-    const { fileId, message, selectionContext } = req.body;
-
-    // DEBUG: Trace incoming request data
-    console.log(`[ChatController] Incoming Body Keys:`, Object.keys(req.body));
-    console.log(`[ChatController] Selection Context Raw Type:`, typeof selectionContext);
-    console.log(`[ChatController] Selection Context Value:`, selectionContext ? JSON.stringify(selectionContext).substring(0, 200) : 'undefined');
+    const { fileId, message, selectionNodeIds } = req.body;
 
     if (!fileId || !message) {
         return res.status(400).json({ error: 'fileId and message are required.' });
@@ -42,13 +37,7 @@ export const chatWithDocumentStream = async (req, res) => {
     res.setHeader('Connection', 'keep-alive');
 
     try {
-        // DEBUG: Log selection context
-        console.log(`[ChatController] Stream Request - Selection Context:`, selectionContext ? `Sent (${selectionContext.length} items)` : 'None');
-        if (selectionContext && selectionContext.length > 0) {
-            console.log(`[ChatController] First Item:`, selectionContext[0].substring(0, 50) + '...');
-        }
-
-        const stream = generateChunkBasedStreamingTransformation(fileId, message, 10, selectionContext);
+        const stream = generateChunkBasedStreamingTransformation(fileId, message, 10, selectionNodeIds);
 
 
         for await (const chunk of stream) {

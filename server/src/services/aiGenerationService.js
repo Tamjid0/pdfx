@@ -148,17 +148,36 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
 
     console.log(`[AI-Service] Normalised Selection Context: ${selectionContext.length} items`);
 
-    // 2. Vector Search with Fallback
+    // Vector Search with Smart Intersection Strategy
     let searchResults = [];
     try {
-        searchResults = await vectorStoreService.similaritySearch(fileId, query, topN);
+        if (selectionContext.length > 0) {
+            // Dual search: Query + Selected text
+            const queryResults = await vectorStoreService.similaritySearch(fileId, query, topN);
+            const selectionQuery = selectionContext.join(' ');
+            const selectionResults = await vectorStoreService.similaritySearch(fileId, selectionQuery, topN);
+
+            // Find intersection: chunks that appear in BOTH searches
+            const queryIds = new Set(queryResults.map(doc => doc.metadata?.chunkId || doc.pageContent));
+            searchResults = selectionResults.filter(doc => {
+                const id = doc.metadata?.chunkId || doc.pageContent;
+                return queryIds.has(id);
+            });
+
+            // Fallback: If no intersection, use selection results (more relevant than query alone)
+            if (searchResults.length === 0) {
+                searchResults = selectionResults.slice(0, 5); // Limit to 5 to save cost
+            }
+        } else {
+            // No selection: Standard vector search
+            searchResults = await vectorStoreService.similaritySearch(fileId, query, topN);
+        }
     } catch (err) {
-        console.error(`[AI-Service] Vector search failed (continuing with selection only): ${err.message}`);
-        // Non-fatal: Proceed so we can at least answer from selection
+        // Non-fatal: Proceed with selection context if available
     }
 
-    // 3. Early Exit if NO Context at all
-    if (searchResults.length === 0 && selectionContext.length === 0) {
+    // Early Exit if NO Context at all
+    if (searchResults.length === 0 && selectionChunks.length === 0) {
         yield "Information not found in document.";
         return;
     }
@@ -182,8 +201,6 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
             return String(item);
         });
 
-        console.log(`[AI-Service] Sanitized Context Content:`, JSON.stringify(sanitizedContext));
-        console.log(`[AI-Service] Injecting Visual Selection Prompt (${sanitizedContext.length} items)`);
         visualSelectionPrompt = `
 ### 🎯 USER HAS SELECTED CONTENT
 The user has MANUALLY SELECTED the following text on the document page.
@@ -198,8 +215,6 @@ ${sanitizedContext.join('\n')}
 - **DEFAULT:** Assume the user is interested in the selected text unless clearly stated otherwise.
 `;
     }
-
-    console.log(`[AI-Service] Visual Prompt Generated: ${!!visualSelectionPrompt}, Length: ${visualSelectionPrompt.length}`);
 
     const systemPrompt = `
 You are a conversational AI assistant named pdfx.
@@ -241,7 +256,6 @@ User Query: "${query}"
 
 
     try {
-        console.log(`[AI-Service] Prompt TAIL:\n...${systemPrompt.slice(-1000)}`);
         const result = await retryOperation(() => aiModel.generateContentStream(systemPrompt));
 
         for await (const chunk of result.stream) {

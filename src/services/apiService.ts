@@ -228,17 +228,15 @@ export async function chatWithDocumentStream(
     fileId: string,
     onChunk: (text: string) => void,
     onComplete: (fullText: string) => void,
-    selectionContext?: string[]
-) {
+    selectionNodeIds?: string[]
+): Promise<void> {
     const response = await fetch('/api/v1/chat/stream', {
         method: 'POST',
         headers: await getAuthHeaders({
             'Content-Type': 'application/json',
         }),
-        body: JSON.stringify({ message, fileId, selectionContext }),
+        body: JSON.stringify({ message, fileId, selectionNodeIds }),
     });
-
-    console.log(`[ApiService] Stream Request - Selection Context:`, selectionContext ? `Sent (${selectionContext.length} items)` : 'None');
 
     if (!response.ok) {
         throw new Error('Failed to initiate streaming chat');

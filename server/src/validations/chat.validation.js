@@ -11,6 +11,6 @@ export const chatStreamSchema = {
     body: z.object({
         fileId: z.string().min(1, 'fileId is required'),
         message: z.string().min(1, 'message is required'),
-        selectionContext: z.array(z.string()).optional(),
+        selectionNodeIds: z.array(z.string()).optional(),
     }),
 };

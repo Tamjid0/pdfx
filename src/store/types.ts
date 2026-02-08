@@ -219,6 +219,7 @@ export interface AppState {
         height: number;
         pageIndex: number;
         textNodes: string[];
+        nodeIds: string[];
     } | null;
 
     // Settings

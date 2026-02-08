@@ -45,11 +45,9 @@ export const useChat = () => {
                 timestamp: 'streaming...'
             }]);
 
-            const selectionContext = activeSelection?.textNodes || [];
+            const selectionNodeIds = activeSelection?.nodeIds || [];
 
-            console.log(`[useChat] About to send - Selection Context:`, selectionContext, `Type:`, typeof selectionContext, `Array:`, Array.isArray(selectionContext));
-
-            if (activeSelection && selectionContext.length === 0) {
+            if (activeSelection && selectionNodeIds.length === 0) {
                 setChatHistory(prev => [...prev, {
                     role: 'ai',
                     content: "⚠️ **No text detected in this selection.**\n\nThis specific area might be an image, or the document needs to be **re-uploaded** to apply the latest text extraction updates.",
@@ -97,7 +95,7 @@ export const useChat = () => {
                     });
                     setIsTyping(false);
                 },
-                selectionContext
+                selectionNodeIds
             );
 
             // Clear selection after sending

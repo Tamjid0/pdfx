@@ -134,19 +134,20 @@ const SlideViewer: React.FC = () => {
             return intersects;
         });
 
-        console.log(`[SlideViewer] Selection Attempt: Rect:`, rect, `Page Nodes:`, currentPage.nodes?.length, `Matches:`, selectedNodes.length);
-        if (selectedNodes.length > 0) {
-            console.log(`[SlideViewer] First Match:`, selectedNodes[0].content);
-        }
-
         const textNodes = selectedNodes
             .filter((n: any) => n.type === 'text')
             .map((n: any) => typeof n.content === 'string' ? n.content : n.content?.text || "");
 
+        const nodeIds = selectedNodes
+            .filter((n: any) => n.type === 'text')
+            .map((n: any) => n.id)
+            .filter(Boolean); // Remove any undefined IDs
+
         setActiveSelection({
             ...rect,
             pageIndex: currentSlideIndex,
-            textNodes
+            textNodes,
+            nodeIds
         });
     };
 

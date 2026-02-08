@@ -105,12 +105,26 @@ export const createProjectSlice: StateCreator<AppState, [], [], ProjectSlice> = 
             const data = await apiService.fetchDocument(documentId);
             set({
                 fileId: data.documentId || data.fileId, // Use documentId as primary source
-                fileType: data.fileType || 'pdf',
+                // Fix: Map backend 'type' to frontend 'fileType'
+                fileType: data.fileType || ((data.type && (data.type.includes('presentation') || data.type.includes('pptx'))) ? 'pptx' : 'pdf'),
                 stats: data.stats || { wordCount: 0, charCount: 0, lineCount: 0, readTime: 0, pageCount: 1 },
                 isPreviewMode: false,
                 htmlPreview: data.pdfUrl || data.originalFile?.url || null,
-                view: 'editor' // Restore view state to fix redirect to import
+                view: 'editor', // Restore view state to fix redirect to import
+                // Explicitly set slide mode if applicable to prevent PDF viewer fallback
+                leftPanelView: (data.fileType === 'pptx' || (data.type && (data.type.includes('presentation') || data.type.includes('pptx')))) ? 'slides' : 'editor',
+                isSlideMode: (data.fileType === 'pptx' || (data.type && (data.type.includes('presentation') || data.type.includes('pptx')))) ? true : false,
             });
+
+            // Populate slides for PPTX
+            if ((data.fileType === 'pptx' || (data.type && (data.type.includes('presentation') || data.type.includes('pptx')))) && data.chunks) {
+                const slides = data.chunks.map((chunk: any) => ({
+                    title: chunk.metadata?.slideTitle || `Slide ${chunk.metadata?.pageIndex || '?'}`,
+                    content: chunk.content
+                }));
+                // We use 'as any' because slides is part of SlideSlice, not ProjectSlice
+                set({ slides, currentSlideIndex: 0 } as any);
+            }
 
             // Hydrate Revisions from server
             const modules: Mode[] = ['summary', 'notes', 'insights', 'flashcards', 'quiz', 'mindmap'];

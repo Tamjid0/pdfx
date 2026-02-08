@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { getAuthHeaders } from '../services/apiService';
+import SelectionOverlay from './slides/SelectionOverlay';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -57,6 +58,7 @@ const DocumentViewer: React.FC = () => {
     const setHeadersLoaded = useStore(state => state.setHeadersLoaded);
     const authHeaders = useStore(state => state.authHeaders);
     const setAuthHeaders = useStore(state => state.setAuthHeaders);
+    const setActiveSelection = useStore(state => state.setActiveSelection);
 
     const [numPages, setNumPages] = useState<number | null>(null);
     const [pageNumber, setPageNumber] = useState<number>(1);
@@ -385,6 +387,37 @@ const DocumentViewer: React.FC = () => {
     const zoomOut = () => setScale(prev => Math.max(prev - 0.1, 0.5));
     const resetZoom = () => setScale(1.0);
 
+    const handleSelectionComplete = (rect: { x: number, y: number, width: number, height: number }) => {
+        if (!documentStructure) return;
+
+        const pages = documentStructure.structure?.pages || documentStructure.pages || [];
+        const currentPage = pages.find((p: any) => p.index === currentSlideIndex);
+
+        if (!currentPage || !currentPage.nodes) return;
+
+        const selectedNodes = currentPage.nodes.filter((node: any) => {
+            if (!node.position) return false;
+
+            // Check intersection (all units are percentages)
+            return (
+                node.position.x < rect.x + rect.width &&
+                node.position.x + node.position.width > rect.x &&
+                node.position.y < rect.y + rect.height &&
+                node.position.y + node.position.height > rect.y
+            );
+        });
+
+        const textNodes = selectedNodes
+            .filter((n: any) => n.type === 'text')
+            .map((n: any) => n.content);
+
+        setActiveSelection({
+            ...rect,
+            pageIndex: currentSlideIndex,
+            textNodes
+        });
+    };
+
     if (!fileId) return null;
 
     return (
@@ -559,6 +592,12 @@ const DocumentViewer: React.FC = () => {
                                         renderAnnotationLayer={true}
                                         onRenderSuccess={onPageRenderSuccess}
                                         className="shadow-2xl border border-[#222] transition-transform duration-200"
+                                    />
+
+                                    {/* SELECTION OVERLAY LAYER (Always active, responds to Alt key) */}
+                                    <SelectionOverlay
+                                        isActive={true}
+                                        onSelectionComplete={handleSelectionComplete}
                                     />
 
 

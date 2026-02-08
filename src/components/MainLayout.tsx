@@ -107,6 +107,17 @@ const MainLayout: React.FC<MainLayoutProps> = ({
         }
     };
 
+    // Ensure we switch to slide view when opening a PPTX
+    React.useEffect(() => {
+        if (fileId && fileType === 'pptx') {
+            setLeftPanelView('slides');
+            useStore.getState().setIsSlideMode(true);
+        } else if (fileId && fileType === 'pdf') {
+            setLeftPanelView('editor'); // Reset for PDFs
+            useStore.getState().setIsSlideMode(false);
+        }
+    }, [fileId, fileType, setLeftPanelView]);
+
     const confirmExit = () => {
         useStore.getState().resetWorkspace();
         // Clear project ID from URL when exiting session

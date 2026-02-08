@@ -29,8 +29,6 @@ const SlideViewer: React.FC = () => {
         isSlideMode,
         activeNodeIds,
         setActiveNodeIds,
-        selectionMode,
-        setSelectionMode,
         activeSelection,
         setActiveSelection
     } = useStore();
@@ -144,9 +142,6 @@ const SlideViewer: React.FC = () => {
             pageIndex: currentSlideIndex,
             textNodes
         });
-
-        // Exit selection mode after drawing
-        setSelectionMode(false);
     };
 
 
@@ -233,7 +228,7 @@ const SlideViewer: React.FC = () => {
 
                             {/* SELECTION OVERLAY LAYER */}
                             <SelectionOverlay
-                                isActive={selectionMode}
+                                isActive={true}
                                 onSelectionComplete={handleSelectionComplete}
                             />
 
@@ -292,24 +287,10 @@ const SlideViewer: React.FC = () => {
                     )}
 
                     {/* Unified Slide Metadata Overlay */}
-                    <div className="absolute top-6 left-8 z-10 flex items-center gap-3">
+                    <div className="absolute top-6 left-8 z-10">
                         <span className="text-[10px] font-bold text-[#00ff88] uppercase tracking-[0.2em] bg-black/40 px-3 py-1 rounded-full backdrop-blur-md border border-[#00ff88]/20">
                             Slide {currentSlideIndex + 1}
                         </span>
-
-                        <button
-                            onClick={() => setSelectionMode(!selectionMode)}
-                            className={`p-1.5 rounded-lg border transition-all backdrop-blur-md flex items-center gap-2 group/btn ${selectionMode
-                                    ? 'bg-[#00ff88] border-[#00ff88] text-black shadow-[0_0_15px_rgba(0,255,136,0.4)]'
-                                    : 'bg-black/40 border-white/10 text-white hover:bg-white/10'
-                                }`}
-                            title="Area Selection"
-                        >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 5a1 1 0 011-1h4a1 1 0 010 2H6v3a1 1 0 01-2 0V5zM14 4a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-2 0V6h-3a1 1 0 01-1-1zM4 14a1 1 0 012 0v3h3a1 1 0 010 2H5a1 1 0 01-1-1v-4zM19 14a1 1 0 012 0v4a1 1 0 01-1 1h-4a1 1 0 010-2h3v-3a1 1 0 01-1-1z" />
-                            </svg>
-                            <span className="text-[9px] font-black uppercase tracking-tighter opacity-0 group-hover/btn:opacity-100 w-0 group-hover/btn:w-auto overflow-hidden transition-all duration-300">Area Selection</span>
-                        </button>
                     </div>
 
                     <div className="absolute bottom-6 right-8 z-10 opacity-40 group-hover:opacity-100 transition-opacity">
@@ -322,7 +303,7 @@ const SlideViewer: React.FC = () => {
                 {/* Floating Navigation Controls (Always Available) */}
                 {slides.length > 1 && (
                     <>
-                        <div className="absolute inset-y-0 left-4 flex items-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-[-10px] group-hover:translate-x-0 z-30">
+                        <div className="absolute inset-y-0 left-4 flex items-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-[-10px] group-hover:translate-x-0 z-[100]">
                             <button
                                 onClick={prevSlide}
                                 disabled={currentSlideIndex === 0}
@@ -332,7 +313,7 @@ const SlideViewer: React.FC = () => {
                             </button>
                         </div>
 
-                        <div className="absolute inset-y-0 right-4 flex items-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-[10px] group-hover:translate-x-0 z-30">
+                        <div className="absolute inset-y-0 right-4 flex items-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-[10px] group-hover:translate-x-0 z-[100]">
                             <button
                                 onClick={nextSlide}
                                 disabled={currentSlideIndex === slides.length - 1}

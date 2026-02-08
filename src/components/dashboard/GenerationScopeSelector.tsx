@@ -142,23 +142,6 @@ const GenerationScopeSelector: React.FC<GenerationScopeSelectorProps> = ({ class
                     </div>
                 )}
             </div>
-
-            <div className="pt-4 border-t border-white/5">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                    <div
-                        onClick={() => setIsAppendMode(!isAppendMode)}
-                        className={`w-10 h-5 rounded-full transition-all duration-300 relative ${isAppendMode ? 'bg-gemini-green' : 'bg-white/10'
-                            }`}
-                    >
-                        <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform duration-300 ${isAppendMode ? 'translate-x-5' : 'translate-x-0'
-                            }`} />
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest group-hover:text-white transition-colors">Append to existing</span>
-                        <span className="text-[8px] text-white/20 uppercase tracking-tighter">Merge new analysis without losing old data</span>
-                    </div>
-                </label>
-            </div>
         </div>
     );
 };

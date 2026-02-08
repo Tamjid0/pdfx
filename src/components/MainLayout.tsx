@@ -233,7 +233,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                                                                 </button>
                                                             );
 
-                                                            const toolsAction = mode !== 'chat' && mode !== 'quiz' && mode !== 'mindmap' ? (
+                                                            const toolsAction = mode !== 'chat' ? (
                                                                 <button
                                                                     onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
                                                                     className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${rightSidebarOpen

@@ -109,41 +109,37 @@ const Mindmap: React.FC<MindmapProps> = ({
         >
             <div className="w-full h-full relative">
                 {!hasData ? (
-                    <div className="flex flex-col items-center justify-center min-h-full text-center p-8 bg-[#0a0a0a] rounded-xl overflow-y-auto custom-scrollbar">
-                        <div className="p-10 max-w-2xl mx-auto w-full space-y-12">
-                            <div className="text-center space-y-4 pt-8">
-                                <div className="w-20 h-20 bg-[#00ff88]/5 rounded-[2.5rem] flex items-center justify-center mx-auto border border-[#00ff88]/10 shadow-2xl">
-                                    <svg className="w-10 h-10 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex flex-col items-center justify-center min-h-full text-center pt-2 px-8 pb-8 bg-[#0a0a0a] rounded-xl overflow-y-auto custom-scrollbar">
+                        <div className="p-4 max-w-2xl mx-auto w-full space-y-6">
+                            <div className="text-center space-y-3 pt-2">
+                                <div className="w-14 h-14 bg-[#00ff88]/5 rounded-[2.5rem] flex items-center justify-center mx-auto border border-[#00ff88]/10 shadow-2xl">
+                                    <svg className="w-7 h-7 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V5l12-2v14l-12 2zM9 19l-6-2V3l6 2m0 14V5" />
                                     </svg>
                                 </div>
-                                <h3 className="text-3xl font-black text-white tracking-tight uppercase italic">Concept Laboratory</h3>
-                                <p className="text-gray-400 max-w-sm mx-auto leading-relaxed text-sm">
-                                    Map out structural hierarchies and semantic relationships within your material.
-                                </p>
+                                <h3 className="text-xl font-black text-white tracking-tight uppercase italic">Mindmap</h3>
                             </div>
 
                             {isGeneratingMindmap ? (
-                                <div className="w-full space-y-8 animate-pulse">
-                                    <div className="h-40 bg-white/5 rounded-[2rem] border border-white/10 flex flex-col items-center justify-center">
-                                        <div className="w-8 h-8 border-2 border-[#00ff88] border-t-transparent rounded-full animate-spin mb-4"></div>
-                                        <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">Mapping Nodes...</span>
+                                <div className="w-full space-y-6 animate-pulse">
+                                    <div className="h-32 bg-white/5 rounded-[2rem] border border-white/10 flex flex-col items-center justify-center">
+                                        <div className="w-6 h-6 border-2 border-[#00ff88] border-t-transparent rounded-full animate-spin mb-3"></div>
+                                        <span className="text-[9px] font-black text-white uppercase tracking-[0.3em]">Mapping Nodes...</span>
                                     </div>
-                                    <LocalizedShimmer blocks={2} />
+                                    <LocalizedShimmer blocks={1} />
                                 </div>
                             ) : (
-                                <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-8 space-y-8">
-                                    <div className="space-y-4 text-left">
-                                        <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Select Target Scope</h4>
-                                        <GenerationScopeSelector />
+                                <div className="space-y-6 max-w-sm mx-auto w-full">
+                                    <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-6">
+                                        <GenerationScopeSelector className="!space-y-4" />
                                     </div>
 
                                     <button
                                         onClick={() => onGenerate('mindmap')}
-                                        className="w-full py-5 bg-[#00ff88] text-black rounded-2xl text-xs font-black transition-all hover:bg-[#00dd77] active:scale-95 shadow-2xl flex items-center justify-center gap-3 uppercase tracking-widest"
+                                        className="px-12 py-4 bg-[#00ff88] text-black rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 active:scale-95 shadow-[0_5px_15px_rgba(0,255,136,0.3)] flex items-center justify-center gap-3 w-full"
                                     >
-                                        Generate Mindmap
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                                        GENERATE MINDMAP
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                                     </button>
                                 </div>
                             )}

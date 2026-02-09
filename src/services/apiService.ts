@@ -288,6 +288,20 @@ export async function getJobStatus(jobId: string) {
 }
 
 /**
+ * Fetches document data including chat history
+ */
+export async function fetchDocumentData(documentId: string) {
+    const response = await fetch(`/api/v1/documents/${documentId}`, {
+        method: 'GET',
+        headers: await getAuthHeaders(),
+    });
+    if (!response.ok) {
+        throw new Error('Failed to fetch document data');
+    }
+    return response.json();
+}
+
+/**
  * Syncs workspace content (Chat, Summary, etc.) to the backend
  */
 export async function syncProjectContent(

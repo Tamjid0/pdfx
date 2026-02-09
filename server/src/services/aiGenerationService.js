@@ -143,6 +143,11 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
     // Validate Selection Node IDs
     let selectionNodeIds = Array.isArray(inputSelectionNodeIds) ? inputSelectionNodeIds : (inputSelectionNodeIds ? [inputSelectionNodeIds] : []);
 
+    // DEBUG: Log what selection is being sent
+    if (selectionNodeIds.length > 0) {
+        console.log(`[AI-Service] 🔍 Selection received: ${selectionNodeIds.length} node IDs:`, selectionNodeIds);
+    }
+
     // Vector Search with Smart Intersection Strategy
     let searchResults = [];
     let selectionChunks = [];
@@ -161,9 +166,9 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
                 return selectionIds.has(id);
             });
 
-            // Fallback: If no intersection, use selection chunks (more relevant than query alone)
+            // Fallback: If no intersection, use selection chunks if available, otherwise query results
             if (searchResults.length === 0) {
-                searchResults = selectionChunks; // Use all selection chunks
+                searchResults = selectionChunks.length > 0 ? selectionChunks : queryResults;
             }
         } else {
             // No selection: Standard vector search
@@ -174,8 +179,16 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
         logger.warn(`[AI-Service] Vector search or selection chunk retrieval failed: ${err.message}`);
     }
 
+    // DEBUG: Log what we got
+    console.log(`[AI-Service] 📊 Results:`, {
+        searchResultsCount: searchResults.length,
+        selectionChunksCount: selectionChunks.length,
+        hasNodeIds: selectionNodeIds.length > 0
+    });
+
     // Early Exit if NO Context at all
     if (searchResults.length === 0 && selectionChunks.length === 0) {
+        console.log(`[AI-Service] ⚠️ Early exit triggered - No context found. Query: "${query}", FileId: ${fileId}, SelectionNodeIds: ${selectionNodeIds.length}`);
         yield "Information not found in document.";
         return;
     }

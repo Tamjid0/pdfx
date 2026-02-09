@@ -411,10 +411,16 @@ const DocumentViewer: React.FC = () => {
             .filter((n: any) => n.type === 'text')
             .map((n: any) => n.content);
 
+        const nodeIds = selectedNodes
+            .filter((n: any) => n.type === 'text')
+            .map((n: any) => n.id)
+            .filter(Boolean); // Remove any undefined IDs
+
         setActiveSelection({
             ...rect,
             pageIndex: currentSlideIndex,
-            textNodes
+            textNodes,
+            nodeIds
         });
     };
 

@@ -1,5 +1,6 @@
 import { useStore } from '../store/useStore';
 import * as apiService from '../services/apiService';
+import { useEffect } from 'react';
 
 export const useChat = () => {
     const {
@@ -7,8 +8,28 @@ export const useChat = () => {
         setChatHistory,
         setIsTyping,
         activeSelection,
-        setActiveSelection
+        setActiveSelection,
+        chatHistory
     } = useStore();
+
+    // Load chat history when fileId changes
+    useEffect(() => {
+        if (!fileId) {
+            setChatHistory([]);
+            return;
+        }
+
+        // Load chat history from backend
+        apiService.fetchDocumentData(fileId)
+            .then(data => {
+                if (data.chatHistory && Array.isArray(data.chatHistory)) {
+                    setChatHistory(data.chatHistory);
+                }
+            })
+            .catch(err => {
+                console.error('[useChat] Failed to load chat history:', err);
+            });
+    }, [fileId, setChatHistory]);
 
     const handleSendMessage = async (message: string) => {
         const newUserMessage = {
@@ -46,6 +67,13 @@ export const useChat = () => {
             }]);
 
             const selectionNodeIds = activeSelection?.nodeIds || [];
+
+            console.log(`[useChat] 🔍 Sending selection:`, {
+                hasSelection: !!activeSelection,
+                nodeIdsCount: selectionNodeIds.length,
+                nodeIds: selectionNodeIds,
+                pageIndex: activeSelection?.pageIndex
+            });
 
             if (activeSelection && selectionNodeIds.length === 0) {
                 setChatHistory(prev => [...prev, {

@@ -68,13 +68,6 @@ export const useChat = () => {
 
             const selectionNodeIds = activeSelection?.nodeIds || [];
 
-            console.log(`[useChat] 🔍 Sending selection:`, {
-                hasSelection: !!activeSelection,
-                nodeIdsCount: selectionNodeIds.length,
-                nodeIds: selectionNodeIds,
-                pageIndex: activeSelection?.pageIndex
-            });
-
             if (activeSelection && selectionNodeIds.length === 0) {
                 setChatHistory(prev => [...prev, {
                     role: 'ai',

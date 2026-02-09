@@ -258,7 +258,16 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                                     </div>
                                     <div className="flex flex-col">
                                         <span className="text-[10px] font-bold text-[#00ff88] uppercase tracking-widest">Visual Selection Active</span>
-                                        <span className="text-[9px] text-white/40 uppercase tracking-tighter">Slide {activeSelection.pageIndex + 1} • {activeSelection.textNodes.length} nodes found</span>
+                                        <div className="flex flex-col">
+                                            {activeSelection.textPreview && (
+                                                <span className="text-[11px] text-white/90 font-medium italic truncate max-w-[300px] mb-0.5">
+                                                    "{activeSelection.textPreview}"
+                                                </span>
+                                            )}
+                                            <span className="text-[9px] text-white/40 uppercase tracking-tighter">
+                                                Page {activeSelection.pageIndex + 1} • {activeSelection.textNodes.length} nodes
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                                 <button

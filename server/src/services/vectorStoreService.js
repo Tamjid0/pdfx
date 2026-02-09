@@ -67,13 +67,6 @@ class VectorStoreService {
                 return [];
             }
 
-
-            console.log(`[VectorStore] 🔍 Document found:`, {
-                hasDoc: !!doc,
-                structureKeys: doc.structure ? Object.keys(doc.structure) : [],
-                structure_structureKeys: doc.structure?.structure ? Object.keys(doc.structure.structure) : []
-            });
-
             // Handle different structure formats
             // Format 1: Direct structure object (legacy?)
             // Format 2: DocumentRoot instance (current) -> has .structure property
@@ -81,23 +74,8 @@ class VectorStoreService {
 
             const chunks = []; // Re-declare chunks here
 
-            console.log(`[VectorStore] 🔍 Document query result:`, {
-                foundDoc: !!doc,
-                hasStructure: !!doc.structure,
-                pagesCount: pages.length,
-                requestedNodeIds: nodeIds,
-                samplePageNodes: pages[0]?.nodes?.length || 0
-            });
-
             for (const page of pages) {
                 if (!page.nodes) continue;
-
-                // DEBUG: Show sample node IDs from first page
-                if (page === pages[0]) {
-                    const sampleNodes = page.nodes.slice(0, 3).map(n => ({ id: n.id, type: n.type }));
-                    console.log(`[VectorStore] 🔍 Sample node IDs in database:`, sampleNodes);
-                    console.log(`[VectorStore] 🔍 Requested node IDs:`, nodeIds);
-                }
 
                 for (const node of page.nodes) {
                     if (nodeIds.includes(node.id) && node.type === 'text') {

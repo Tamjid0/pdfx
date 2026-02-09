@@ -100,6 +100,17 @@ export interface MindmapData {
     edges: MindmapEdge[];
 }
 
+export interface ActiveSelection {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    pageIndex: number;
+    textNodes: string[];
+    nodeIds?: string[];
+    textPreview?: string; // Short preview of selected text
+}
+
 export interface Revision<T> {
     id: string;
     name: string;
@@ -212,15 +223,7 @@ export interface AppState {
     slides: any[];
     currentSlideIndex: number;
     selectionMode: boolean;
-    activeSelection: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-        pageIndex: number;
-        textNodes: string[];
-        nodeIds: string[];
-    } | null;
+    activeSelection: ActiveSelection | null;
 
     // Settings
     summarySettings: any;

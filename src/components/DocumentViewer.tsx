@@ -398,29 +398,46 @@ const DocumentViewer: React.FC = () => {
         const selectedNodes = currentPage.nodes.filter((node: any) => {
             if (!node.position) return false;
 
-            // Check intersection (all units are percentages)
-            return (
-                node.position.x < rect.x + rect.width &&
-                node.position.x + node.position.width > rect.x &&
-                node.position.y < rect.y + rect.height &&
-                node.position.y + node.position.height > rect.y
-            );
+            // Robust Intersection Logic (Overlap Threshold)
+            const x1 = Math.max(node.position.x, rect.x);
+            const y1 = Math.max(node.position.y, rect.y);
+            const x2 = Math.min(node.position.x + node.position.width, rect.x + rect.width);
+            const y2 = Math.min(node.position.y + node.position.height, rect.y + rect.height);
+
+            if (x2 > x1 && y2 > y1) {
+                const intersectionArea = (x2 - x1) * (y2 - y1);
+                const nodeArea = node.position.width * node.position.height;
+                const rectArea = rect.width * rect.height;
+
+                // Select if:
+                // 1. Capture significant part of the node (> 20%)
+                // 2. OR Selection is mostly inside the node (> 50%) - for small precision selects
+                return (intersectionArea / nodeArea > 0.2) || (intersectionArea / rectArea > 0.5);
+            }
+            return false;
         });
 
         const textNodes = selectedNodes
             .filter((n: any) => n.type === 'text')
-            .map((n: any) => n.content);
+            .map((n: any) => typeof n.content === 'string' ? n.content : n.content?.text || "");
 
         const nodeIds = selectedNodes
             .filter((n: any) => n.type === 'text')
             .map((n: any) => n.id)
-            .filter(Boolean); // Remove any undefined IDs
+            .filter(Boolean);
+
+        // Generate Text Preview (First ~5 words)
+        const fullText = textNodes.join(' ');
+        const textPreview = fullText.length > 40
+            ? fullText.slice(0, 40) + '...'
+            : fullText;
 
         setActiveSelection({
             ...rect,
             pageIndex: currentSlideIndex,
             textNodes,
-            nodeIds
+            nodeIds,
+            textPreview
         });
     };
 

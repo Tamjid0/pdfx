@@ -1,5 +1,5 @@
 import { StateCreator } from 'zustand';
-import { AppState } from '../types';
+import { AppState, ActiveSelection } from '../types';
 
 export interface SlideSlice {
     isSlideMode: boolean;
@@ -8,14 +8,7 @@ export interface SlideSlice {
     slides: { title: string; content: string }[];
     currentSlideIndex: number;
     selectionMode: boolean;
-    activeSelection: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-        pageIndex: number;
-        textNodes: string[];
-    } | null;
+    activeSelection: ActiveSelection | null;
 
     setIsSlideMode: (isSlideMode: boolean) => void;
     setIsProcessingSlides: (isProcessing: boolean) => void;
@@ -25,14 +18,7 @@ export interface SlideSlice {
     nextSlide: () => void;
     prevSlide: () => void;
     setSelectionMode: (mode: boolean) => void;
-    setActiveSelection: (selection: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-        pageIndex: number;
-        textNodes: string[];
-    } | null) => void;
+    setActiveSelection: (selection: ActiveSelection | null) => void;
 }
 
 export const createSlideSlice: StateCreator<AppState, [], [], SlideSlice> = (set) => ({
@@ -58,5 +44,5 @@ export const createSlideSlice: StateCreator<AppState, [], [], SlideSlice> = (set
         activeSelection: null
     })),
     setSelectionMode: (mode) => set({ selectionMode: mode }),
-    setActiveSelection: (selection) => set({ activeSelection: selection }),
+    setActiveSelection: (selection: ActiveSelection | null) => set({ activeSelection: selection }),
 });

@@ -377,7 +377,10 @@ const DocumentViewer: React.FC = () => {
     }
 
     const changePage = (offset: number) => {
-        setPageNumber(prevPageNumber => prevPageNumber + offset);
+        const newIndex = currentSlideIndex + offset;
+        if (numPages && newIndex >= 0 && newIndex < numPages) {
+            setCurrentSlideIndex(newIndex);
+        }
     };
 
     const previousPage = () => changePage(-1);

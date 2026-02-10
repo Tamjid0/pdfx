@@ -14,7 +14,16 @@ interface ChatProps {
         role: 'user' | 'assistant' | 'ai';
         content: string;
         timestamp?: string;
-        selection?: { pageIndex: number; nodesCount: number; textPreview?: string };
+        selection?: {
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+            pageIndex: number;
+            textNodes: string[];
+            nodeIds?: string[];
+            textPreview?: string;
+        };
     }[];
     onSendMessage: (message: string) => void;
     isTyping?: boolean;
@@ -25,7 +34,8 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
     const {
         setActiveNodeIds,
         activeSelection,
-        setActiveSelection
+        setActiveSelection,
+        setCurrentSlideIndex
     } = useStore();
     const [inputValue, setInputValue] = useState('');
     const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -144,8 +154,8 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                                                     </svg>
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className="text-[9px] font-bold text-[#00ff88] uppercase tracking-wider">Visual Context</span>
-                                                    <span className="text-[8px] text-white/50">Slide {msg.selection.pageIndex + 1} Selected</span>
+                                                    <span className="text-[9px] font-bold text-[#00ff88] uppercase tracking-wider">Visual Selection Active</span>
+                                                    <span className="text-[8px] text-white/50">{msg.selection.textPreview || `Slide ${msg.selection.pageIndex + 1} Selected`}</span>
                                                 </div>
                                             </div>
                                         )}

@@ -34,14 +34,12 @@ export const createSlideSlice: StateCreator<AppState, [], [], SlideSlice> = (set
     setIsProcessingSlides: (isProcessing) => set({ isProcessingSlides: isProcessing }),
     setRenderingProgress: (progress) => set({ renderingProgress: progress }),
     setSlides: (slides) => set({ slides }),
-    setCurrentSlideIndex: (index) => set({ currentSlideIndex: index, activeSelection: null }), // Clear selection on page change
+    setCurrentSlideIndex: (index) => set({ currentSlideIndex: index }), // Keep selection persistent
     nextSlide: () => set((state) => ({
         currentSlideIndex: Math.min(state.currentSlideIndex + 1, state.slides.length - 1),
-        activeSelection: null
     })),
     prevSlide: () => set((state) => ({
         currentSlideIndex: Math.max(state.currentSlideIndex - 1, 0),
-        activeSelection: null
     })),
     setSelectionMode: (mode) => set({ selectionMode: mode }),
     setActiveSelection: (selection: ActiveSelection | null) => set({ activeSelection: selection }),

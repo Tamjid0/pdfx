@@ -430,11 +430,14 @@ const DocumentViewer: React.FC = () => {
             .map((n: any) => n.id)
             .filter(Boolean);
 
-        // Generate Text Preview (First ~5 words)
+        // Generate Text Preview (Start...End)
         const fullText = textNodes.join(' ');
-        const textPreview = fullText.length > 40
-            ? fullText.slice(0, 40) + '...'
-            : fullText;
+        let textPreview = fullText;
+        if (fullText.length > 50) {
+            const start = fullText.slice(0, 20).trim();
+            const end = fullText.slice(-20).trim();
+            textPreview = `${start}...${end}`;
+        }
 
         setActiveSelection({
             ...rect,
@@ -629,7 +632,7 @@ const DocumentViewer: React.FC = () => {
                                     {/* Persistent Active Selection Box */}
                                     {activeSelection && activeSelection.pageIndex === pageNumber - 1 && (
                                         <div
-                                            className="absolute pointer-events-none z-[55]"
+                                            className="absolute pointer-events-none z-[70]"
                                             style={{
                                                 left: `${activeSelection.x}%`,
                                                 top: `${activeSelection.y}%`,

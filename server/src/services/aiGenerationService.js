@@ -5,8 +5,24 @@ import fs from 'fs';
 import logger from '../utils/logger.js';
 
 const aiModel = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
+    model: "gemini-1.5-flash",
 });
+
+const visionModel = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+});
+
+/**
+ * Converts local file information to a GoogleGenerativeAI.Part object.
+ */
+function fileToGenerativePart(path, mimeType) {
+    return {
+        inlineData: {
+            data: Buffer.from(fs.readFileSync(path)).toString("base64"),
+            mimeType
+        },
+    };
+}
 
 
 /**
@@ -139,56 +155,65 @@ User Query: "${query}"
     }
 }
 
+/**
+ * Analyzes a single image and returns a description.
+ */
+export async function analyzeImage(imagePath, prompt = "Describe this image in detail, focus on charts, tables, or key data points.") {
+    try {
+        const imagePart = fileToGenerativePart(imagePath, "image/png");
+        const result = await retryOperation(() => visionModel.generateContent([prompt, imagePart]));
+        return result?.response?.text()?.trim() || "No description generated.";
+    } catch (error) {
+        logger.error(`[AI-Service] Image analysis failed: ${error.message}`);
+        return "Failed to analyze image.";
+    }
+}
+
 export async function* generateChunkBasedStreamingTransformation(fileId, query, topN = 10, inputSelectionNodeIds = []) {
     // Validate Selection Node IDs
     let selectionNodeIds = Array.isArray(inputSelectionNodeIds) ? inputSelectionNodeIds : (inputSelectionNodeIds ? [inputSelectionNodeIds] : []);
 
-    // DEBUG: Log what selection is being sent
-    if (selectionNodeIds.length > 0) {
-        console.log(`[AI-Service] 🔍 Selection received: ${selectionNodeIds.length} node IDs:`, selectionNodeIds);
-    }
-
     // Vector Search with Smart Intersection Strategy
     let searchResults = [];
     let selectionChunks = [];
+    let imageParts = [];
+
     try {
         if (selectionNodeIds.length > 0) {
-            // Retrieve selection chunks directly by node IDs (no re-embedding!)
+            // Retrieve selection chunks directly by node IDs
             selectionChunks = await vectorStoreService.getChunksByNodeIds(fileId, selectionNodeIds);
+
+            // SPECIAL: Look for images in the selection
+            const docDir = storageService.getDocDir('guest', fileId); // Default to guest for now
+            for (const nodeId of selectionNodeIds) {
+                const imagePath = path.join(docDir, 'images', `${nodeId}.png`);
+                if (fs.existsSync(imagePath)) {
+                    imageParts.push(fileToGenerativePart(imagePath, "image/png"));
+                }
+            }
 
             // Perform query-based vector search
             const queryResults = await vectorStoreService.similaritySearch(fileId, query, topN);
 
-            // Find intersection: chunks that appear in BOTH selection and query results
+            // Find intersection
             const selectionIds = new Set(selectionChunks.map(doc => doc.metadata?.nodeId || doc.pageContent));
             searchResults = queryResults.filter(doc => {
                 const id = doc.metadata?.nodeId || doc.pageContent;
                 return selectionIds.has(id);
             });
 
-            // Fallback: If no intersection, use selection chunks if available, otherwise query results
             if (searchResults.length === 0) {
                 searchResults = selectionChunks.length > 0 ? selectionChunks : queryResults;
             }
         } else {
-            // No selection: Standard vector search
             searchResults = await vectorStoreService.similaritySearch(fileId, query, topN);
         }
     } catch (err) {
-        // Non-fatal: Proceed with selection context if available
-        logger.warn(`[AI-Service] Vector search or selection chunk retrieval failed: ${err.message}`);
+        logger.warn(`[AI-Service] Vector search or retrieval failed: ${err.message}`);
     }
 
-    // DEBUG: Log what we got
-    console.log(`[AI-Service] 📊 Results:`, {
-        searchResultsCount: searchResults.length,
-        selectionChunksCount: selectionChunks.length,
-        hasNodeIds: selectionNodeIds.length > 0
-    });
-
     // Early Exit if NO Context at all
-    if (searchResults.length === 0 && selectionChunks.length === 0) {
-        console.log(`[AI-Service] ⚠️ Early exit triggered - No context found. Query: "${query}", FileId: ${fileId}, SelectionNodeIds: ${selectionNodeIds.length}`);
+    if (searchResults.length === 0 && selectionChunks.length === 0 && imageParts.length === 0) {
         yield "Information not found in document.";
         return;
     }
@@ -203,49 +228,35 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
     let visualSelectionPrompt = "";
     if (selectionChunks && selectionChunks.length > 0) {
         const selectionText = selectionChunks.map(chunk => chunk.pageContent).join('\n');
-
         visualSelectionPrompt = `
 ### 🎯 USER HAS SELECTED CONTENT
-The user has MANUALLY SELECTED the following text on the document page.
-
+The user has MANUALLY SELECTED the following text:
 """
 ${selectionText}
 """
-
-✅ **INSTRUCTION:**
-- **IF** the user's question refers to "this", "here", "selected text", or asks about specific details found in the selection -> **Focus strictly on the selection above.**
-- **IF** the user asks a GENERAL question (e.g., "Summarize the document", "What is the main topic") -> Answer based on the full document context below, but you may mention how the selected part fits in.
-- **DEFAULT:** Assume the user is interested in the selected text unless clearly stated otherwise.
 `;
+    }
+
+    if (imageParts.length > 0) {
+        visualSelectionPrompt += `\n\n### 🖼️ USER HAS SELECTED IMAGES\nI have provided ${imageParts.length} image(s) from the document selection. Please use them to answer the user query if relevant.\n`;
     }
 
     const systemPrompt = `
 You are a conversational AI assistant named pdfx.
-
 You should answer in well structured markdown.
 Your response should be well structured like in the gemini app.
-structuring should be based on the question.
-Use table, bullet points, emojis, code blocks etc only when needed.
+Answer ONLY based on the provided Selected Content, Selected Images, and Document Context.
 
 STYLE:
 - Natural, human-like explanation
 - Clean flow, no over-formatting
-- Explain things the way you would in a normal chat
-- Use numerical emojis, or emojis like tick when needed
-- Avoid nested lists unless absolutely necessary
+- Use numerical emojis or ticks where needed
 
 Rules:
 - Don't greet the user
 - Don't say anything else other than the answer
 - Don't ever expose your real identity (Gemini)
-- Don't share your any personal information
-- **CRITICAL:** Answer ONLY based on the provided **Selected Content** (above) and **Document Context** (below).
-- If the user asks about the "selected area", USE THE "USER HAS SELECTED CONTENT" SECTION.
-- Never answer general questions unrelated to the context.
-
-- Each text block in the context is prepended with [[UUID]].
-- When referring to the Document Context, cite using [keyword](#UUID).
-- Do NOT cite the Selected Content section.
+- If the user asks about the "selected area", use the provided selection/images.
 
 Document Context:
 """
@@ -257,9 +268,9 @@ ${visualSelectionPrompt}
 User Query: "${query}"
 `;
 
-
     try {
-        const result = await retryOperation(() => aiModel.generateContentStream(systemPrompt));
+        const promptParts = [systemPrompt, ...imageParts];
+        const result = await retryOperation(() => visionModel.generateContentStream(promptParts));
 
         for await (const chunk of result.stream) {
             const chunkText = chunk.text();
@@ -269,7 +280,7 @@ User Query: "${query}"
         }
     } catch (error) {
         logger.error(`[AI-Service] Streaming transformation failed: ${error.message}`);
-        throw new Error('Failed to generate streaming response.');
+        yield "I encountered an error while processing your request.";
     }
 }
 

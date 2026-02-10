@@ -4,6 +4,7 @@ import { PdfExtractor } from './extractors/PdfExtractor.js';
 import { PptxExtractor } from './extractors/PptxExtractor.js';
 import { StructuredChunker } from './StructuredChunker.js';
 import { ImageExtractor } from './ImageExtractor.js';
+import { analyzeImage } from './aiGenerationService.js';
 import LibreOfficeService from './LibreOfficeService.js';
 import crypto from 'crypto';
 
@@ -105,7 +106,60 @@ export class DocumentProcessor {
         const jsonPath = path.join(docDir, `metadata.json`);
         fs.writeFileSync(jsonPath, JSON.stringify({ ...documentGraph, chunks, topics, extractedText: flatText }, null, 2));
 
+        // Start asynchronous image enrichment (don't block the return)
+        this.enrichImages(documentId, documentGraph, docDir).catch(err => {
+            logger.error(`[DocumentProcessor] Image enrichment failed: ${err.message}`);
+        });
+
         return { documentId, documentGraph, chunks, topics, extractedText: flatText };
+    }
+
+    /**
+     * Asynchronously enriches image nodes with AI descriptions
+     */
+    async enrichImages(documentId, documentGraph, docDir) {
+        const imageNodes = [];
+        documentGraph.pages.forEach(page => {
+            if (page.nodes) {
+                page.nodes.forEach(node => {
+                    if (node.type === 'image') imageNodes.push(node);
+                });
+            }
+        });
+
+        if (imageNodes.length === 0) return;
+
+        logger.info(`[DocumentProcessor] Enriching ${imageNodes.length} images for ${documentId}`);
+
+        for (const node of imageNodes) {
+            const imagePath = path.join(docDir, 'images', `${node.id}.png`);
+            if (fs.existsSync(imagePath)) {
+                try {
+                    const description = await analyzeImage(imagePath);
+                    node.content.description = description; // Store description in the node
+                    node.content.alt = description.substring(0, 100); // Also update alt text
+                } catch (e) {
+                    logger.warn(`[DocumentProcessor] Failed to enrich image ${node.id}: ${e.message}`);
+                }
+            }
+        }
+
+        // Update persistence after enrichment
+        const jsonPath = path.join(docDir, `metadata.json`);
+        const updatedData = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+        updatedData.pages = documentGraph.pages; // Sync pages with enriched nodes
+        fs.writeFileSync(jsonPath, JSON.stringify(updatedData, null, 2));
+
+        // Update MongoDB
+        try {
+            await Document.findOneAndUpdate(
+                { documentId },
+                { structure: documentGraph }
+            );
+            logger.info(`[DocumentProcessor] Enriched metadata saved for ${documentId}`);
+        } catch (mongoError) {
+            logger.error(`[DocumentProcessor] Failed to update enriched metadata in MongoDB: ${mongoError.message}`);
+        }
     }
 
     /**

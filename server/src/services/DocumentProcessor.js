@@ -11,6 +11,7 @@ import crypto from 'crypto';
 import storageService from './storageService.js';
 import PdfImageRenderer from './PdfImageRenderer.js';
 import Document from '../models/Document.js';
+import logger from '../utils/logger.js';
 
 export class DocumentProcessor {
     constructor() {
@@ -58,9 +59,15 @@ export class DocumentProcessor {
         documentGraph.documentId = documentId;
         documentGraph.userId = userId;
 
-        // Extract internal images (embedded in chunks)
-        // Note: ImageExtractor will need to be updated to handle the new directory structure
+        // Extract internal images
         await ImageExtractor.extractAndSave(documentId, documentGraph, docDir);
+
+        // Enrich images with AI descriptions BEFORE chunking
+        try {
+            await this.enrichImages(documentId, documentGraph, docDir);
+        } catch (enrichError) {
+            logger.warn(`[DocumentProcessor] Image enrichment failed but proceeding with extraction: ${enrichError.message}`);
+        }
 
         const chunks = StructuredChunker.chunkByStructure(documentGraph);
         const topics = StructuredChunker.detectTopics(documentGraph);
@@ -77,7 +84,7 @@ export class DocumentProcessor {
             storage: {
                 type: 'local',
                 key: path.relative(process.cwd(), docDir),
-                url: `/api/v1/documents/${documentId}/view` // Dynamic retrieval endpoint
+                url: `/api/v1/documents/${documentId}/view`
             },
             originalFile: {
                 name: originalName,
@@ -106,11 +113,6 @@ export class DocumentProcessor {
         const jsonPath = path.join(docDir, `metadata.json`);
         fs.writeFileSync(jsonPath, JSON.stringify({ ...documentGraph, chunks, topics, extractedText: flatText }, null, 2));
 
-        // Start asynchronous image enrichment (don't block the return)
-        this.enrichImages(documentId, documentGraph, docDir).catch(err => {
-            logger.error(`[DocumentProcessor] Image enrichment failed: ${err.message}`);
-        });
-
         return { documentId, documentGraph, chunks, topics, extractedText: flatText };
     }
 
@@ -132,34 +134,31 @@ export class DocumentProcessor {
         logger.info(`[DocumentProcessor] Enriching ${imageNodes.length} images for ${documentId}`);
 
         for (const node of imageNodes) {
-            const imagePath = path.join(docDir, 'images', `${node.id}.png`);
-            if (fs.existsSync(imagePath)) {
+            // Find the image file with any extension (png, jpeg, webp)
+            const possibleExtensions = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
+            let imagePath = null;
+
+            for (const ext of possibleExtensions) {
+                const p = path.join(docDir, 'images', `${node.id}.${ext}`);
+                if (fs.existsSync(p)) {
+                    imagePath = p;
+                    break;
+                }
+            }
+
+            if (imagePath) {
                 try {
                     const description = await analyzeImage(imagePath);
-                    node.content.description = description; // Store description in the node
-                    node.content.alt = description.substring(0, 100); // Also update alt text
+                    node.content.description = description;
+                    node.content.alt = description.substring(0, 100);
                 } catch (e) {
                     logger.warn(`[DocumentProcessor] Failed to enrich image ${node.id}: ${e.message}`);
                 }
+            } else {
+                logger.warn(`[DocumentProcessor] Image file not found for node ${node.id}`);
             }
         }
-
-        // Update persistence after enrichment
-        const jsonPath = path.join(docDir, `metadata.json`);
-        const updatedData = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
-        updatedData.pages = documentGraph.pages; // Sync pages with enriched nodes
-        fs.writeFileSync(jsonPath, JSON.stringify(updatedData, null, 2));
-
-        // Update MongoDB
-        try {
-            await Document.findOneAndUpdate(
-                { documentId },
-                { structure: documentGraph }
-            );
-            logger.info(`[DocumentProcessor] Enriched metadata saved for ${documentId}`);
-        } catch (mongoError) {
-            logger.error(`[DocumentProcessor] Failed to update enriched metadata in MongoDB: ${mongoError.message}`);
-        }
+        logger.info(`[DocumentProcessor] Enriched metadata completed for ${documentId}`);
     }
 
     /**

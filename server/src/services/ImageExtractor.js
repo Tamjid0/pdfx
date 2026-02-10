@@ -43,8 +43,7 @@ export class ImageExtractor {
                         const result = await this.saveBase64Image(
                             imageUrl,
                             imageDir,
-                            page.index,
-                            imgIndex,
+                            imageNode.id,
                             documentId
                         );
 
@@ -73,11 +72,11 @@ export class ImageExtractor {
      * @param {string} dataUrl - The Base64 data URL
      * @param {string} imageDir - Directory to save the image
      * @param {number} pageIndex - Page/slide index
-     * @param {number} imgIndex - Image index within the page
+     * @param {string} nodeId - Node ID for naming
      * @param {string} documentId - Document ID for path construction
      * @returns {Promise<{absolutePath: string, relativePath: string}>}
      */
-    static async saveBase64Image(dataUrl, imageDir, pageIndex, imgIndex, documentId) {
+    static async saveBase64Image(dataUrl, imageDir, nodeId, documentId) {
         // Extract MIME type and Base64 data
         const matches = dataUrl.match(/^data:image\/(\w+);base64,(.+)$/);
         if (!matches) {
@@ -89,7 +88,7 @@ export class ImageExtractor {
         const buffer = Buffer.from(base64Data, 'base64');
 
         // Generate filename
-        const filename = `slide_${pageIndex}_img_${imgIndex}.${extension}`;
+        const filename = `${nodeId}.${extension}`;
         const absolutePath = path.join(imageDir, filename);
 
         // Write to disk

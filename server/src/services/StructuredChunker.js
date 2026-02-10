@@ -40,11 +40,15 @@ export class StructuredChunker {
         const textNodes = page.nodes.filter(node => node.type === 'text');
         const imageNodes = page.nodes.filter(node => node.type === 'image');
 
-        // Concatenate all text content from the page with IDs for Referential AI
-        const rawContent = textNodes
-            .map(node => `[[${node.id}]]: ${node.content.text || ''}`)
-            .filter(text => text.trim())
+        const imageContent = imageNodes
+            .map(node => `[Image Description: ${node.content.description || node.content.alt || "Image without description"}]`)
             .join('\n');
+
+        // Concatenate all text content from the page with IDs for Referential AI
+        const rawContent = [
+            textNodes.map(node => `[[${node.id}]]: ${node.content.text || ''}`).join('\n'),
+            imageContent
+        ].filter(c => c.trim()).join('\n\n');
 
         if (!rawContent.trim()) return [];
 

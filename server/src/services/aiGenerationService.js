@@ -5,11 +5,11 @@ import fs from 'fs';
 import logger from '../utils/logger.js';
 
 const aiModel = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.5-flash",
 });
 
 const visionModel = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.5-flash",
 });
 
 /**
@@ -176,21 +176,11 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
     // Vector Search with Smart Intersection Strategy
     let searchResults = [];
     let selectionChunks = [];
-    let imageParts = [];
 
     try {
         if (selectionNodeIds.length > 0) {
             // Retrieve selection chunks directly by node IDs
             selectionChunks = await vectorStoreService.getChunksByNodeIds(fileId, selectionNodeIds);
-
-            // SPECIAL: Look for images in the selection
-            const docDir = storageService.getDocDir('guest', fileId); // Default to guest for now
-            for (const nodeId of selectionNodeIds) {
-                const imagePath = path.join(docDir, 'images', `${nodeId}.png`);
-                if (fs.existsSync(imagePath)) {
-                    imageParts.push(fileToGenerativePart(imagePath, "image/png"));
-                }
-            }
 
             // Perform query-based vector search
             const queryResults = await vectorStoreService.similaritySearch(fileId, query, topN);
@@ -213,7 +203,7 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
     }
 
     // Early Exit if NO Context at all
-    if (searchResults.length === 0 && selectionChunks.length === 0 && imageParts.length === 0) {
+    if (searchResults.length === 0 && selectionChunks.length === 0) {
         yield "Information not found in document.";
         return;
     }
@@ -230,22 +220,21 @@ export async function* generateChunkBasedStreamingTransformation(fileId, query, 
         const selectionText = selectionChunks.map(chunk => chunk.pageContent).join('\n');
         visualSelectionPrompt = `
 ### 🎯 USER HAS SELECTED CONTENT
-The user has MANUALLY SELECTED the following text:
+The user has MANUALLY SELECTED the following content:
 """
 ${selectionText}
 """
 `;
     }
 
-    if (imageParts.length > 0) {
-        visualSelectionPrompt += `\n\n### 🖼️ USER HAS SELECTED IMAGES\nI have provided ${imageParts.length} image(s) from the document selection. Please use them to answer the user query if relevant.\n`;
-    }
-
     const systemPrompt = `
 You are a conversational AI assistant named pdfx.
 You should answer in well structured markdown.
 Your response should be well structured like in the gemini app.
-Answer ONLY based on the provided Selected Content, Selected Images, and Document Context.
+Answer ONLY based on the provided Selected Content and Document Context.
+
+Note: Images are analyzed during upload, and their descriptions are included in the context as "[Image Description: ...]".
+Use these descriptions to answer questions about diagrams, charts, or images.
 
 STYLE:
 - Natural, human-like explanation
@@ -256,7 +245,7 @@ Rules:
 - Don't greet the user
 - Don't say anything else other than the answer
 - Don't ever expose your real identity (Gemini)
-- If the user asks about the "selected area", use the provided selection/images.
+- If the user asks about the "selected area", use the provided selection.
 
 Document Context:
 """
@@ -269,8 +258,7 @@ User Query: "${query}"
 `;
 
     try {
-        const promptParts = [systemPrompt, ...imageParts];
-        const result = await retryOperation(() => visionModel.generateContentStream(promptParts));
+        const result = await retryOperation(() => aiModel.generateContentStream(systemPrompt));
 
         for await (const chunk of result.stream) {
             const chunkText = chunk.text();

@@ -121,7 +121,9 @@ export class DocumentProcessor {
      */
     async enrichImages(documentId, documentGraph, docDir) {
         const imageNodes = [];
-        documentGraph.pages.forEach(page => {
+        if (!documentGraph.structure || !documentGraph.structure.pages) return;
+
+        documentGraph.structure.pages.forEach(page => {
             if (page.nodes) {
                 page.nodes.forEach(node => {
                     if (node.type === 'image') imageNodes.push(node);

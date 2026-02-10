@@ -421,17 +421,59 @@ const DocumentViewer: React.FC = () => {
             return false;
         });
 
-        const textNodes = selectedNodes
-            .filter((n: any) => n.type === 'text')
-            .map((n: any) => typeof n.content === 'string' ? n.content : n.content?.text || "");
-
         const nodeIds = selectedNodes
-            .filter((n: any) => n.type === 'text')
+            .filter((n: any) => n.type === 'text' || n.type === 'image')
             .map((n: any) => n.id)
             .filter(Boolean);
 
+        // --- BUDDY SELECTION: If text (label) is selected, select the image it overlaps ---
+        const finalSelectedNodes = [...selectedNodes];
+        const selectedTextNodes = selectedNodes.filter((n: any) => n.type === 'text');
+
+        currentPage.nodes.forEach((pageNode: any) => {
+            if (pageNode.type === 'image' && !nodeIds.includes(pageNode.id)) {
+                // Check if this image overlaps any selected text nodes
+                const imgPos = pageNode.position;
+                if (!imgPos) return;
+
+                const overlapsText = selectedTextNodes.some((textNode: any) => {
+                    const txtPos = textNode.position;
+                    if (!txtPos) return false;
+
+                    // Intersection of text and image
+                    const x1 = Math.max(imgPos.x, txtPos.x);
+                    const y1 = Math.max(imgPos.y, txtPos.y);
+                    const x2 = Math.min(imgPos.x + imgPos.width, txtPos.x + txtPos.width);
+                    const y2 = Math.min(imgPos.y + imgPos.height, txtPos.y + txtPos.height);
+
+                    if (x2 > x1 && y2 > y1) {
+                        const intersectionArea = (x2 - x1) * (y2 - y1);
+                        const txtArea = txtPos.width * txtPos.height;
+                        // If text is mostly inside the image (>= 50% of text area)
+                        return (intersectionArea / txtArea) > 0.5;
+                    }
+                    return false;
+                });
+
+                if (overlapsText) {
+                    finalSelectedNodes.push(pageNode);
+                    nodeIds.push(pageNode.id);
+                }
+            }
+        });
+
+        const textNodes = finalSelectedNodes
+            .filter((n: any) => n.type === 'text')
+            .map((n: any) => typeof n.content === 'string' ? n.content : n.content?.text || "");
+
+        const hasImage = finalSelectedNodes.some((n: any) => n.type === 'image');
+
         // Generate Text Preview (Start...End)
-        const fullText = textNodes.join(' ');
+        let fullText = textNodes.join(' ');
+        if (!fullText.trim() && hasImage) {
+            fullText = "[Selected Image]";
+        }
+
         let textPreview = fullText;
         if (fullText.length > 50) {
             const start = fullText.slice(0, 20).trim();
@@ -441,10 +483,11 @@ const DocumentViewer: React.FC = () => {
 
         setActiveSelection({
             ...rect,
-            pageIndex: currentSlideIndex,
+            pageIndex: pageNumber - 1,
             textNodes,
             nodeIds,
-            textPreview
+            textPreview,
+            hasImage
         });
     };
 

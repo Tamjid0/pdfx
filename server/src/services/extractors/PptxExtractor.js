@@ -217,6 +217,14 @@ export class PptxExtractor {
                     const finalW = cx * groupScaleX;
                     const finalH = cy * groupScaleY;
 
+                    const pctW = (finalW / slideWidth) * 100;
+                    const pctH = (finalH / slideHeight) * 100;
+
+                    // Filter out background images (heuristic: >95% area)
+                    if (pctW > 95 && pctH > 95) {
+                        continue;
+                    }
+
                     const blipFill = findChild(node, 'blipFill');
                     const blip = blipFill ? findChild(blipFill, 'blip') : null;
                     let embedId = blip && blip.$ ? (blip.$.embed || blip.$.link) : null;

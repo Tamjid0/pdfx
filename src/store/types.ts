@@ -108,7 +108,8 @@ export interface ActiveSelection {
     pageIndex: number;
     textNodes: string[];
     nodeIds?: string[];
-    textPreview?: string; // Short preview of selected text
+    textPreview?: string;
+    hasImage?: boolean; // Indicator for image presence
 }
 
 export interface Revision<T> {
@@ -320,14 +321,7 @@ export interface AppState {
     nextSlide: () => void;
     prevSlide: () => void;
     setSelectionMode: (mode: boolean) => void;
-    setActiveSelection: (selection: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-        pageIndex: number;
-        textNodes: string[];
-    } | null) => void;
+    setActiveSelection: (selection: ActiveSelection | null) => void;
 
     // Preview Actions
     setPreviewPreset: (preset: PreviewPreset) => void;

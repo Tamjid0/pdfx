@@ -23,6 +23,7 @@ interface ChatProps {
             textNodes: string[];
             nodeIds?: string[];
             textPreview?: string;
+            hasImage?: boolean;
         };
     }[];
     onSendMessage: (message: string) => void;
@@ -149,12 +150,20 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                                                 className="mb-2 mr-1 px-3 py-2 bg-[#00ff88]/5 border border-[#00ff88]/20 rounded-lg flex items-center gap-3 w-fit backdrop-blur-sm shadow-lg cursor-pointer hover:bg-[#00ff88]/10 transition-colors group/selection"
                                             >
                                                 <div className="w-6 h-6 rounded bg-[#00ff88]/20 flex items-center justify-center border border-[#00ff88]/30 mt-0.5 group-hover/selection:bg-[#00ff88]/30 transition-colors">
-                                                    <svg className="w-3 h-3 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 010 2H6v3a1 1 0 01-2 0V5zM14 4a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-2 0V6h-3a1 1 0 01-1-1zM4 14a1 1 0 012 0v3h3a1 1 0 010 2H5a1 1 0 01-1-1v-4zM19 14a1 1 0 012 0v4a1 1 0 01-1 1h-4a1 1 0 010-2h3v-3a1 1 0 01-1-1z" />
-                                                    </svg>
+                                                    {msg.selection.hasImage ? (
+                                                        <svg className="w-3.5 h-3.5 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                        </svg>
+                                                    ) : (
+                                                        <svg className="w-3 h-3 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 010 2H6v3a1 1 0 01-2 0V5zM14 4a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-2 0V6h-3a1 1 0 01-1-1zM4 14a1 1 0 012 0v3h3a1 1 0 010 2H5a1 1 0 01-1-1v-4zM19 14a1 1 0 012 0v4a1 1 0 01-1 1h-4a1 1 0 010-2h3v-3a1 1 0 01-1-1z" />
+                                                        </svg>
+                                                    )}
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className="text-[9px] font-bold text-[#00ff88] uppercase tracking-wider">Visual Selection Active</span>
+                                                    <span className="text-[9px] font-bold text-[#00ff88] uppercase tracking-wider">
+                                                        {msg.selection.hasImage ? "Visual Context + Image" : "Visual Selection Active"}
+                                                    </span>
                                                     <span className="text-[8px] text-white/50">{msg.selection.textPreview || `Slide ${msg.selection.pageIndex + 1} Selected`}</span>
                                                 </div>
                                             </div>

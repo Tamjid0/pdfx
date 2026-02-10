@@ -255,6 +255,26 @@ const SlideViewer: React.FC = () => {
                                 onSelectionComplete={handleSelectionComplete}
                             />
 
+                            {/* Persistent Active Selection Box */}
+                            {activeSelection && activeSelection.pageIndex === currentSlideIndex && (
+                                <div
+                                    className="absolute pointer-events-none z-[55]"
+                                    style={{
+                                        left: `${activeSelection.x}%`,
+                                        top: `${activeSelection.y}%`,
+                                        width: `${activeSelection.width}%`,
+                                        height: `${activeSelection.height}%`,
+                                        backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                                        border: '2px solid #00ff88',
+                                        boxShadow: '0 0 15px rgba(0, 255, 136, 0.3)'
+                                    }}
+                                >
+                                    <div className="absolute -top-6 left-0 bg-[#00ff88] text-black text-[10px] font-bold px-2 py-0.5 rounded-t-sm">
+                                        SELECTED AREA
+                                    </div>
+                                </div>
+                            )}
+
                             {/* HIGHLIGHT OVERLAY LAYER */}
                             {activeNodeBoxes && activeNodeBoxes.map((box, idx) => (
                                 box.pageIndex === currentSlideIndex && (

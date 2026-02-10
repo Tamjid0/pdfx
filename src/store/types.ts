@@ -199,7 +199,7 @@ export interface AppState {
     quizRevisions: Revision<QuizData>[];
     mindmapRevisions: Revision<MindmapData>[];
     activeRevisionIds: Record<Mode, string>;
-    chatHistory: { role: 'user' | 'assistant' | 'ai'; content: string; timestamp?: string; selection?: { pageIndex: number; nodesCount: number; textPreview?: string } }[];
+    chatHistory: { role: 'user' | 'assistant' | 'ai'; content: string; timestamp?: string; selection?: ActiveSelection }[];
     fileId: string | null;
     fileType: 'pdf' | 'pptx' | 'text' | null;
     stats: {

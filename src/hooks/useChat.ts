@@ -37,7 +37,7 @@ export const useChat = () => {
             content: message,
             timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
             // Optional: attach selection info to the local message for UI reference if needed
-            selection: activeSelection ? { pageIndex: activeSelection.pageIndex, nodesCount: activeSelection.textNodes.length } : undefined
+            selection: activeSelection || undefined
         };
 
         setChatHistory(prev => [...prev, newUserMessage]);
@@ -76,8 +76,8 @@ export const useChat = () => {
                 }]);
             }
 
-            // Clear selection immediately so it doesn't persist in UI while streaming
-            setActiveSelection(null);
+            // Do NOT clear selection here - user wants it to persist
+            // setActiveSelection(null);
 
             await apiService.chatWithDocumentStream(
                 message,

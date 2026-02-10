@@ -59,6 +59,7 @@ const DocumentViewer: React.FC = () => {
     const authHeaders = useStore(state => state.authHeaders);
     const setAuthHeaders = useStore(state => state.setAuthHeaders);
     const setActiveSelection = useStore(state => state.setActiveSelection);
+    const activeSelection = useStore(state => state.activeSelection);
 
     const [numPages, setNumPages] = useState<number | null>(null);
     const [pageNumber, setPageNumber] = useState<number>(1);
@@ -620,11 +621,30 @@ const DocumentViewer: React.FC = () => {
                                         className="shadow-2xl border border-[#222] transition-transform duration-200"
                                     />
 
-                                    {/* SELECTION OVERLAY LAYER (Always active, responds to Alt key) */}
                                     <SelectionOverlay
                                         isActive={true}
                                         onSelectionComplete={handleSelectionComplete}
                                     />
+
+                                    {/* Persistent Active Selection Box */}
+                                    {activeSelection && activeSelection.pageIndex === pageNumber - 1 && (
+                                        <div
+                                            className="absolute pointer-events-none z-[55]"
+                                            style={{
+                                                left: `${activeSelection.x}%`,
+                                                top: `${activeSelection.y}%`,
+                                                width: `${activeSelection.width}%`,
+                                                height: `${activeSelection.height}%`,
+                                                backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                                                border: '2px solid #00ff88',
+                                                boxShadow: '0 0 15px rgba(0, 255, 136, 0.3)'
+                                            }}
+                                        >
+                                            <div className="absolute -top-6 left-0 bg-[#00ff88] text-black text-[10px] font-bold px-2 py-0.5 rounded-t-sm">
+                                                SELECTED AREA
+                                            </div>
+                                        </div>
+                                    )}
 
 
                                     {/* Coordinate-based Highlight Overlay (Multiple Boxes) */}

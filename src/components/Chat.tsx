@@ -129,8 +129,16 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
 
                                         {/* Render Active Selection Attachment for User Messages */}
                                         {msg.role === 'user' && msg.selection && (
-                                            <div className="mb-2 mr-1 px-3 py-2 bg-[#00ff88]/5 border border-[#00ff88]/20 rounded-lg flex items-center gap-3 w-fit backdrop-blur-sm shadow-lg">
-                                                <div className="w-6 h-6 rounded bg-[#00ff88]/20 flex items-center justify-center border border-[#00ff88]/30 mt-0.5">
+                                            <div
+                                                onClick={() => {
+                                                    if (msg.selection) {
+                                                        setActiveSelection(msg.selection);
+                                                        setCurrentSlideIndex(msg.selection.pageIndex);
+                                                    }
+                                                }}
+                                                className="mb-2 mr-1 px-3 py-2 bg-[#00ff88]/5 border border-[#00ff88]/20 rounded-lg flex items-center gap-3 w-fit backdrop-blur-sm shadow-lg cursor-pointer hover:bg-[#00ff88]/10 transition-colors group/selection"
+                                            >
+                                                <div className="w-6 h-6 rounded bg-[#00ff88]/20 flex items-center justify-center border border-[#00ff88]/30 mt-0.5 group-hover/selection:bg-[#00ff88]/30 transition-colors">
                                                     <svg className="w-3 h-3 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 010 2H6v3a1 1 0 01-2 0V5zM14 4a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-2 0V6h-3a1 1 0 01-1-1zM4 14a1 1 0 012 0v3h3a1 1 0 010 2H5a1 1 0 01-1-1v-4zM19 14a1 1 0 012 0v4a1 1 0 01-1 1h-4a1 1 0 010-2h3v-3a1 1 0 01-1-1z" />
                                                     </svg>

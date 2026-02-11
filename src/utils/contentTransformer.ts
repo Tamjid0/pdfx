@@ -25,6 +25,8 @@ export interface PreviewData {
         difficulty?: string;
         totalCards?: number;
     };
+    presentationData?: any;
+    adaptiveData?: any[]; // To preserve raw blocks for specialized templates
 }
 
 /**
@@ -116,7 +118,7 @@ export function transformNotes(data: NotesData): PreviewData | null {
     // 1. Check for Presentation Deck structure (highest priority)
     if (data?.blocks && Array.isArray(data.blocks)) {
         // Find a block that looks like a presentation (by type OR by having slides)
-        const presentationBlock = data.blocks.find(b =>
+        const presentationBlock = data.blocks.find((b: any) =>
             b.type === 'presentation_deck' ||
             b.type === 'presentation' ||
             (b.slides && b.slides.length > 0) ||
@@ -124,8 +126,9 @@ export function transformNotes(data: NotesData): PreviewData | null {
         );
 
         if (presentationBlock) {
+            const pb = presentationBlock as any;
             // Robust slide discovery
-            const slides = presentationBlock.slides || presentationBlock.content?.slides || [];
+            const slides = pb.slides || pb.content?.slides || [];
 
             // Map slides to backup sections (for other templates)
             const backupSections: PreviewSection[] = slides.map((s: any) => ({
@@ -135,11 +138,12 @@ export function transformNotes(data: NotesData): PreviewData | null {
             }));
 
             return {
-                title: presentationBlock.title || presentationBlock.content?.title || 'Presentation Notes',
+                title: pb.title || pb.content?.title || 'Presentation Notes',
                 sections: backupSections,
                 metadata: { count: slides.length },
-                presentationData: { ...presentationBlock, slides }
-            } as any;
+                presentationData: { ...pb, slides },
+                adaptiveData: data.blocks
+            };
         }
 
         // 2. Regular adaptive blocks (Study Notes)
@@ -147,7 +151,8 @@ export function transformNotes(data: NotesData): PreviewData | null {
         return {
             title: 'Study Notes',
             sections,
-            metadata: { count: data.blocks.length }
+            metadata: { count: data.blocks.length },
+            adaptiveData: data.blocks // Preserve raw blocks for specialized rendering
         };
     }
 

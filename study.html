@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bohr's Atomic Model - Study Notes (Print Version)</title>
+    <style>
+        /* Print-specific styles */
+        @media print {
+            body {
+                background: white !important;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+            
+            .page-break {
+                page-break-before: always;
+            }
+            
+            .avoid-break {
+                page-break-inside: avoid;
+            }
+            
+            .block {
+                box-shadow: none !important;
+                border: 1px solid #ddd;
+            }
+            
+            .header {
+                background: #667eea !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            a {
+                text-decoration: none;
+                color: #000;
+            }
+            
+            .formula {
+                border: 1px solid #ddd !important;
+            }
+        }
+
+        /* Screen and Print Common Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Times New Roman', Georgia, serif;
+            background: #f5f5f5;
+            line-height: 1.8;
+            color: #000;
+        }
+
+        .document-container {
+            max-width: 8.5in;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        /* Header Section */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.95;
+            font-style: italic;
+        }
+
+        .document-info {
+            background: #f8f9fa;
+            padding: 20px 40px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            font-size: 0.95em;
+        }
+
+        .info-item {
+            padding: 10px;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* Table of Contents */
+        .toc {
+            padding: 40px;
+            background: white;
+        }
+
+        .toc h2 {
+            font-size: 1.8em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .toc-item {
+            padding: 12px 0;
+            border-bottom: 1px dotted #ddd;
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.05em;
+        }
+
+        .toc-item:hover {
+            background: #f8f9fa;
+            padding-left: 10px;
+        }
+
+        .toc-number {
+            font-weight: bold;
+            color: #667eea;
+            margin-right: 15px;
+        }
+
+        .toc-title {
+            flex: 1;
+        }
+
+        .toc-page {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        /* Content Section */
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            page-break-inside: avoid;
+        }
+
+        .section-header {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .section-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 0.9em;
+        }
+
+        .section-title {
+            display: inline;
+            font-size: 1.6em;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        .section-content {
+            padding: 20px 0;
+            text-align: justify;
+        }
+
+        /* Block Styles for Print */
+        .info-block {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 20px;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+
+        .important-block {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 20px;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+
+        .note-block {
+            background: #f3e5f5;
+            border-left: 4px solid #9c27b0;
+            padding: 20px;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+
+        .example-block {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 20px;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+
+        .block-title {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        /* Formula Styles */
+        .formula {
+            background: #f8f9fa;
+            border: 2px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 1.3em;
+            font-weight: bold;
+            page-break-inside: avoid;
+        }
+
+        .formula-label {
+            display: block;
+            font-size: 0.8em;
+            color: #7f8c8d;
+            font-family: 'Times New Roman', serif;
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        /* Table Styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+
+        .data-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+            border: 1px solid #555;
+        }
+
+        .data-table td {
+            padding: 12px;
+            border: 1px solid #ddd;
+        }
+
+        .data-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        /* List Styles */
+        .styled-list {
+            margin: 15px 0;
+            padding-left: 30px;
+        }
+
+        .styled-list li {
+            margin: 10px 0;
+            line-height: 1.8;
+        }
+
+        /* Calculation Box */
+        .calculation {
+            border: 2px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            background: white;
+            page-break-inside: avoid;
+        }
+
+        .calc-step {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+
+        .calc-label {
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .calc-result {
+            background: #fffde7;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid #ffc107;
+            font-weight: bold;
+        }
+
+        /* Keywords */
+        .keywords {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .keyword {
+            background: #ecf0f1;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 0.95em;
+            border: 1px solid #bdc3c7;
+        }
+
+        /* Footer */
+        .document-footer {
+            background: #2c3e50;
+            color: white;
+            padding: 30px 40px;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .footer-content {
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        /* Page Numbers */
+        .page-number {
+            text-align: right;
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+        }
+
+
+
+        /* Highlight */
+        .highlight {
+            background: #fff176;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        /* Diagram placeholder */
+        .diagram-placeholder {
+            border: 2px dashed #667eea;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            background: #f8f9fa;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        /* Reference Section */
+        .reference {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 3px solid #95a5a6;
+            font-size: 0.95em;
+        }
+    </style>
+</head>
+<body>
+    <div class="document-container">
+        
+        <!-- Header -->
+        <div class="header">
+            <h1>⚛️ Bohr's Atomic Model</h1>
+            <div class="subtitle">Comprehensive Study Notes</div>
+        </div>
+
+        <!-- Document Information -->
+        <div class="document-info">
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Subject:</span>
+                    Physics - Atomic Structure
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Topic:</span>
+                    Bohr's Atomic Model
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Date:</span>
+                    February 2026
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Level:</span>
+                    Advanced / Undergraduate
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Document Type:</span>
+                    Study Notes
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Pages:</span>
+                    Approximately 15
+                </div>
+            </div>
+        </div>
+
+        <!-- Table of Contents -->
+        <div class="toc page-break">
+            <h2>📑 Table of Contents</h2>
+            <ul class="toc-list">
+                <li class="toc-item">
+                    <span><span class="toc-number">1.</span><span class="toc-title">Introduction & Historical Context</span></span>
+                    <span class="toc-page">Page 2</span>
+                </li>
+                <li class="toc-item">
+                    <span><span class="toc-number">2.</span><span class="toc-title">Key Terms & Definitions</span></span>
+                    <span class="toc-page">Page 3</span>
+                </li>
+                <li class="toc-item">
+                    <span><span class="toc-number">3.</span><span class="toc-title">Bohr's Postulates</span></span>
+                    <span class="toc-page">Page 4</span>
+                </li>
+                <li class="toc-item">
+                    <span><span class="toc-number">4.</span><span class="toc-title">Important Formulas</span></span>
+                    <span class="toc-page">Page 5</span>
+                </li>
+                <li class="toc-item">
+                    <span><span class="toc-number">5.</span><span class="toc-title">Worked Examples (1-6)</span></span>
+                    <span class="toc-page">Page 6-9</span>
+                </li>
+                <li class="toc-item">
+                    <span><span class="toc-number">6.</span><span class="toc-title">Hydrogen Spectral Series</span></span>
+                    <span class="toc-page">Page 10</span>
+                </li>
+                <li class="toc-item">
+                    <span><span class="toc-number">7.</span><span class="toc-title">Limitations of Bohr's Model</span></span>
+                    <span class="toc-page">Page 11</span>
+                </li>
+                <li class="toc-item">
+                    <span><span class="toc-number">8.</span><span class="toc-title">Summary & Key Takeaways</span></span>
+                    <span class="toc-page">Page 12</span>
+                </li>
+                <li class="toc-item">
+                    <span><span class="toc-number">9.</span><span class="toc-title">Practice Questions</span></span>
+                    <span class="toc-page">Page 13</span>
+                </li>
+                <li class="toc-item">
+                    <span><span class="toc-number">10.</span><span class="toc-title">References & Further Reading</span></span>
+                    <span class="toc-page">Page 14</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content page-break">
+
+            <!-- Section 1: Introduction -->
+            <div class="section avoid-break">
+                <div class="section-header">
+                    <span class="section-number">1</span>
+                    <h2 class="section-title">Introduction & Historical Context</h2>
+                </div>
+                <div class="section-content">
+                    <p>
+                        The Bohr model, proposed by Danish physicist Niels Bohr in 1913, represents a pivotal development in atomic theory. This model describes the atom as a small, positively charged nucleus surrounded by electrons that travel in circular orbits around the nucleus, similar to planets orbiting the sun. However, unlike planetary motion, electrons in the Bohr model can only occupy certain specific orbits with quantized energy levels.
+                    </p>
+                    
+                    <div class="info-block">
+                        <div class="block-title">💡 Key Insight</div>
+                        <p>
+                            The Bohr model was revolutionary because it successfully incorporated quantum theory into atomic structure, explaining phenomena that classical physics could not address, particularly the stability of atoms and the discrete spectral lines observed in hydrogen emission spectra.
+                        </p>
+                    </div>
+
+                    <h3 style="margin-top: 25px; color: #2c3e50;">Historical Background</h3>
+                    <p style="margin-top: 10px;">
+                        Before Bohr's model, the prevailing atomic model was Ernest Rutherford's nuclear model (1911), which proposed that atoms consisted of a small, dense, positively charged nucleus surrounded by electrons. However, this model had a critical flaw: according to classical electromagnetic theory, orbiting electrons should continuously emit radiation, lose energy, and spiral into the nucleus within a fraction of a second, causing atoms to collapse. This prediction clearly contradicted the observed stability of matter.
+                    </p>
+                    <p style="margin-top: 10px;">
+                        Niels Bohr resolved this paradox by boldly introducing quantum mechanics into atomic structure. His model combined Rutherford's nuclear concept with Max Planck's quantum theory and incorporated ideas about the quantization of energy. This synthesis created a revolutionary framework that not only explained atomic stability but also provided accurate predictions for the hydrogen spectrum.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Section 2: Key Terms -->
+            <div class="section page-break avoid-break">
+                <div class="section-header">
+                    <span class="section-number">2</span>
+                    <h2 class="section-title">Key Terms & Definitions</h2>
+                </div>
+                <div class="section-content">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 30%;">Term</th>
+                                <th>Definition</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Stationary Orbit</strong></td>
+                                <td>An orbit in which an electron can revolve around the nucleus without radiating energy. Only certain orbits with specific angular momentum values are allowed as stationary states.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Quantized Energy</strong></td>
+                                <td>Energy that exists in discrete packets (quanta) rather than continuous values. In the Bohr model, electrons can only possess certain specific energy values corresponding to allowed orbits.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Ground State</strong></td>
+                                <td>The lowest energy state of an atom, where electrons occupy the innermost available orbits (n=1 for hydrogen). This is the most stable configuration of the atom.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Excited State</strong></td>
+                                <td>A higher energy state where one or more electrons occupy orbits further from the nucleus (n>1). Atoms in excited states are unstable and tend to return to the ground state.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Photon</strong></td>
+                                <td>A quantum (discrete packet) of electromagnetic radiation with energy E = hν, where h is Planck's constant and ν is the frequency. Photons are emitted or absorbed during electron transitions.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Principal Quantum Number (n)</strong></td>
+                                <td>An integer (n = 1, 2, 3, ...) that specifies the energy level and orbital radius of an electron. Higher values of n correspond to higher energy levels and larger orbital radii.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Rydberg Constant (R)</strong></td>
+                                <td>A fundamental physical constant (R = 1.097 × 10⁷ m⁻¹) that appears in formulas describing the wavelengths of spectral lines in hydrogen and hydrogen-like atoms.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="note-block" style="margin-top: 20px;">
+                        <div class="block-title">📌 Important Keywords</div>
+                        <div class="keywords">
+                            <span class="keyword">Quantized Energy Levels</span>
+                            <span class="keyword">Stationary Orbits</span>
+                            <span class="keyword">Energy Shells</span>
+                            <span class="keyword">Electron Transitions</span>
+                            <span class="keyword">Spectral Lines</span>
+                            <span class="keyword">Atomic Number (Z)</span>
+                            <span class="keyword">Angular Momentum</span>
+                            <span class="keyword">Photon Emission</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Bohr's Postulates -->
+            <div class="section page-break avoid-break">
+                <div class="section-header">
+                    <span class="section-number">3</span>
+                    <h2 class="section-title">Bohr's Postulates</h2>
+                </div>
+                <div class="section-content">
+                    <p>Bohr's atomic model is based on three fundamental postulates that revolutionized our understanding of atomic structure:</p>
+
+                    <h3 style="margin-top: 25px; color: #2c3e50;">Postulate 1: Stationary Orbits</h3>
+                    <div class="important-block">
+                        <p>
+                            Electrons revolve around the nucleus in certain fixed circular paths called <strong>stationary orbits</strong> or <strong>energy shells</strong>. While moving in these orbits, electrons do not radiate energy despite being accelerated (which would normally require energy emission according to classical physics). These orbits are characterized by specific energy levels, and an electron in a stationary orbit maintains constant energy.
+                        </p>
+                    </div>
+
+                    <h3 style="margin-top: 25px; color: #2c3e50;">Postulate 2: Quantization of Angular Momentum</h3>
+                    <div class="important-block">
+                        <p style="margin-bottom: 15px;">
+                            The angular momentum of an electron in a stationary orbit is quantized and must be an integral multiple of h/2π, where h is Planck's constant:
+                        </p>
+                        <div class="formula">
+                            L = mvr = n(h/2π)
+                            <span class="formula-label">where n = 1, 2, 3, ... (principal quantum number)</span>
+                        </div>
+                        <p style="margin-top: 15px;">
+                            Where: <strong>m</strong> = mass of electron, <strong>v</strong> = velocity of electron, <strong>r</strong> = radius of orbit, <strong>h</strong> = Planck's constant (6.626 × 10⁻³⁴ J·s), and <strong>n</strong> = principal quantum number (positive integer).
+                        </p>
+                    </div>
+
+                    <h3 style="margin-top: 25px; color: #2c3e50;">Postulate 3: Energy Transitions and Photon Emission/Absorption</h3>
+                    <div class="important-block">
+                        <p style="margin-bottom: 15px;">
+                            When an electron jumps from a higher energy orbit (E₂) to a lower energy orbit (E₁), it emits a photon with energy equal to the difference between the two energy levels:
+                        </p>
+                        <div class="formula">
+                            ΔE = E₂ - E₁ = hν
+                            <span class="formula-label">where ν is the frequency of emitted radiation</span>
+                        </div>
+                        <p style="margin-top: 15px;">
+                            Conversely, when an electron absorbs a photon of appropriate energy, it jumps from a lower energy orbit to a higher energy orbit. The frequency of the absorbed or emitted photon is directly proportional to the energy difference between the two levels.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4: Important Formulas -->
+            <div class="section page-break avoid-break">
+                <div class="section-header">
+                    <span class="section-number">4</span>
+                    <h2 class="section-title">Important Formulas</h2>
+                </div>
+                <div class="section-content">
+                    
+                    <h3 style="color: #2c3e50; margin-bottom: 15px;">1. Radius of nth Orbit</h3>
+                    <div class="formula">
+                        rₙ = n²h²ε₀ / (πmZe²) = 0.529 × (n²/Z) Å
+                        <span class="formula-label">For hydrogen (Z=1): r₁ = 0.529 Å (Bohr radius)</span>
+                    </div>
+                    <p style="margin: 15px 0;">
+                        Where: <strong>n</strong> = principal quantum number, <strong>Z</strong> = atomic number, <strong>ε₀</strong> = permittivity of free space, <strong>m</strong> = electron mass, <strong>e</strong> = electron charge
+                    </p>
+
+                    <h3 style="color: #2c3e50; margin: 25px 0 15px 0;">2. Energy of nth Orbit</h3>
+                    <div class="formula">
+                        Eₙ = -13.6 × (Z²/n²) eV
+                        <span class="formula-label">Negative sign indicates electron is bound to nucleus</span>
+                    </div>
+                    <p style="margin: 15px 0;">
+                        For hydrogen atom (Z=1): E₁ = -13.6 eV (ground state), E₂ = -3.4 eV, E₃ = -1.51 eV, etc.
+                    </p>
+
+                    <h3 style="color: #2c3e50; margin: 25px 0 15px 0;">3. Velocity of Electron in nth Orbit</h3>
+                    <div class="formula">
+                        vₙ = 2.18 × 10⁶ × (Z/n) m/s
+                        <span class="formula-label">Velocity decreases with increasing n</span>
+                    </div>
+
+                    <h3 style="color: #2c3e50; margin: 25px 0 15px 0;">4. Frequency of Emitted Photon</h3>
+                    <div class="formula">
+                        ν = RZ² (1/n₁² - 1/n₂²)
+                        <span class="formula-label">R = Rydberg constant = 1.097 × 10⁷ m⁻¹</span>
+                    </div>
+                    <p style="margin: 15px 0;">
+                        Where: <strong>n₂</strong> = higher energy level (initial), <strong>n₁</strong> = lower energy level (final)
+                    </p>
+
+                    <h3 style="color: #2c3e50; margin: 25px 0 15px 0;">5. Wavelength of Emitted Light</h3>
+                    <div class="formula">
+                        1/λ = RZ² (1/n₁² - 1/n₂²)
+                        <span class="formula-label">This is the famous Rydberg formula</span>
+                    </div>
+
+                    <div class="note-block" style="margin-top: 25px;">
+                        <div class="block-title">📝 Important Note</div>
+                        <p>All formulas above apply to hydrogen-like atoms (atoms with only one electron). For hydrogen, Z = 1. For He⁺, Z = 2, and so on.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 5: Worked Examples -->
+            <div class="section page-break avoid-break">
+                <div class="section-header">
+                    <span class="section-number">5</span>
+                    <h2 class="section-title">Worked Examples</h2>
+                </div>
+                <div class="section-content">
+
+                    <!-- Example 1 -->
+                    <div class="example-block">
+                        <div class="block-title">Example 1: Calculate Radius of Second Orbit</div>
+                        <div class="calculation">
+                            <div class="calc-step">
+                                <span class="calc-label">Problem:</span>
+                                Calculate the radius of the second orbit (n=2) in a hydrogen atom.
+                            </div>
+                            <div class="calc-step">
+                                <span class="calc-label">Given:</span>
+                                n = 2, Z = 1 (hydrogen)
+                            </div>
+                            <div class="calc-step">
+                                <span class="calc-label">Formula:</span>
+                                rₙ = 0.529 × (n²/Z) Å
+                            </div>
+                            <div class="calc-step">
+                                <span class="calc-label">Solution:</span>
+                                <div class="formula" style="margin-top: 10px;">
+                                    r₂ = 0.529 × (2²/1) = 0.529 × 4 = 2.116 Å
+                                </div>
+                            </div>
+                            <div class="calc-result">
+                                ✓ Answer: The radius of the second orbit is 2.116 Å
+                                <p style="margin-top: 10px; font-weight: normal;">Note: The radius increases as n² - the second orbit is 4 times larger than the first!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Example 2 -->
+                    <div class="example-block avoid-break">
+                        <div class="block-title">Example 2: Energy Level Calculation</div>
+                        <div class="calculation">
+                            <div class="calc-step">
+                                <span class="calc-label">Problem:</span>
+                                Calculate the energy of an electron in the third orbit of a hydrogen atom.
+                            </div>
+                            <div class="calc-step">
+                                <span class="calc-label">Given:</span>
+                                n = 3, Z = 1
+                            </div>
+                            <div class="calc-step">
+                                <span class="calc-label">Formula:</span>
+                                Eₙ = -13.6 × (Z²/n²) eV
+                            </div>
+                            <div class="calc-step">
+                                <span class="calc-label">Solution:</span>
+                                <div class="formula" style="margin-top: 10px;">
+                                    E₃ = -13.6 × (1²/3²) = -13.6/9 = -1.51 eV
+                                </div>
+                            </div>
+                            <div class="calc-result">
+                                ✓ Answer: The energy of the third orbit is -1.51 eV
+                                <p style="margin-top: 10px; font-weight: normal;">Note: The negative sign indicates the electron is bound to the nucleus. As n increases, energy becomes less negative (increases).</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Example 3 -->
+                    <div class="example-block page-break avoid-break">
+                        <div class="block-title">Example 3: Photon Energy in Transitions</div>
+                        <div class="calculation">
+                            <div class="calc-step">
+                                <span class="calc-label">Problem:</span>
+                                Calculate the energy of the photon emitted when an electron transitions from n=3 to n=2 in hydrogen.
+                            </div>
+                            <div class="calc-step">
+                                <span class="calc-label">Solution:</span>
+                                <p>First, calculate energies of both orbits:</p>
+                                <div class="formula" style="margin: 10px 0;">
+                                    E₃ = -13.6/9 = -1.51 eV<br>
+                                    E₂ = -13.6/4 = -3.40 eV
+                                </div>
+                                <p>Energy of emitted photon:</p>
+                                <div class="formula" style="margin: 10px 0;">
+                                    ΔE = E₃ - E₂ = -1.51 - (-3.40) = 1.89 eV
+                                </div>
+                            </div>
+                            <div class="calc-result">
+                                ✓ Answer: The photon energy is 1.89 eV
+                                <p style="margin-top: 10px; font-weight: normal;">Note: This transition produces a red line in the Balmer series of the hydrogen spectrum (visible light).</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Example 4 -->
+                    <div class="example-block avoid-break">
+                        <div class="block-title">Example 4: Wavelength Calculation</div>
+                        <div class="calculation">
+                            <div class="calc-step">
+                                <span class="calc-label">Problem:</span>
+                                Calculate the wavelength of light emitted when an electron falls from n=4 to n=2.
+                            </div>
+                            <div class="calc-step">
+                                <span class="calc-label">Formula:</span>
+                                1/λ = R(1/n₁² - 1/n₂²), where R = 1.097 × 10⁷ m⁻¹
+                            </div>
+                            <div class="calc-step">
+                                <span class="calc-label">Given:</span>
+                                n₁ = 2 (final), n₂ = 4 (initial)
+                            </div>
+                            <div class="calc-step">
+                                <span class="calc-label">Solution:</span>
+                                <div class="formula" style="margin-top: 10px;">
+                                    1/λ = 1.097 × 10⁷ × (1/4 - 1/16)<br>
+                                    1/λ = 1.097 × 10⁷ × (3/16)<br>
+                                    λ = 486 nm
+                                </div>
+                            </div>
+                            <div class="calc-result">
+                                ✓ Answer: The wavelength is 486 nm (blue-green light)
+                                <p style="margin-top: 10px; font-weight: normal;">Note: This is the H-β line in the Balmer series, visible as blue-green in hydrogen discharge tubes.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Example 5 -->
+                    <div class="example-block page-break avoid-break">
+                        <div class="block-title">Example 5: Electron Velocity</div>
+                        <div class="calculation">
+                            <div class="calc-step">
+                                <span class="calc-label">Problem:</span>
+                                Calculate the velocity of the electron in the first Bohr orbit of hydrogen.
+                            </div>
+                            <div class="calc-step">
+                                <span class="calc-label">Given:</span>
+                                n = 1, Z = 1
+                            </div>
+                            <div class="calc-step">
+                                <span class="calc-label">Formula:</span>
+                                vₙ = 2.18 × 10⁶ × (Z/n) m/s
+                            </div>
+                            <div class="calc-step">
+                                <span class="calc-label">Solution:</span>
+                                <div class="formula" style="margin-top: 10px;">
+                                    v₁ = 2.18 × 10⁶ × (1/1) = 2.18 × 10⁶ m/s
+                                </div>
+                            </div>
+                            <div class="calc-result">
+                                ✓ Answer: The velocity is 2.18 × 10⁶ m/s
+                                <p style="margin-top: 10px; font-weight: normal;">Note: This is approximately 0.7% the speed of light! Velocity decreases as 1/n in higher orbits.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Example 6 -->
+                    <div class="example-block avoid-break">
+                        <div class="block-title">Example 6: Ionization Energy</div>
+                        <div class="calculation">
+                            <div class="calc-step">
+                                <span class="calc-label">Problem:</span>
+                                Calculate the ionization energy of a hydrogen atom (energy required to remove the electron from the ground state to infinity).
+                            </div>
+                            <div class="calc-step">
+                                <span class="calc-label">Concept:</span>
+                                Ionization means the electron goes from n=1 to n=∞
+                            </div>
+                            <div class="calc-step">
+                                <span class="calc-label">Known Values:</span>
+                                E₁ = -13.6 eV (ground state)<br>
+                                E∞ = 0 eV (free electron)
+                            </div>
+                            <div class="calc-step">
+                                <span class="calc-label">Solution:</span>
+                                <div class="formula" style="margin-top: 10px;">
+                                    Ionization Energy = E∞ - E₁ = 0 - (-13.6) = 13.6 eV
+                                </div>
+                            </div>
+                            <div class="calc-result">
+                                ✓ Answer: The ionization energy is 13.6 eV
+                                <p style="margin-top: 10px; font-weight: normal;">Note: This is the binding energy of the hydrogen atom and represents the minimum energy needed to completely remove the electron.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 6: Spectral Series -->
+            <div class="section page-break avoid-break">
+                <div class="section-header">
+                    <span class="section-number">6</span>
+                    <h2 class="section-title">Hydrogen Spectral Series</h2>
+                </div>
+                <div class="section-content">
+                    <p>When electrons in hydrogen atoms transition between energy levels, they emit or absorb photons of specific wavelengths, creating characteristic spectral lines. These lines are grouped into series based on the final energy level:</p>
+
+                    <h3 style="margin-top: 25px; color: #2c3e50;">Lyman Series (Ultraviolet Region)</h3>
+                    <div class="info-block">
+                        <p><strong>Transitions:</strong> n = 2, 3, 4, ... → n = 1</p>
+                        <p><strong>Region:</strong> Ultraviolet</p>
+                        <p><strong>Wavelength Range:</strong> 91 - 122 nm</p>
+                        <div class="formula" style="margin: 15px 0;">
+                            1/λ = R(1/1² - 1/n²), where n = 2, 3, 4, ...
+                        </div>
+                        <p><strong>First Line (Lyman α):</strong> 121.6 nm (n=2 → n=1)</p>
+                        <p style="margin-top: 10px;"><em>These transitions involve the highest energy changes and produce UV radiation. The Lyman series is important in astrophysics for studying stellar atmospheres.</em></p>
+                    </div>
+
+                    <h3 style="margin-top: 25px; color: #2c3e50;">Balmer Series (Visible Region)</h3>
+                    <div class="info-block">
+                        <p><strong>Transitions:</strong> n = 3, 4, 5, ... → n = 2</p>
+                        <p><strong>Region:</strong> Visible light</p>
+                        <p><strong>Wavelength Range:</strong> 365 - 656 nm</p>
+                        <div class="formula" style="margin: 15px 0;">
+                            1/λ = R(1/2² - 1/n²), where n = 3, 4, 5, ...
+                        </div>
+                        <p><strong>Prominent Lines:</strong></p>
+                        <ul class="styled-list" style="margin-top: 10px;">
+                            <li>H-α (656 nm, red) - n=3 → n=2</li>
+                            <li>H-β (486 nm, blue-green) - n=4 → n=2</li>
+                            <li>H-γ (434 nm, violet) - n=5 → n=2</li>
+                            <li>H-δ (410 nm, violet) - n=6 → n=2</li>
+                        </ul>
+                        <p style="margin-top: 10px;"><em>The Balmer series is the most studied because it falls in the visible spectrum and can be easily observed in hydrogen discharge tubes.</em></p>
+                    </div>
+
+                    <h3 style="margin-top: 25px; color: #2c3e50;">Paschen Series (Infrared Region)</h3>
+                    <div class="info-block">
+                        <p><strong>Transitions:</strong> n = 4, 5, 6, ... → n = 3</p>
+                        <p><strong>Region:</strong> Infrared</p>
+                        <p><strong>Wavelength Range:</strong> 820 - 1875 nm</p>
+                        <div class="formula" style="margin: 15px 0;">
+                            1/λ = R(1/3² - 1/n²), where n = 4, 5, 6, ...
+                        </div>
+                        <p><strong>First Line:</strong> 1875 nm (n=4 → n=3)</p>
+                        <p style="margin-top: 10px;"><em>These infrared transitions have lower energies and require special detectors for observation.</em></p>
+                    </div>
+
+                    <div class="note-block" style="margin-top: 25px;">
+                        <div class="block-title">📌 Additional Series</div>
+                        <p>Other less commonly studied series include:</p>
+                        <ul class="styled-list">
+                            <li><strong>Brackett Series:</strong> n → 4 transitions (far infrared)</li>
+                            <li><strong>Pfund Series:</strong> n → 5 transitions (far infrared)</li>
+                            <li><strong>Humphreys Series:</strong> n → 6 transitions (far infrared)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 7: Limitations -->
+            <div class="section page-break avoid-break">
+                <div class="section-header">
+                    <span class="section-number">7</span>
+                    <h2 class="section-title">Limitations of Bohr's Model</h2>
+                </div>
+                <div class="section-content">
+                    <p>While Bohr's model was revolutionary and successfully explained many phenomena, it has several important limitations:</p>
+
+                    <ol class="styled-list" style="margin-top: 20px;">
+                        <li>
+                            <strong>Limited to Hydrogen-like Atoms:</strong> The model works well only for hydrogen and hydrogen-like atoms (ions with a single electron, such as He⁺, Li²⁺). It fails to accurately predict the spectra of multi-electron atoms due to electron-electron interactions that are not accounted for in the model.
+                        </li>
+                        <li>
+                            <strong>Cannot Explain Fine Structure:</strong> The model cannot explain the fine structure of spectral lines - the splitting of lines observed when atoms are placed in magnetic fields (Zeeman effect) or the natural splitting of lines even without external fields (fine structure due to spin-orbit coupling).
+                        </li>
+                        <li>
+                            <strong>No Prediction of Spectral Line Intensities:</strong> While Bohr's model predicts the wavelengths of spectral lines accurately for hydrogen, it cannot predict their relative intensities. Some transitions produce bright lines while others are faint, but the model offers no explanation for this.
+                        </li>
+                        <li>
+                            <strong>Ignores Wave Nature of Electrons:</strong> The model treats electrons purely as particles following definite orbits. It completely ignores the wave nature of electrons, which was later discovered through experiments like electron diffraction (de Broglie hypothesis).
+                        </li>
+                        <li>
+                            <strong>Cannot Explain Chemical Bonding:</strong> The model provides no framework for understanding how atoms combine to form molecules or the nature of chemical bonds. It cannot explain molecular spectra or the directional nature of covalent bonds.
+                        </li>
+                        <li>
+                            <strong>Violates Heisenberg Uncertainty Principle:</strong> By assuming that electrons have both definite positions (in specific orbits) and definite momenta simultaneously, Bohr's model violates the Heisenberg Uncertainty Principle, which states that position and momentum cannot both be known with arbitrary precision.
+                        </li>
+                        <li>
+                            <strong>Arbitrary Postulates:</strong> Some critics argued that Bohr's postulates, while successful, were somewhat arbitrary and lacked a deeper theoretical foundation. The quantization conditions were imposed rather than derived from more fundamental principles.
+                        </li>
+                    </ol>
+
+                    <div class="important-block" style="margin-top: 25px;">
+                        <div class="block-title">🔬 Historical Significance</div>
+                        <p>
+                            Despite these limitations, Bohr's model was a crucial stepping stone in the development of quantum mechanics. It demonstrated that classical physics was inadequate for describing atomic phenomena and paved the way for the modern quantum mechanical model of the atom developed by Schrödinger, Heisenberg, and others in the 1920s. The concept of quantized energy levels remains central to our understanding of atomic structure today.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 8: Summary -->
+            <div class="section page-break avoid-break">
+                <div class="section-header">
+                    <span class="section-number">8</span>
+                    <h2 class="section-title">Summary & Key Takeaways</h2>
+                </div>
+                <div class="section-content">
+                    <div class="important-block">
+                        <div class="block-title">🎯 Essential Points to Remember</div>
+                        <ul class="styled-list">
+                            <li>Electrons exist in <strong>quantized energy levels</strong>, not continuous orbits. Only certain discrete energy states are allowed.</li>
+                            <li>The overall equation for photosynthesis is: <strong>6CO₂ + 6H₂O + Light Energy → C₆H₁₂O₆ + 6O₂</strong></li>
+                            <li>Energy is <strong>absorbed or emitted</strong> only during transitions between energy levels, with ΔE = hν.</li>
+                            <li>The <strong>radius increases as n²</strong> and <strong>energy increases (becomes less negative) as 1/n²</strong>.</li>
+                            <li>Bohr's model successfully explained the <strong>hydrogen spectrum</strong> and derived the Rydberg formula from first principles.</li>
+                            <li>The <strong>ground state (n=1)</strong> of hydrogen has an energy of <strong>-13.6 eV</strong> and a radius of <strong>0.529 Å</strong> (Bohr radius).</li>
+                            <li>Angular momentum is quantized according to <strong>L = nh/2π</strong>, where n is a positive integer.</li>
+                            <li>The model has significant limitations but was a crucial bridge from classical physics to <strong>quantum mechanics</strong>.</li>
+                        </ul>
+                    </div>
+
+                    <h3 style="margin-top: 30px; color: #2c3e50;">Quick Reference: Key Values</h3>
+                    <table class="data-table" style="margin-top: 15px;">
+                        <thead>
+                            <tr>
+                                <th>Constant/Value</th>
+                                <th>Symbol</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Bohr Radius (1st orbit of H)</td>
+                                <td>r₁</td>
+                                <td>0.529 Å</td>
+                            </tr>
+                            <tr>
+                                <td>Ground State Energy (H)</td>
+                                <td>E₁</td>
+                                <td>-13.6 eV</td>
+                            </tr>
+                            <tr>
+                                <td>Rydberg Constant</td>
+                                <td>R</td>
+                                <td>1.097 × 10⁷ m⁻¹</td>
+                            </tr>
+                            <tr>
+                                <td>Planck's Constant</td>
+                                <td>h</td>
+                                <td>6.626 × 10⁻³⁴ J·s</td>
+                            </tr>
+                            <tr>
+                                <td>Electron Velocity (1st orbit)</td>
+                                <td>v₁</td>
+                                <td>2.18 × 10⁶ m/s</td>
+                            </tr>
+                            <tr>
+                                <td>Ionization Energy (H)</td>
+                                <td>IE</td>
+                                <td>13.6 eV</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Section 9: Practice Questions -->
+            <div class="section page-break avoid-break">
+                <div class="section-header">
+                    <span class="section-number">9</span>
+                    <h2 class="section-title">Practice Questions</h2>
+                </div>
+                <div class="section-content">
+                    
+                    <h3 style="color: #2c3e50;">Conceptual Questions</h3>
+                    <ol class="styled-list">
+                        <li>What is the radius of the first Bohr orbit, and why is it called the Bohr radius?</li>
+                        <li>Which spectral series of hydrogen falls in the visible region?</li>
+                        <li>What happens when an electron absorbs a photon of appropriate energy?</li>
+                        <li>Why are electron energies in Bohr's model negative?</li>
+                        <li>Explain why classical physics predicts that Rutherford's atomic model should be unstable.</li>
+                    </ol>
+
+                    <h3 style="color: #2c3e50; margin-top: 25px;">Numerical Problems</h3>
+                    <ol class="styled-list">
+                        <li>Calculate the radius of the third orbit in a hydrogen atom.</li>
+                        <li>Find the energy difference between the second and third energy levels in hydrogen.</li>
+                        <li>What is the wavelength of the photon emitted when an electron transitions from n=5 to n=2?</li>
+                        <li>Calculate the velocity of an electron in the second Bohr orbit of hydrogen.</li>
+                        <li>Determine the ionization energy required for a He⁺ ion (Z=2).</li>
+                        <li>How many spectral lines will be emitted when an electron transitions from n=5 to the ground state?</li>
+                    </ol>
+
+                    <div class="note-block" style="margin-top: 25px;">
+                        <div class="block-title">💡 Answers to Conceptual Questions</div>
+                        <ol class="styled-list">
+                            <li><strong>Answer:</strong> 0.529 Å (angstroms). It's called the Bohr radius because it represents the most probable distance of the electron from the nucleus in the ground state of hydrogen.</li>
+                            <li><strong>Answer:</strong> Balmer Series (transitions to n=2), with wavelengths from 365 to 656 nm.</li>
+                            <li><strong>Answer:</strong> The electron jumps to a higher energy level (excited state), gaining energy equal to the photon's energy.</li>
+                            <li><strong>Answer:</strong> Negative energies indicate that the electron is bound to the nucleus. Energy must be added (making it less negative or zero) to free the electron.</li>
+                            <li><strong>Answer:</strong> According to classical electromagnetic theory, an accelerating charged particle (like an electron in orbit) should continuously emit radiation, lose energy, and spiral into the nucleus.</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 10: References -->
+            <div class="section page-break avoid-break">
+                <div class="section-header">
+                    <span class="section-number">10</span>
+                    <h2 class="section-title">References & Further Reading</h2>
+                </div>
+                <div class="section-content">
+                    
+                    <h3 style="color: #2c3e50;">Primary Sources</h3>
+                    <div class="reference">
+                        Bohr, N. (1913). "On the Constitution of Atoms and Molecules". <em>Philosophical Magazine</em>, Series 6, Volume 26, pp. 1-25.
+                    </div>
+                    <div class="reference">
+                        Bohr, N. (1913). "On the Constitution of Atoms and Molecules, Part II: Systems containing only a Single Nucleus". <em>Philosophical Magazine</em>, Series 6, Volume 26, pp. 476-502.
+                    </div>
+
+                    <h3 style="color: #2c3e50; margin-top: 25px;">Textbooks</h3>
+                    <div class="reference">
+                        Griffiths, D. J. (2018). <em>Introduction to Quantum Mechanics</em> (3rd ed.). Cambridge University Press.
+                    </div>
+                    <div class="reference">
+                        Eisberg, R., & Resnick, R. (1985). <em>Quantum Physics of Atoms, Molecules, Solids, Nuclei, and Particles</em> (2nd ed.). Wiley.
+                    </div>
+                    <div class="reference">
+                        Beiser, A. (2003). <em>Concepts of Modern Physics</em> (6th ed.). McGraw-Hill.
+                    </div>
+
+                    <h3 style="color: #2c3e50; margin-top: 25px;">Online Resources</h3>
+                    <div class="reference">
+                        Khan Academy: Quantum Physics - Bohr's Model of the Hydrogen Atom<br>
+                        <em>https://www.khanacademy.org/science/physics/quantum-physics</em>
+                    </div>
+                    <div class="reference">
+                        MIT OpenCourseWare: Atomic Structure and Hydrogen Atom<br>
+                        <em>https://ocw.mit.edu</em>
+                    </div>
+                    <div class="reference">
+                        HyperPhysics - Georgia State University: Bohr Model<br>
+                        <em>http://hyperphysics.phy-astr.gsu.edu/hbase/quantum/bohr.html</em>
+                    </div>
+
+                    <h3 style="color: #2c3e50; margin-top: 25px;">Historical Context</h3>
+                    <div class="reference">
+                        Pais, A. (1991). <em>Niels Bohr's Times: In Physics, Philosophy, and Polity</em>. Oxford University Press.
+                    </div>
+                    <div class="reference">
+                        Heilbron, J. L., & Kuhn, T. S. (1969). "The Genesis of the Bohr Atom". <em>Historical Studies in the Physical Sciences</em>, Vol. 1, pp. 211-290.
+                    </div>
+
+                    <div class="note-block" style="margin-top: 30px;">
+                        <div class="block-title">📚 Recommended Study Path</div>
+                        <p>For a comprehensive understanding of atomic structure:</p>
+                        <ol class="styled-list">
+                            <li>Review classical mechanics and electromagnetism</li>
+                            <li>Study Rutherford's atomic model and its limitations</li>
+                            <li>Master Bohr's model (this document)</li>
+                            <li>Progress to de Broglie waves and matter waves</li>
+                            <li>Study Schrödinger's wave equation</li>
+                            <li>Learn the modern quantum mechanical model of the atom</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Document Footer -->
+        <div class="document-footer">
+            <div class="footer-content">
+                <h3 style="margin-bottom: 10px;">Bohr's Atomic Model - Study Notes</h3>
+                <p>Comprehensive educational resource for understanding quantum atomic structure</p>
+                <p style="margin-top: 15px; font-size: 0.9em; opacity: 0.8;">
+                    Document prepared for educational purposes • February 2026<br>
+                    For questions or corrections, please consult your instructor or reference materials
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Print optimization
+        window.onbeforeprint = function() {
+            document.body.style.background = 'white';
+        };
+    </script>
+</body>
+</html>

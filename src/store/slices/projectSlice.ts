@@ -28,6 +28,7 @@ export interface ProjectSlice {
     loadProjectModule: (moduleKey: string) => Promise<void>;
     pdfSearchText: string | null;
     setPdfSearchText: (text: string | null) => void;
+    deleteDocument: (documentId: string) => Promise<void>;
 }
 
 export const createProjectSlice: StateCreator<AppState, [], [], ProjectSlice> = (set, get) => ({
@@ -197,6 +198,22 @@ export const createProjectSlice: StateCreator<AppState, [], [], ProjectSlice> = 
             await get().ensureMinimumOneTab(module);
         } catch (error) {
             console.error('[Store] loadProjectModule failed:', error);
+        }
+    },
+
+    deleteDocument: async (documentId) => {
+        try {
+            await apiService.deleteDocument(documentId);
+            toast.success('Project deleted successfully');
+
+            // If deleting the currently open project, reset the workspace
+            if (get().fileId === documentId) {
+                get().resetWorkspace();
+            }
+        } catch (error) {
+            console.error('[Store] deleteDocument failed:', error);
+            toast.error('Failed to delete project');
+            throw error;
         }
     }
 });

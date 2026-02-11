@@ -1,4 +1,4 @@
-export type PreviewPreset = 'professional' | 'academic' | 'minimal' | 'creative';
+export type PreviewPreset = 'study' | 'presentation';
 export type Mode = 'summary' | 'insights' | 'notes' | 'quiz' | 'flashcards' | 'mindmap' | 'editor' | 'chat' | 'slides';
 
 // --- Data Interfaces ---

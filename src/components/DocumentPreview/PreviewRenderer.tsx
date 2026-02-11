@@ -54,7 +54,7 @@ export const PreviewRenderer: React.FC<PreviewRendererProps> = ({ mode, data }) 
     }, [previewData, previewPreset]);
 
     // Handle empty or invalid data
-    if (!previewData || !previewData.sections || previewData.sections.length === 0) {
+    if (!previewData || (!previewData.sections?.length && !(previewData as any).presentationData)) {
         return (
             <div className="flex items-center justify-center h-full bg-gemini-dark-300">
                 <div className="text-center p-8">

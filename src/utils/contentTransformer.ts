@@ -113,7 +113,36 @@ export function transformInsights(data: InsightsData): PreviewData | null {
  * Transform Notes data for preview
  */
 export function transformNotes(data: NotesData): PreviewData | null {
+    // 1. Check for Presentation Deck structure (highest priority)
     if (data?.blocks && Array.isArray(data.blocks)) {
+        // Find a block that looks like a presentation (by type OR by having slides)
+        const presentationBlock = data.blocks.find(b =>
+            b.type === 'presentation_deck' ||
+            b.type === 'presentation' ||
+            (b.slides && b.slides.length > 0) ||
+            (b.content?.slides && b.content?.slides.length > 0)
+        );
+
+        if (presentationBlock) {
+            // Robust slide discovery
+            const slides = presentationBlock.slides || presentationBlock.content?.slides || [];
+
+            // Map slides to backup sections (for other templates)
+            const backupSections: PreviewSection[] = slides.map((s: any) => ({
+                heading: s.title || 'Slide',
+                content: s.script || '',
+                type: 'paragraph'
+            }));
+
+            return {
+                title: presentationBlock.title || presentationBlock.content?.title || 'Presentation Notes',
+                sections: backupSections,
+                metadata: { count: slides.length },
+                presentationData: { ...presentationBlock, slides }
+            } as any;
+        }
+
+        // 2. Regular adaptive blocks (Study Notes)
         const sections = transformAdaptiveBlocks(data.blocks);
         return {
             title: 'Study Notes',
@@ -122,6 +151,7 @@ export function transformNotes(data: NotesData): PreviewData | null {
         };
     }
 
+    // 3. Simple list-based notes (Legacy fallback)
     const sections: PreviewSection[] = [];
     const notesArray = data?.notes || [];
 

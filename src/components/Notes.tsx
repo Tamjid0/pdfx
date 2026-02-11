@@ -71,7 +71,13 @@ const Notes: React.FC<NotesProps> = ({
                                         {categories.map((cat) => (
                                             <button
                                                 key={cat.id}
-                                                onClick={() => setNotesSettings({ ...notesSettings, category: cat.id })}
+                                                onClick={() => {
+                                                    setNotesSettings({ ...notesSettings, category: cat.id });
+                                                    // Sync preview preset
+                                                    if (cat.id === 'study' || cat.id === 'presentation') {
+                                                        useStore.getState().setPreviewPreset(cat.id as any);
+                                                    }
+                                                }}
                                                 className={`group flex items-start gap-4 p-6 rounded-[2rem] border transition-all duration-300 text-left relative overflow-hidden ${notesSettings.category === cat.id
                                                     ? 'bg-white/5 border-white/20 ring-1 ring-white/10'
                                                     : 'bg-black/40 border-white/5 hover:border-white/10'

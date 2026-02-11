@@ -10,10 +10,8 @@ export const PreviewToolbar: React.FC = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const presets: { value: PreviewPreset; label: string; icon: string }[] = [
-        { value: 'professional', label: 'Professional', icon: '💼' },
-        { value: 'academic', label: 'Academic', icon: '🎓' },
-        { value: 'minimal', label: 'Minimal', icon: '⚡' },
-        { value: 'creative', label: 'Creative', icon: '🎨' },
+        { value: 'study', label: 'Study Note', icon: '📚' },
+        { value: 'presentation', label: 'Presentation Note', icon: '🎙️' },
     ];
 
     const currentPreset = presets.find(p => p.value === previewPreset) || presets[0];

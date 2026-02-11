@@ -119,3 +119,26 @@ export const addScheduledCleanupJob = async () => {
     }
 };
 
+export const addAIJob = async (type, data) => {
+    try {
+        const queue = await getDocumentQueue();
+        if (!queue) {
+            throw new Error('Redis is not available to process background AI jobs.');
+        }
+
+        const job = await queue.add(`ai-${type}`, data, {
+            // Higher priority for user-triggered generation? (Optional)
+            attempts: 2,
+            backoff: {
+                type: 'exponential',
+                delay: 2000,
+            }
+        });
+
+        logger.info(`AI Job added to queue: ${job.id} type: ${type}`);
+        return job;
+    } catch (error) {
+        logger.error(`Failed to add AI job to queue: ${error.message}`);
+        throw error;
+    }
+};

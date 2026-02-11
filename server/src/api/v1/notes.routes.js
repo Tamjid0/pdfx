@@ -9,6 +9,7 @@ import ApiError from '../../utils/ApiError.js';
 import { resolveScopedText } from '../../utils/scoping.js';
 import { safeParseAiJson } from '../../utils/aiUtils.js';
 import logger from '../../utils/logger.js';
+import { addAIJob, isRedisConnected } from '../../services/queueService.js';
 
 const router = express.Router();
 
@@ -125,6 +126,22 @@ router.post('/', optionalVerifyToken, aiGenerationLimiter, validate(notesSchema)
         }
 
         const promptInstruction = getPromptByCategory(category);
+
+        // --- BACKGROUND PROCESSING LOGIC ---
+        // Threshold: ~10k chars or explicit request
+        const useBackground = req.body.background || fullText.length > 10000;
+        const redisAvailable = await isRedisConnected();
+
+        if (useBackground && redisAvailable) {
+            logger.info(`[NotesRoute] Backgrounding generation for ${fileId || 'raw text'} (Length: ${fullText.length})`);
+            const job = await addAIJob('notes', {
+                fullText,
+                promptInstruction,
+                options: { outputFormat: 'json' }
+            });
+            return res.json({ success: true, jobId: job.id, isBackground: true });
+        }
+        // ------------------------------------
 
         const aiResponse = await generateFullDocumentTransformation(fullText, promptInstruction, { outputFormat: 'json' });
 

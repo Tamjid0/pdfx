@@ -166,10 +166,13 @@ const Home = () => {
             switch (targetMode) {
                 case 'insights':
                     const resultInsights = await apiService.fetchInsights(payload);
-                    setInsightsData(resultInsights);
+                    const finalInsights = resultInsights.isBackground && resultInsights.jobId
+                        ? await apiService.pollJobUntilComplete(resultInsights.jobId)
+                        : resultInsights;
+                    setInsightsData(finalInsights);
                     setIsInsightsGenerated(true);
                     if (fileId) {
-                        await apiService.syncProjectContent(fileId, { insightsData: resultInsights }, { append: isAppendMode, scope: generationScope, preventSnapshot: true } as any)
+                        await apiService.syncProjectContent(fileId, { insightsData: finalInsights }, { append: isAppendMode, scope: generationScope, preventSnapshot: true } as any)
                             .then((res) => {
                                 if (res.updatedFields) updateRevisionsFromSync(res.updatedFields);
                                 toast.success('Insights synced and ready');
@@ -179,10 +182,13 @@ const Home = () => {
                     break;
                 case 'notes':
                     const resultNotes = await apiService.fetchNotes(payload);
-                    setNotesData(resultNotes);
+                    const finalNotes = resultNotes.isBackground && resultNotes.jobId
+                        ? await apiService.pollJobUntilComplete(resultNotes.jobId)
+                        : resultNotes;
+                    setNotesData(finalNotes);
                     setIsNotesGenerated(true);
                     if (fileId) {
-                        await apiService.syncProjectContent(fileId, { notesData: resultNotes }, { append: isAppendMode, scope: generationScope, preventSnapshot: true } as any)
+                        await apiService.syncProjectContent(fileId, { notesData: finalNotes }, { append: isAppendMode, scope: generationScope, preventSnapshot: true } as any)
                             .then((res) => {
                                 if (res.updatedFields) updateRevisionsFromSync(res.updatedFields);
                                 toast.success('Notes synced and ready');
@@ -191,11 +197,14 @@ const Home = () => {
                     }
                     break;
                 case 'quiz':
-                    const quiz = await apiService.fetchQuiz(payload);
-                    setQuizData(quiz);
+                    const resultQuiz = await apiService.fetchQuiz(payload);
+                    const finalQuiz = resultQuiz.isBackground && resultQuiz.jobId
+                        ? await apiService.pollJobUntilComplete(resultQuiz.jobId)
+                        : resultQuiz;
+                    setQuizData(finalQuiz);
                     setIsQuizGenerated(true);
                     if (fileId) {
-                        await apiService.syncProjectContent(fileId, { quizData: quiz }, { append: isAppendMode, scope: generationScope, preventSnapshot: true } as any)
+                        await apiService.syncProjectContent(fileId, { quizData: finalQuiz }, { append: isAppendMode, scope: generationScope, preventSnapshot: true } as any)
                             .then((res) => {
                                 if (res.updatedFields) updateRevisionsFromSync(res.updatedFields);
                                 toast.success('Quiz synced and ready');
@@ -204,11 +213,14 @@ const Home = () => {
                     }
                     break;
                 case 'flashcards':
-                    const flashcards = await apiService.fetchFlashcards(payload);
-                    setFlashcardsData(flashcards);
+                    const resultFlashcards = await apiService.fetchFlashcards(payload);
+                    const finalFlashcards = resultFlashcards.isBackground && resultFlashcards.jobId
+                        ? await apiService.pollJobUntilComplete(resultFlashcards.jobId)
+                        : resultFlashcards;
+                    setFlashcardsData(finalFlashcards);
                     setIsFlashcardsGenerated(true);
                     if (fileId) {
-                        await apiService.syncProjectContent(fileId, { flashcardsData: flashcards }, { append: isAppendMode, scope: generationScope, preventSnapshot: true } as any)
+                        await apiService.syncProjectContent(fileId, { flashcardsData: finalFlashcards }, { append: isAppendMode, scope: generationScope, preventSnapshot: true } as any)
                             .then((res) => {
                                 if (res.updatedFields) updateRevisionsFromSync(res.updatedFields);
                                 toast.success('Flashcards synced and ready');
@@ -217,11 +229,14 @@ const Home = () => {
                     }
                     break;
                 case 'mindmap':
-                    const mindmap = await apiService.fetchMindmap(payload);
-                    setMindmapData(mindmap);
+                    const resultMindmap = await apiService.fetchMindmap(payload);
+                    const finalMindmap = resultMindmap.isBackground && resultMindmap.jobId
+                        ? await apiService.pollJobUntilComplete(resultMindmap.jobId)
+                        : resultMindmap;
+                    setMindmapData(finalMindmap);
                     setIsMindmapGenerated(true);
                     if (fileId) {
-                        await apiService.syncProjectContent(fileId, { mindmapData: mindmap }, { append: isAppendMode, scope: generationScope, preventSnapshot: true } as any)
+                        await apiService.syncProjectContent(fileId, { mindmapData: finalMindmap }, { append: isAppendMode, scope: generationScope, preventSnapshot: true } as any)
                             .then((res) => {
                                 if (res.updatedFields) updateRevisionsFromSync(res.updatedFields);
                                 toast.success('Mindmap synced and ready');
@@ -230,11 +245,14 @@ const Home = () => {
                     }
                     break;
                 case 'summary':
-                    const summary = await apiService.generateSummary(payload);
-                    setSummaryData(summary);
+                    const resultSummary = await apiService.generateSummary(payload);
+                    const finalSummary = resultSummary.isBackground && resultSummary.jobId
+                        ? await apiService.pollJobUntilComplete(resultSummary.jobId)
+                        : resultSummary;
+                    setSummaryData(finalSummary);
                     setIsSummaryGenerated(true);
                     if (fileId) {
-                        await apiService.syncProjectContent(fileId, { summaryData: summary }, { append: isAppendMode, scope: generationScope, preventSnapshot: true } as any)
+                        await apiService.syncProjectContent(fileId, { summaryData: finalSummary }, { append: isAppendMode, scope: generationScope, preventSnapshot: true } as any)
                             .then((res) => {
                                 if (res.updatedFields) updateRevisionsFromSync(res.updatedFields);
                                 toast.success('Summary synced and ready');

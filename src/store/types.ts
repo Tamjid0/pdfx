@@ -5,6 +5,8 @@ export type Mode = 'summary' | 'insights' | 'notes' | 'quiz' | 'flashcards' | 'm
 export interface SummaryData {
     summary: string | string[];
     keyPoints: string[];
+    isBackground?: boolean;
+    jobId?: string;
 }
 
 export interface NoteSection {
@@ -30,11 +32,15 @@ export interface AdaptiveBlock {
 export interface NotesData {
     notes?: NoteSection[];
     blocks?: AdaptiveBlock[];
+    isBackground?: boolean;
+    jobId?: string;
 }
 
 export interface InsightsData {
     insights?: Insight[];
     blocks?: AdaptiveBlock[];
+    isBackground?: boolean;
+    jobId?: string;
 }
 
 export interface Flashcard {
@@ -50,6 +56,8 @@ export interface Flashcard {
 
 export interface FlashcardsData {
     flashcards: Flashcard[];
+    isBackground?: boolean;
+    jobId?: string;
 }
 
 export type QuizItem = {
@@ -81,6 +89,8 @@ export type QuizItem = {
 
 export interface QuizData {
     quiz: QuizItem[];
+    isBackground?: boolean;
+    jobId?: string;
 }
 
 export interface MindmapNode {
@@ -98,6 +108,8 @@ export interface MindmapEdge {
 export interface MindmapData {
     nodes: MindmapNode[];
     edges: MindmapEdge[];
+    isBackground?: boolean;
+    jobId?: string;
 }
 
 export interface ActiveSelection {

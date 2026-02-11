@@ -4,6 +4,8 @@ import { DocumentProcessor } from '../services/DocumentProcessor.js';
 import { embedStructuredChunks } from '../controllers/fileUploadController.js';
 import { isRedisConnected } from '../services/queueService.js';
 import cleanupService from '../services/CleanupService.js';
+import * as aiService from '../services/aiGenerationService.js';
+import { safeParseAiJson } from '../utils/aiUtils.js';
 
 const connection = {
     host: process.env.REDIS_HOST || '127.0.0.1',
@@ -30,6 +32,28 @@ export const initDocumentWorker = async () => {
                 const result = await cleanupService.cleanupGuests(24); // Purge older than 24h
                 logger.info(`[Worker] Guest cleanup complete. Purged: ${result.purged}/${result.total}`);
                 return result;
+            }
+
+            // Handle AI Generation Jobs
+            if (job.name.startsWith('ai-')) {
+                const type = job.name.replace('ai-', '');
+                const { fullText, promptInstruction, options } = job.data;
+
+                logger.info(`[Worker] Starting background AI generation for type: ${type}`);
+
+                try {
+                    const aiResponse = await aiService.generateFullDocumentTransformation(fullText, promptInstruction, options);
+
+                    // Specific parsing for structured types that expect JSON
+                    if (options?.outputFormat === 'json') {
+                        return safeParseAiJson(aiResponse, type.charAt(0).toUpperCase() + type.slice(1));
+                    }
+
+                    return { text: aiResponse };
+                } catch (error) {
+                    logger.error(`[Worker] AI generation failed: ${error.message}`);
+                    throw error;
+                }
             }
 
             const { filePath, mimeType, fileName, documentId, userId = 'guest', triggerFullProcess = false } = job.data;

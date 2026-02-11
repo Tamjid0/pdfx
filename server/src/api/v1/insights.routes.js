@@ -9,6 +9,7 @@ import ApiError from '../../utils/ApiError.js';
 
 import { resolveScopedText } from '../../utils/scoping.js';
 import { safeParseAiJson } from '../../utils/aiUtils.js';
+import { addAIJob, isRedisConnected } from '../../services/queueService.js';
 
 const router = express.Router();
 
@@ -53,6 +54,21 @@ router.post('/', optionalVerifyToken, aiGenerationLimiter, validate(insightsSche
           ]
         }
         Do NOT include markdown formatting, code fences, or explanations outside the JSON. Return only the raw JSON.`;
+
+        // --- BACKGROUND PROCESSING LOGIC ---
+        const useBackground = req.body.background || fullText.length > 10000;
+        const redisAvailable = await isRedisConnected();
+
+        if (useBackground && redisAvailable) {
+            logger.info(`[InsightsRoute] Backgrounding generation for ${fileId || 'raw text'} (Length: ${fullText.length})`);
+            const job = await addAIJob('insights', {
+                fullText,
+                promptInstruction,
+                options: { outputFormat: 'json' }
+            });
+            return res.json({ success: true, jobId: job.id, isBackground: true });
+        }
+        // ------------------------------------
 
         const aiResponse = await generateFullDocumentTransformation(fullText, promptInstruction, { outputFormat: 'json' });
 

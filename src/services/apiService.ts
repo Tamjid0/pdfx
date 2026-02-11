@@ -288,6 +288,32 @@ export async function getJobStatus(jobId: string) {
 }
 
 /**
+ * Polls a job until it is completed or failed
+ */
+export async function pollJobUntilComplete(jobId: string, intervalMs: number = 3000): Promise<any> {
+    return new Promise((resolve, reject) => {
+        const poll = async () => {
+            try {
+                const status = await getJobStatus(jobId);
+
+                if (status.state === 'completed') {
+                    resolve(status.result);
+                } else if (status.state === 'failed') {
+                    reject(new Error(status.failedReason || 'Job failed in background'));
+                } else {
+                    // Still processing
+                    setTimeout(poll, intervalMs);
+                }
+            } catch (err) {
+                reject(err);
+            }
+        };
+
+        poll();
+    });
+}
+
+/**
  * Fetches document data including chat history
  */
 export async function fetchDocumentData(documentId: string) {

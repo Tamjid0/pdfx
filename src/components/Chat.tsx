@@ -40,7 +40,8 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
         setActiveNodeIds,
         activeSelection,
         setActiveSelection,
-        setCurrentSlideIndex
+        setCurrentSlideIndex,
+        setPdfSearchText
     } = useStore();
     const { suggestion, handleAcceptSuggestion, handleDismissSuggestion } = useProactiveAgent();
     const [inputValue, setInputValue] = useState('');
@@ -276,7 +277,7 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                                                                 }
                                                             }}
                                                         >
-                                                            {msg.content}
+                                                            {msg.content.replace(/<br\s*\/?>/gi, '\n')}
                                                         </ReactMarkdown>
                                                     </div>
                                                 ) : (

@@ -274,6 +274,8 @@ STYLE:
   - FORMAT: [cited text segment](#UUID)
   - **NEGATIVE CONSTRAINT**: Never use the word "SOURCE", "[SOURCE]", or numerical placeholders like "[1]" as link text. Always wrap the actual informative text from your response.
   - DO NOT create separate "SOURCE" links. Ground the text itself.
+  - NO RAW HTML: Never include raw HTML tags like "br", "div", or "span". Use Markdown for ALL formatting. 
+  - TABLES: In markdown tables, do NOT use HTML line breaks. If you need multiple items in a cell, use commas, semicolons, or a simple list like "1. item 2. item".
 
 Rules:
 - Don't greet the user.

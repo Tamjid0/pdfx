@@ -116,20 +116,22 @@ export const useChat = () => {
                     });
                     setIsTyping(false);
                 },
-                selectionNodeIds
+                selectionNodeIds,
+                chatHistory
             );
 
             // Clear selection after sending
             setActiveSelection(null);
         } catch (error) {
             console.error("Error sending message:", error);
-            setIsTyping(false);
             const errorResponse = {
                 role: 'ai' as const,
                 content: 'Sorry, I encountered an error. Please try again.',
                 timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
             };
             setChatHistory(prev => [...prev.slice(0, -1), errorResponse]);
+        } finally {
+            setIsTyping(false);
         }
     };
 

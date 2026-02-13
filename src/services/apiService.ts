@@ -209,13 +209,13 @@ export async function exportContent(content: string, format: string, mode: strin
     return response;
 }
 
-export async function chatWithDocument(message: string, fileId: string) {
+export async function chatWithDocument(message: string, fileId: string, chatHistory: any[] = []) {
     const response = await fetch('/api/v1/chat', {
         method: 'POST',
         headers: await getAuthHeaders({
             'Content-Type': 'application/json',
         }),
-        body: JSON.stringify({ message, fileId }),
+        body: JSON.stringify({ message, fileId, chatHistory }),
     });
     if (!response.ok) {
         throw new Error('Failed to send message');
@@ -226,16 +226,16 @@ export async function chatWithDocument(message: string, fileId: string) {
 export async function chatWithDocumentStream(
     message: string,
     fileId: string,
-    onChunk: (text: string) => void,
     onComplete: (fullText: string) => void,
-    selectionNodeIds?: string[]
+    selectionNodeIds?: string[],
+    chatHistory: any[] = []
 ): Promise<void> {
     const response = await fetch('/api/v1/chat/stream', {
         method: 'POST',
         headers: await getAuthHeaders({
             'Content-Type': 'application/json',
         }),
-        body: JSON.stringify({ message, fileId, selectionNodeIds }),
+        body: JSON.stringify({ message, fileId, selectionNodeIds, chatHistory }),
     });
 
     if (!response.ok) {

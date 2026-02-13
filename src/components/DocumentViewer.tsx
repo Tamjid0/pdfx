@@ -39,6 +39,12 @@ const HIGHLIGHT_STYLE = `
     .search-box-transition {
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
+
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 0.8; }
+        50% { transform: scale(1.02); opacity: 1; box-shadow: 0 0 40px rgba(0, 255, 136, 1); }
+        100% { transform: scale(1); opacity: 0.8; }
+    }
 `;
 
 const DocumentViewer: React.FC = () => {

@@ -4,6 +4,7 @@ export const chatSchema = {
     body: z.object({
         fileId: z.string().min(1, 'fileId is required'),
         message: z.string().min(1, 'message is required'),
+        chatHistory: z.array(z.any()).optional(),
     }),
 };
 
@@ -12,5 +13,6 @@ export const chatStreamSchema = {
         fileId: z.string().min(1, 'fileId is required'),
         message: z.string().min(1, 'message is required'),
         selectionNodeIds: z.array(z.string()).optional(),
+        chatHistory: z.array(z.any()).optional(),
     }),
 };

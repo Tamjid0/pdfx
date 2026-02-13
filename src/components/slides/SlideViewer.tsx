@@ -16,6 +16,14 @@ const IconChevronRight = () => (
     </svg>
 );
 
+const PULSE_STYLE = `
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 0.8; }
+        50% { transform: scale(1.02); opacity: 1; box-shadow: 0 0 40px rgba(0, 255, 136, 1); }
+        100% { transform: scale(1); opacity: 0.8; }
+    }
+`;
+
 const SlideViewer: React.FC = () => {
     const {
         currentSlideIndex,
@@ -222,6 +230,7 @@ const SlideViewer: React.FC = () => {
 
     return (
         <div className="slide-viewer flex flex-col h-full bg-[#0a0a0a] relative group overflow-hidden animate-in fade-in duration-500">
+            <style>{PULSE_STYLE}</style>
             {/* Loading Overlay for Background Processing */}
             {isProcessingSlides && (
                 <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0a0a]/90 backdrop-blur-xl animate-in fade-in duration-700">

@@ -46,6 +46,22 @@ async function retryOperation(operation, maxRetries = 3, delayMs = 1000) {
 }
 
 /**
+ * Formats chat history into a compact string for the prompt.
+ * Keeps only the last 6 messages for token efficiency.
+ */
+function formatChatHistory(history = []) {
+    if (!history || history.length === 0) return "";
+
+    // Last 6 messages (3 user/AI turns)
+    const recentHistory = history.slice(-6);
+
+    return recentHistory.map(msg => {
+        const role = msg.role === 'user' ? 'U' : 'A';
+        return `[${role}: ${msg.content}]`;
+    }).join('\n');
+}
+
+/**
  * Performs full-document transformation for raw text (e.g., summaries, notes).
  * @param {string} fullText - The raw text content to process.
  * @param {string} promptInstruction - Specific instructions for the AI.
@@ -80,7 +96,7 @@ User's specific instruction: "${promptInstruction}"
     }
 }
 
-export async function generateChunkBasedTransformation(fileId, query, topN = 10) {
+export async function generateChunkBasedTransformation(fileId, query, topN = 10, chatHistory = []) {
     const searchResults = await vectorStoreService.similaritySearch(fileId, query, topN);
 
     if (searchResults.length === 0) {
@@ -126,22 +142,22 @@ STYLE:
 - Never ever answer to general questions.
 - Never ever answer to questions that are not related to the context.
 
-REFERENTIAL CITATIONS:
-- Each text block in the context is prepended with [[UUID]] where UUID is a unique identifier.
-- When you reference a specific fact, you MUST cite it using the EXACT UUID from the context.
-- Format: [keyword](#UUID) - Copy the EXACT UUID from between [[ and ]].
-- Example: If context shows "[[a1b2-c3d4-5678]]: Revenue increased"
-  Then cite as: "The [revenue increased](#a1b2-c3d4-5678)"
-- CRITICAL: DO NOT OUTPUT THE RAW "[[UUID]]" FORMAT. ALWAYS USE THE MARKDOWN LINK FORMAT.
-- CRITICAL: Use the EXACT UUID - do NOT make up IDs like "node_1".
-- DO NOT use footnotes or citation bubbles.
-- DO NOT mention "UUID" in the visible text.
-
+- REFERENTVISUAL GROUNDING (CRITICAL):
+- You MUST cite your sources using numerical indices with UUID links.
+- FORMAT: Wrap the specific phrase or sentence that is supported by a source in a markdown link pointing to that source's UUID.
+- EXAMPLE: "The [protons and neutrons reside in the nucleus](#UUID)."
+- Do NOT use generic "SOURCE" or [1] buttons. Integrate citations directly into the text flow.
+- If multiple sources support a claim, separate them in the link: [text](#UUID1,UUID2).
+- Copy the UUID EXACTLY. Do NOT use "node_x" or any other format.
+- Ensure the citation is a valid Markdown link pointing to the UUID.
+- Do NOT mention "UUID" in visible text.
 
 Context:
 """
 ${context}
 """
+
+${chatHistory && chatHistory.length > 0 ? `H:\n${formatChatHistory(chatHistory)}\n` : ""}
 
 User Query: "${query}"
 `;
@@ -169,7 +185,7 @@ export async function analyzeImage(imagePath, prompt = "Describe this image in d
     }
 }
 
-export async function* generateChunkBasedStreamingTransformation(fileId, query, topN = 10, inputSelectionNodeIds = []) {
+export async function* generateChunkBasedStreamingTransformation(fileId, query, topN = 10, inputSelectionNodeIds = [], chatHistory = []) {
     // Validate Selection Node IDs
     let selectionNodeIds = Array.isArray(inputSelectionNodeIds) ? inputSelectionNodeIds : (inputSelectionNodeIds ? [inputSelectionNodeIds] : []);
 
@@ -238,21 +254,41 @@ Use these descriptions to answer questions about diagrams, charts, or images.
 
 STYLE:
 - Natural, human-like explanation
-- Clean flow, no over-formatting
-- Use numerical emojis or ticks where needed
+- Use clear, professional language.
+- Use numerical emojis or ticks where needed.
+- VISUAL DATA (CRITICAL):
+  - Use markdown tables for structured data or comparisons.
+  - If explaining architectures, flows, or relationships, use a Mermaid diagram.
+  - Mermaid Format: \`\`\`mermaid [diagram code] \`\`\`. Keep diagrams simple and focused.
+  - **MERMAID v11 RULES**: Avoid using 'graph TD' with rounded edges brackets \`(...)\` inside labels as it can cause syntax errors. Use standard \`[label]\` instead.
+- DOCUMENT CONTROL:
+  - If the user asks you to perform an action on the document (e.g., "Highlight X", "Scroll to Y", "Find Z"), you MUST return a structured command.
+  - Command Format: \`\`\`command { "action": "highlight" | "scroll" | "search", "params": { ... } } \`\`\`.
+  - Actions:
+    - "highlight": { "query": "text to highlight" }
+    - "scroll": { "pageIndex": number }
+    - "search": { "query": "text to search" }
+  - You can still provide a text response alongside the command.
+- TEXTUAL GROUNDING (CRITICAL):
+  - Every time you state a fact from the document, wrap the RELEVANT WORDS in a markdown link to the source's UUID.
+  - FORMAT: [cited text segment](#UUID)
+  - **NEGATIVE CONSTRAINT**: Never use the word "SOURCE", "[SOURCE]", or numerical placeholders like "[1]" as link text. Always wrap the actual informative text from your response.
+  - DO NOT create separate "SOURCE" links. Ground the text itself.
 
 Rules:
-- Don't greet the user
-- Don't say anything else other than the answer
-- Don't ever expose your real identity (Gemini)
-- If the user asks about the "selected area", use the provided selection.
-
+- Don't greet the user.
+- Don't say anything else other than the answer.
+- Don't ever expose your real identity (pdfx is your name).
+- If the user asks about the "selected area", use the provided manual selection.
+- CITATIONS: You MUST cite every specific fact using [keyword](#UUID) format from the Document Context.
 Document Context:
 """
 ${context || "No additional document matches found."}
 """
 
 ${visualSelectionPrompt}
+
+${chatHistory && chatHistory.length > 0 ? `H:\n${formatChatHistory(chatHistory)}\n` : ""}
 
 User Query: "${query}"
 `;

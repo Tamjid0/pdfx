@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -6,6 +6,10 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { triggerBrowserSearch } from '../utils/citationParser';
 
 import { useStore } from '../store/useStore';
+import { useProactiveAgent } from '../hooks/useProactiveAgent';
+
+// Lazy load Mermaid to keep initial bundle size small
+const Mermaid = lazy(() => import('./shared/Mermaid'));
 
 // Local interface removed, using store types implicitly via Props
 
@@ -38,6 +42,7 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
         setActiveSelection,
         setCurrentSlideIndex
     } = useStore();
+    const { suggestion, handleAcceptSuggestion, handleDismissSuggestion } = useProactiveAgent();
     const [inputValue, setInputValue] = useState('');
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -191,18 +196,68 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                                                                     if (href?.startsWith('#')) {
                                                                         const nodeIds = href.slice(1).split(',');
                                                                         return (
-                                                                            <button
-                                                                                onClick={() => setActiveNodeIds(nodeIds)}
-                                                                                className="text-[#00ff88] font-semibold border-b border-[#00ff88]/40 hover:bg-[#00ff88]/10 transition-colors cursor-pointer"
+                                                                            <span
+                                                                                onClick={(e) => {
+                                                                                    e.preventDefault();
+                                                                                    setActiveNodeIds(nodeIds);
+                                                                                }}
+                                                                                className="inline border-b border-dashed border-[#00ff88]/60 text-[#00ff88] font-medium cursor-pointer hover:bg-[#00ff88]/10 transition-colors px-0.5"
+                                                                                title="Click to view source"
                                                                             >
                                                                                 {children}
-                                                                            </button>
+                                                                            </span>
                                                                         );
                                                                     }
                                                                     return <a href={href} className="text-gemini-green underline" target="_blank" rel="noreferrer">{children}</a>;
                                                                 },
+                                                                table: ({ children }) => (
+                                                                    <div className="my-6 overflow-hidden rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm">
+                                                                        <table className="w-full text-left border-collapse">{children}</table>
+                                                                    </div>
+                                                                ),
+                                                                thead: ({ children }) => <thead className="bg-white/10">{children}</thead>,
+                                                                th: ({ children }) => <th className="px-4 py-3 text-xs font-bold text-[#00ff88] uppercase tracking-wider border-b border-white/10">{children}</th>,
+                                                                td: ({ children }) => <td className="px-4 py-3 text-sm text-white/80 border-b border-white/5">{children}</td>,
                                                                 code: ({ node, inline, className, children, ...props }: any) => {
                                                                     const match = /language-(\w+)/.exec(className || '');
+
+                                                                    if (!inline && match && match[1] === 'command') {
+                                                                        const commandStr = String(children).replace(/\n$/, '');
+                                                                        try {
+                                                                            const cmd = JSON.parse(commandStr);
+                                                                            // Execute command effect
+                                                                            setTimeout(() => {
+                                                                                if (cmd.action === 'scroll' && typeof cmd.params?.pageIndex === 'number') {
+                                                                                    setCurrentSlideIndex(cmd.params.pageIndex);
+                                                                                } else if (cmd.action === 'search' || cmd.action === 'highlight') {
+                                                                                    const query = cmd.params?.query || cmd.params?.text;
+                                                                                    if (query) setPdfSearchText(query);
+                                                                                }
+                                                                            }, 500);
+
+                                                                            return (
+                                                                                <div className="flex items-center gap-2 px-3 py-2 bg-[#00ff88]/5 border border-[#00ff88]/20 rounded-lg my-2 animate-pulse">
+                                                                                    <div className="w-2 h-2 rounded-full bg-[#00ff88]"></div>
+                                                                                    <span className="text-[10px] font-bold text-[#00ff88] uppercase tracking-widest">
+                                                                                        Executing Document command: {cmd.action}
+                                                                                    </span>
+                                                                                </div>
+                                                                            );
+                                                                        } catch (e) {
+                                                                            return null; // Don't show broken commands
+                                                                        }
+                                                                    }
+
+                                                                    if (!inline && match && match[1] === 'mermaid') {
+                                                                        return (
+                                                                            <Suspense fallback={<div className="h-32 flex items-center justify-center bg-white/5 rounded-xl border border-dashed border-white/20 animate-pulse">
+                                                                                <span className="text-[10px] text-white/30 uppercase tracking-[0.2em]">Generating Diagram...</span>
+                                                                            </div>}>
+                                                                                <Mermaid chart={String(children).replace(/\n$/, '')} />
+                                                                            </Suspense>
+                                                                        );
+                                                                    }
+
                                                                     return !inline && match ? (
                                                                         <SyntaxHighlighter
                                                                             style={vscDarkPlus as any}
@@ -217,15 +272,11 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                                                                         <code className="bg-white/10 rounded px-1.5 py-0.5 font-mono text-sm" {...props}>
                                                                             {children}
                                                                         </code>
-                                                                    )
+                                                                    );
                                                                 }
                                                             }}
                                                         >
-                                                            {/* Pre-process regex: Group adjacent [[UUID]] or [UUID] into one [📌] link */}
-                                                            {msg.content.replace(/((?:\[{1,2}[a-f0-9-]{36}\]{1,2}\s*[,]?\s*)+)/g, (match) => {
-                                                                const ids = Array.from(match.matchAll(/([a-f0-9-]{36})/g)).map(m => m[1]);
-                                                                return ids.length > 0 ? ` [📌](#${ids.join(',')}) ` : match;
-                                                            })}
+                                                            {msg.content}
                                                         </ReactMarkdown>
                                                     </div>
                                                 ) : (
@@ -323,6 +374,38 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                             </button>
                         </div>
+
+                        {/* Proactive Suggestion UI */}
+                        {suggestion && (
+                            <div className="mt-4 p-4 bg-gradient-to-r from-gemini-green/20 to-teal-500/20 border border-gemini-green/30 rounded-2xl animate-in slide-in-from-bottom-4 duration-500 backdrop-blur-md">
+                                <div className="flex items-start gap-4">
+                                    <div className="w-10 h-10 rounded-full bg-gemini-green/20 flex items-center justify-center border border-gemini-green/30 shrink-0">
+                                        <svg className="w-5 h-5 text-gemini-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                        </svg>
+                                    </div>
+                                    <div className="flex-1">
+                                        <h4 className="text-sm font-bold text-white mb-1">Study Insight</h4>
+                                        <p className="text-xs text-white/70 leading-relaxed mb-3">{suggestion.reason}</p>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={handleAcceptSuggestion}
+                                                className="px-4 py-1.5 bg-gemini-green text-black text-[10px] font-bold rounded-lg hover:bg-gemini-green/90 transition-all"
+                                            >
+                                                Try {suggestion.type === 'quiz' ? 'a Socratic Quiz' : suggestion.type === 'flashcards' ? 'Flashcards' : 'Notes'}
+                                            </button>
+                                            <button
+                                                onClick={handleDismissSuggestion}
+                                                className="px-4 py-1.5 bg-white/5 border border-white/10 text-white/50 text-[10px] font-bold rounded-lg hover:bg-white/10 hover:text-white transition-all"
+                                            >
+                                                Maybe later
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <p className="footer-text text-center text-[11px] text-[#6b7280] mt-4 tracking-wide font-medium">AI can make mistakes. Consider checking important information.</p>
                     </div>
                 </div>

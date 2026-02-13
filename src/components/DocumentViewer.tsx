@@ -236,12 +236,21 @@ const DocumentViewer: React.FC = () => {
         return ligatures[c] || symbols[c] || c;
     };
 
-    const highlightTextInPDF = (searchText: string) => {
+    const highlightTextInPDF = (searchText: string, retryCount = 0) => {
         if (!searchText) return;
 
         const textLayer = document.querySelector('.react-pdf__Page__textContent');
         if (!textLayer) {
+            // Retry if layer not found (likely still rendering)
+            if (retryCount < 5) {
+                setTimeout(() => highlightTextInPDF(searchText, retryCount + 1), 500);
+            }
             return;
+        }
+
+        // Clear previous highlights if this is a fresh search
+        if (retryCount === 0) {
+            textLayer.querySelectorAll('.pdf-highlight').forEach(el => el.classList.remove('pdf-highlight'));
         }
 
         const spans = textLayer.querySelectorAll('span');
@@ -250,7 +259,6 @@ const DocumentViewer: React.FC = () => {
         const charMap: Array<{ char: string, element: HTMLElement }> = [];
         spans.forEach(span => {
             const element = span as HTMLElement;
-            element.classList.remove('pdf-highlight');
             const text = element.textContent || '';
             for (const char of text) {
                 const normalized = normalizeChar(char).toLowerCase();
@@ -264,11 +272,12 @@ const DocumentViewer: React.FC = () => {
 
         const cleanQuery = (text: string) => text.toLowerCase()
             .split('').map(normalizeChar).join('')
-            .replace(/["'“”‘’]/g, '')
+            .replace(/[!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]/g, ' ') // More aggressive punctuation cleaning
             .replace(/\s+/g, ' ')
             .trim();
 
         const normalizedSearch = cleanQuery(searchText);
+        if (!normalizedSearch) return;
 
         // Match Strategy Pipeline
         const normalizedPageText = fullPageText.replace(/\s+/g, ' ');
@@ -293,78 +302,41 @@ const DocumentViewer: React.FC = () => {
                 }
                 if (currentNormalizedPos >= matchIndex + normalizedSearch.length) break;
             }
-            applyHighlights(highlightedElements);
-            return;
-        }
 
-        const searchTerms = normalizedSearch.split(' ').filter(w => w.length > 0);
-        const semanticPattern = searchTerms
-            .map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-            .join('[^a-z0-9]+');
-
-        try {
-            const regex = new RegExp(semanticPattern, 'i');
-            const match = fullPageText.match(regex);
-
-            if (match) {
-                const highlightedElements = new Set<HTMLElement>();
-                const startIndex = fullPageText.indexOf(match[0]);
-                const endIndex = startIndex + match[0].length;
-                for (let i = startIndex; i < endIndex && i < charMap.length; i++) {
-                    highlightedElements.add(charMap[i].element);
-                }
+            if (highlightedElements.size > 0) {
                 applyHighlights(highlightedElements);
                 return;
             }
-        } catch (e) { }
+        }
 
-        const importantWords = searchTerms.filter(w => w.length > 3);
-        if (importantWords.length > 0) {
+        // Fallback: Word cluster matching (Flexible order/spacing)
+        const searchTerms = normalizedSearch.split(' ').filter(w => w.length > 2);
+        if (searchTerms.length > 0) {
             const clusterSpans = new Set<HTMLElement>();
-            let foundWords = 0;
+            let matchedTerms = 0;
 
-            importantWords.forEach(word => {
-                if (fullPageText.includes(word)) {
-                    foundWords++;
+            searchTerms.forEach(term => {
+                if (fullPageText.includes(term)) {
+                    matchedTerms++;
                     spans.forEach(span => {
-                        if (span.textContent?.toLowerCase().includes(word)) {
+                        if (span.textContent?.toLowerCase().includes(term)) {
                             clusterSpans.add(span as HTMLElement);
                         }
                     });
                 }
             });
 
-            if (foundWords >= Math.min(2, importantWords.length)) {
+            // If we found a significant portion of the terms, highlight the cluster
+            if (matchedTerms >= Math.ceil(searchTerms.length * 0.7)) {
                 applyHighlights(clusterSpans);
                 return;
             }
         }
 
-        const pageCharsOnly = charMap.filter(c => /[a-z0-9]/.test(c.char)).map(c => c.char).join('');
-        const searchCharsOnly = normalizedSearch.replace(/[^a-z0-9]/g, '');
-        const charMatchIndex = pageCharsOnly.indexOf(searchCharsOnly);
-
-        if (charMatchIndex !== -1 && searchCharsOnly.length > 5) {
-            const highlightedElements = new Set<HTMLElement>();
-            let alphaCounter = 0;
-            let matchedCount = 0;
-            let startMatching = false;
-            for (let i = 0; i < charMap.length; i++) {
-                if (/[a-z0-9]/.test(charMap[i].char)) {
-                    if (alphaCounter === charMatchIndex) startMatching = true;
-                    if (startMatching) {
-                        highlightedElements.add(charMap[i].element);
-                        matchedCount++;
-                    }
-                    alphaCounter++;
-                    if (matchedCount === searchCharsOnly.length) break;
-                } else if (startMatching) highlightedElements.add(charMap[i].element);
-            }
-            applyHighlights(highlightedElements);
-            return;
+        // Final retry if no match found yet (might be partial text layer)
+        if (retryCount < 2) {
+            setTimeout(() => highlightTextInPDF(searchText, retryCount + 1), 1000);
         }
-
-        // Search failed
     };
 
     const applyHighlights = (elements: Set<HTMLElement>) => {

@@ -226,6 +226,7 @@ export async function chatWithDocument(message: string, fileId: string, chatHist
 export async function chatWithDocumentStream(
     message: string,
     fileId: string,
+    onChunk: (chunk: string) => void,
     onComplete: (fullText: string) => void,
     selectionNodeIds?: string[],
     chatHistory: any[] = []

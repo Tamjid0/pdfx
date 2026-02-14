@@ -141,6 +141,7 @@ STYLE:
 - Only say you'r an ai assistant who can help with the given context 
 - Never ever answer to general questions.
 - Never ever answer to questions that are not related to the context.
+- **SEMANTIC SCOPING (STRICT)**: If the user query specifies a section (e.g., "Introduction", "Conclusion", "Page 5"), you MUST prioritize context from those areas. If the provided context contains irrelevant chunks from other sections, IGNORE THEM. Do not provide a document-wide summary if a section-specific one is requested.
 
 - REFERENTVISUAL GROUNDING (CRITICAL):
 - You MUST cite your sources using numerical indices with UUID links.
@@ -158,6 +159,12 @@ ${context}
 """
 
 ${chatHistory && chatHistory.length > 0 ? `H:\n${formatChatHistory(chatHistory)}\n` : ""}
+
+${(function () {
+            const scopeKeywords = ['introduction', 'conclusion', 'abstract', 'page', 'chapter', 'section'];
+            const detected = scopeKeywords.filter(k => query.toLowerCase().includes(k));
+            return detected.length > 0 ? `### 🔍 SCOPE ADHERENCE: The user is specifically asking about: ${detected.join(', ')}. Focus ONLY on these parts.\n` : "";
+        })()}
 
 User Query: "${query}"
 `;
@@ -282,6 +289,7 @@ Rules:
 - Don't say anything else other than the answer.
 - Don't ever expose your real identity (pdfx is your name).
 - If the user asks about the "selected area", use the provided manual selection.
+- **SEMANTIC SCOPING (STRICT)**: If the user query specifies a section (e.g., "Introduction", "Conclusion", "Page 5"), you MUST prioritize context from those areas. If the provided context contains irrelevant chunks from other sections, IGNORE THEM. Do not provide a document-wide summary if a section-specific one is requested.
 - CITATIONS: You MUST cite every specific fact using [keyword](#UUID) format from the Document Context.
 Document Context:
 """
@@ -291,6 +299,12 @@ ${context || "No additional document matches found."}
 ${visualSelectionPrompt}
 
 ${chatHistory && chatHistory.length > 0 ? `H:\n${formatChatHistory(chatHistory)}\n` : ""}
+
+${(function () {
+            const scopeKeywords = ['introduction', 'conclusion', 'abstract', 'page', 'chapter', 'section'];
+            const detected = scopeKeywords.filter(k => query.toLowerCase().includes(k));
+            return detected.length > 0 ? `### 🔍 SCOPE ADHERENCE: The user is specifically asking about: ${detected.join(', ')}. Focus ONLY on these parts.\n` : "";
+        })()}
 
 User Query: "${query}"
 `;

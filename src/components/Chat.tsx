@@ -43,6 +43,8 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
         setCurrentSlideIndex,
         setPdfSearchText
     } = useStore();
+
+    const processedCommandsRef = useRef<Set<string>>(new Set());
     const { suggestion, handleAcceptSuggestion, handleDismissSuggestion } = useProactiveAgent();
     const [inputValue, setInputValue] = useState('');
     const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -55,6 +57,10 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
 
     useEffect(() => {
         scrollToBottom();
+        // Clear processed commands when a new AI response starts or terminates
+        if (isTyping) {
+            processedCommandsRef.current.clear();
+        }
     }, [history, isTyping]);
 
     const handleSend = () => {
@@ -224,8 +230,24 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
 
                                                                     if (!inline && match && match[1] === 'command') {
                                                                         const commandStr = String(children).replace(/\n$/, '');
+
+                                                                        // Deduplicate: Don't execute the same command string multiple times (e.g. during streaming)
+                                                                        if (processedCommandsRef.current.has(commandStr)) {
+                                                                            // Still return the UI but don't re-trigger store updates
+                                                                            return (
+                                                                                <div className="flex items-center gap-2 px-3 py-2 bg-[#00ff88]/5 border border-[#00ff88]/20 rounded-lg my-2 opacity-60">
+                                                                                    <div className="w-2 h-2 rounded-full bg-[#00ff88]/40"></div>
+                                                                                    <span className="text-[10px] font-bold text-[#00ff88]/60 uppercase tracking-widest">
+                                                                                        Document command active
+                                                                                    </span>
+                                                                                </div>
+                                                                            );
+                                                                        }
+
                                                                         try {
                                                                             const cmd = JSON.parse(commandStr);
+                                                                            processedCommandsRef.current.add(commandStr);
+
                                                                             // Execute command effect
                                                                             setTimeout(() => {
                                                                                 if (cmd.action === 'scroll' && typeof cmd.params?.pageIndex === 'number') {
@@ -234,7 +256,7 @@ const Chat: React.FC<ChatProps> = ({ history, onSendMessage, isTyping }) => {
                                                                                     const query = cmd.params?.query || cmd.params?.text;
                                                                                     if (query) setPdfSearchText(query);
                                                                                 }
-                                                                            }, 500);
+                                                                            }, 300); // Reduced delay for better responsiveness
 
                                                                             return (
                                                                                 <div className="flex items-center gap-2 px-3 py-2 bg-[#00ff88]/5 border border-[#00ff88]/20 rounded-lg my-2 animate-pulse">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import { getAuthHeaders } from '../services/apiService';
 import SelectionOverlay from './slides/SelectionOverlay';
@@ -74,9 +74,18 @@ const DocumentViewer: React.FC = () => {
     const [containerRect, setContainerRect] = useState<{ width: number; height: number } | null>(null);
     const [showSearchBox, setShowSearchBox] = useState(false);
     const [isSearchMinimized, setIsSearchMinimized] = useState(false);
+    const [searchResultCount, setSearchResultCount] = useState(0);
     const [highlightedText, setHighlightedText] = useState<string | null>(null);
+    const [searchHistory, setSearchHistory] = useState<string[]>([]);
+    const [historyIndex, setHistoryIndex] = useState<number>(-1);
     const [documentStructure, setDocumentStructure] = useState<any>(null);
     const [activeNodeBoxes, setActiveNodeBoxes] = useState<any[] | null>(null);
+
+    // Performance & Stability Refs
+    const charMapCacheRef = useRef<{ pageNumber: number, map: any[] } | null>(null);
+    const manuallyClosedRef = useRef(false);
+    const pendingHighlightTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const [isMounted, setIsMounted] = useState(false);
 
     // Fetch auth headers for PDF retrieval
     useEffect(() => {
@@ -125,12 +134,60 @@ const DocumentViewer: React.FC = () => {
         }
     }, [currentSlideIndex]);
 
+    // Track mount state
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    // Keyboard listener for Arrow keys (Search History Navigation)
+    useEffect(() => {
+        if (!showSearchBox) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setHistoryIndex(prev => {
+                    const newIndex = Math.max(0, prev - 1);
+                    if (searchHistory[newIndex]) {
+                        console.log(`[SearchHistory] Navigating to: ${searchHistory[newIndex]}`);
+                        setPdfSearchText(searchHistory[newIndex]);
+                    }
+                    return newIndex;
+                });
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setHistoryIndex(prev => {
+                    const newIndex = Math.min(searchHistory.length - 1, prev + 1);
+                    if (searchHistory[newIndex]) {
+                        console.log(`[SearchHistory] Navigating to: ${searchHistory[newIndex]}`);
+                        setPdfSearchText(searchHistory[newIndex]);
+                    }
+                    return newIndex;
+                });
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [showSearchBox, searchHistory]);
+
     // Show search box and highlight text when citation with quoted text is clicked
     useEffect(() => {
-        if (pdfSearchText) {
+        // Skip initial mount to prevent auto-open on project reload
+        if (!isMounted) return;
+
+        if (pdfSearchText && !manuallyClosedRef.current) {
             setShowSearchBox(true);
             setIsSearchMinimized(false);
             setHighlightedText(pdfSearchText);
+
+            // Update search history
+            setSearchHistory(prev => {
+                if (prev[prev.length - 1] === pdfSearchText) return prev;
+                const newHistory = [...prev, pdfSearchText].slice(-20); // Keep last 20
+                setHistoryIndex(newHistory.length - 1);
+                return newHistory;
+            });
 
             // Copy to clipboard for easy Ctrl+F search
             if (navigator.clipboard) {
@@ -138,14 +195,20 @@ const DocumentViewer: React.FC = () => {
             }
 
             // Highlighting triggers:
-            // 1. Immediately (for when we're already on the correct page)
-            const timer = setTimeout(() => {
+            if (pendingHighlightTimerRef.current) clearTimeout(pendingHighlightTimerRef.current);
+            pendingHighlightTimerRef.current = setTimeout(() => {
                 highlightTextInPDF(pdfSearchText);
             }, 300);
 
-            return () => clearTimeout(timer);
+            return () => {
+                if (pendingHighlightTimerRef.current) clearTimeout(pendingHighlightTimerRef.current);
+            };
+        } else if (!pdfSearchText) {
+            setShowSearchBox(false);
+            setSearchResultCount(0);
+            manuallyClosedRef.current = false; // Reset lockdown for next query
         }
-    }, [pdfSearchText]);
+    }, [pdfSearchText, isMounted]);
 
     // Fetch document structure for coordinate-based highlighting
     useEffect(() => {
@@ -236,72 +299,102 @@ const DocumentViewer: React.FC = () => {
         return ligatures[c] || symbols[c] || c;
     };
 
+    // Optimized Highlight Function with Memoization
     const highlightTextInPDF = (searchText: string, retryCount = 0) => {
         if (!searchText) return;
 
+        // Clear any pending retry timers
+        if (pendingHighlightTimerRef.current) {
+            clearTimeout(pendingHighlightTimerRef.current);
+            pendingHighlightTimerRef.current = null;
+        }
+
         const textLayer = document.querySelector('.react-pdf__Page__textContent');
+
         if (!textLayer) {
-            // Retry if layer not found (likely still rendering)
             if (retryCount < 5) {
-                setTimeout(() => highlightTextInPDF(searchText, retryCount + 1), 500);
+                pendingHighlightTimerRef.current = setTimeout(() => highlightTextInPDF(searchText, retryCount + 1), 500);
             }
             return;
         }
 
-        // Clear previous highlights if this is a fresh search
-        if (retryCount === 0) {
-            textLayer.querySelectorAll('.pdf-highlight').forEach(el => el.classList.remove('pdf-highlight'));
-        }
+        // --- PERFORMANCE OPTIMIZATION: Character Mapping ---
+        // Cache the char map for the current page to avoid O(N^2) builds on every stream chunk
+        let charMap: any[] = [];
+        if (charMapCacheRef.current && charMapCacheRef.current.pageNumber === currentSlideIndex) {
+            charMap = charMapCacheRef.current.map;
+        } else {
+            console.log(`[PDF-Highlight] Rebuilding character map for page ${currentSlideIndex}`);
+            const textNodes = Array.from(textLayer.querySelectorAll('span'));
+            let fullTextContent = "";
 
-        const spans = textLayer.querySelectorAll('span');
+            for (let i = 0; i < textNodes.length; i++) {
+                const node = textNodes[i] as HTMLElement;
+                const nodeText = node.textContent || "";
 
-        // 1. Build character map with normalization
-        const charMap: Array<{ char: string, element: HTMLElement }> = [];
-        spans.forEach(span => {
-            const element = span as HTMLElement;
-            const text = element.textContent || '';
-            for (const char of text) {
-                const normalized = normalizeChar(char).toLowerCase();
-                for (const n of normalized) {
-                    charMap.push({ char: n, element });
+                for (let j = 0; j < nodeText.length; j++) {
+                    const normalizedChar = normalizeChar(nodeText[j]).toLowerCase();
+                    // Handle cases where normalization might change string length (ligatures)
+                    for (const char of normalizedChar) {
+                        charMap.push({
+                            char,
+                            element: node,
+                            localIndex: j,
+                            fullIndex: fullTextContent.length + j
+                        });
+                    }
                 }
+                fullTextContent += nodeText;
             }
-        });
-
-        const fullPageText = charMap.map(c => c.char).join('');
+            charMapCacheRef.current = { pageNumber: currentSlideIndex, map: charMap };
+        }
 
         const cleanQuery = (text: string) => text.toLowerCase()
             .split('').map(normalizeChar).join('')
-            .replace(/[!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]/g, ' ') // More aggressive punctuation cleaning
+            .replace(/[!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]/g, ' ')
             .replace(/\s+/g, ' ')
             .trim();
 
-        const normalizedSearch = cleanQuery(searchText);
-        if (!normalizedSearch) return;
+        const target = cleanQuery(searchText);
+        if (!target) return;
 
-        // Match Strategy Pipeline
-        const normalizedPageText = fullPageText.replace(/\s+/g, ' ');
-        const matchIndex = normalizedPageText.indexOf(normalizedSearch);
+        // Clear existing highlights
+        textLayer.querySelectorAll('.pdf-highlight').forEach(el => el.classList.remove('pdf-highlight'));
 
-        if (matchIndex !== -1) {
+        const fullDocumentText = charMap.map(c => c.char).join('').replace(/\s+/g, ' ');
+
+        // Find ALL occurrences
+        const matchIndices: number[] = [];
+        let pos = fullDocumentText.indexOf(target);
+        while (pos !== -1) {
+            matchIndices.push(pos);
+            pos = fullDocumentText.indexOf(target, pos + target.length);
+        }
+
+        setSearchResultCount(matchIndices.length);
+
+        if (matchIndices.length > 0) {
             const highlightedElements = new Set<HTMLElement>();
-            let currentNormalizedPos = 0;
-            let lastCharWasSpace = false;
 
-            for (let i = 0; i < charMap.length; i++) {
-                const isSpace = /\s/.test(charMap[i].char);
-                if (isSpace) {
-                    if (!lastCharWasSpace) currentNormalizedPos++;
-                    lastCharWasSpace = true;
-                } else {
-                    if (currentNormalizedPos >= matchIndex && currentNormalizedPos < matchIndex + normalizedSearch.length) {
-                        highlightedElements.add(charMap[i].element);
+            matchIndices.forEach(matchIdx => {
+                let currentNormalizedPos = 0;
+                let lastCharWasSpace = false;
+
+                for (let i = 0; i < charMap.length; i++) {
+                    const isSpace = /\s/.test(charMap[i].char);
+                    if (isSpace) {
+                        if (!lastCharWasSpace) currentNormalizedPos++;
+                        lastCharWasSpace = true;
+                    } else {
+                        if (currentNormalizedPos >= matchIdx && currentNormalizedPos < matchIdx + target.length) {
+                            highlightedElements.add(charMap[i].element);
+                        }
+                        currentNormalizedPos++;
+                        lastCharWasSpace = false;
                     }
-                    currentNormalizedPos++;
-                    lastCharWasSpace = false;
+                    if (currentNormalizedPos >= matchIdx + target.length && currentNormalizedPos > matchIdx) continue;
                 }
-                if (currentNormalizedPos >= matchIndex + normalizedSearch.length) break;
-            }
+            });
 
             if (highlightedElements.size > 0) {
                 applyHighlights(highlightedElements);
@@ -309,33 +402,36 @@ const DocumentViewer: React.FC = () => {
             }
         }
 
-        // Fallback: Word cluster matching (Flexible order/spacing)
-        const searchTerms = normalizedSearch.split(' ').filter(w => w.length > 2);
+        // Fallback: Word cluster matching
+        const searchTerms = target.split(' ').filter(w => w.length > 2);
         if (searchTerms.length > 0) {
             const clusterSpans = new Set<HTMLElement>();
             let matchedTerms = 0;
+            const fullPageText = charMap.map(c => c.char).join('');
 
             searchTerms.forEach(term => {
                 if (fullPageText.includes(term)) {
                     matchedTerms++;
-                    spans.forEach(span => {
-                        if (span.textContent?.toLowerCase().includes(term)) {
-                            clusterSpans.add(span as HTMLElement);
+                    charMap.forEach(item => {
+                        if (item.element.textContent?.toLowerCase().includes(term)) {
+                            clusterSpans.add(item.element);
                         }
                     });
                 }
             });
 
-            // If we found a significant portion of the terms, highlight the cluster
             if (matchedTerms >= Math.ceil(searchTerms.length * 0.7)) {
+                setSearchResultCount(1); // Cluster is counted as 1 logical result
                 applyHighlights(clusterSpans);
                 return;
             }
         }
 
-        // Final retry if no match found yet (might be partial text layer)
+        setSearchResultCount(0);
+
+        // Final retry
         if (retryCount < 2) {
-            setTimeout(() => highlightTextInPDF(searchText, retryCount + 1), 1000);
+            pendingHighlightTimerRef.current = setTimeout(() => highlightTextInPDF(searchText, retryCount + 1), 1000);
         }
     };
 
@@ -358,6 +454,9 @@ const DocumentViewer: React.FC = () => {
     const changePage = (offset: number) => {
         const newIndex = currentSlideIndex + offset;
         if (numPages && newIndex >= 0 && newIndex < numPages) {
+            // Reset character map cache and manual close lockdown on page change
+            charMapCacheRef.current = null;
+            manuallyClosedRef.current = false;
             setCurrentSlideIndex(newIndex);
         }
     };
@@ -532,14 +631,21 @@ const DocumentViewer: React.FC = () => {
 
             {/* Floating Search Box - Appears when citation is clicked */}
             {showSearchBox && pdfSearchText && (
-                <div className={`absolute top-20 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-2 fade-in duration-200 search-box-transition ${isSearchMinimized ? 'min-w-0 opacity-80' : 'min-w-[400px]'}`}>
+                <div
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()} // Prevent selection start when clicking box
+                    className={`absolute top-20 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-top-2 fade-in duration-200 search-box-transition ${isSearchMinimized ? 'min-w-0 opacity-80' : 'min-w-[400px]'}`}
+                >
                     <div className={`bg-[#1a1a1a]/95 backdrop-blur-md border border-[#00ff88]/30 rounded-xl shadow-2xl overflow-hidden ${isSearchMinimized ? 'p-1' : 'p-4'}`}>
                         {isSearchMinimized ? (
                             <div className="flex items-center gap-2 px-2 py-1">
                                 <div className="w-2 h-2 bg-[#00ff88] rounded-full animate-pulse"></div>
                                 <span className="text-[10px] font-bold text-[#00ff88] uppercase tracking-widest">Active Highlight</span>
                                 <button
-                                    onClick={() => setIsSearchMinimized(false)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsSearchMinimized(false);
+                                    }}
                                     className="p-1 hover:bg-white/10 rounded-lg transition-colors text-white/50 hover:text-white"
                                     title="Restore Search Box"
                                 >
@@ -551,20 +657,35 @@ const DocumentViewer: React.FC = () => {
                         ) : (
                             <div className="flex items-start gap-3">
                                 <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <svg className="w-4 h-4 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                        </svg>
-                                        <span className="text-xs font-bold text-[#00ff88] uppercase tracking-wider">Search in PDF</span>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <svg className="w-4 h-4 text-[#00ff88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                            </svg>
+                                            <span className="text-xs font-bold text-[#00ff88] uppercase tracking-wider">Search in PDF</span>
+                                        </div>
+                                        {searchResultCount > 0 && (
+                                            <span className="text-[10px] font-bold text-white/40 bg-white/5 px-2 py-0.5 rounded-full border border-white/10 uppercase tracking-widest">
+                                                {searchResultCount} {searchResultCount === 1 ? 'match' : 'matches'} found
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="bg-[#0a0a0a] border border-[#333] rounded-lg p-3 mb-2">
                                         <p className="text-sm text-white/90 italic">"{pdfSearchText}"</p>
                                     </div>
-                                    <p className="text-xs text-white/50 mb-3">
-                                        Press <kbd className="px-1.5 py-0.5 bg-[#333] rounded text-[#00ff88] font-mono">Ctrl+F</kbd> (or <kbd className="px-1.5 py-0.5 bg-[#333] rounded text-[#00ff88] font-mono">⌘+F</kbd>) to search for this text in the PDF
-                                    </p>
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-[10px] text-white/40">
+                                            Use <span className="text-[#00ff88]/60 font-mono">↑↓</span> to cycle history
+                                        </p>
+                                        <p className="text-[10px] text-white/40">
+                                            Press <kbd className="px-1 py-0.5 bg-[#333] rounded text-[#00ff88]/60 font-mono text-[9px]">Ctrl+F</kbd> for browser search
+                                        </p>
+                                    </div>
                                     <button
-                                        onClick={() => highlightTextInPDF(pdfSearchText)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            highlightTextInPDF(pdfSearchText);
+                                        }}
                                         className="w-full py-1.5 bg-[#00ff88]/20 border border-[#00ff88]/30 rounded-lg text-[#00ff88] text-xs font-bold hover:bg-[#00ff88]/30 transition-all flex items-center justify-center gap-2"
                                     >
                                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -575,7 +696,10 @@ const DocumentViewer: React.FC = () => {
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <button
-                                        onClick={() => setIsSearchMinimized(true)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsSearchMinimized(true);
+                                        }}
                                         className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-white/50 hover:text-white"
                                         title="Minimize search box"
                                     >
@@ -584,10 +708,15 @@ const DocumentViewer: React.FC = () => {
                                         </svg>
                                     </button>
                                     <button
-                                        onClick={() => {
+                                        onClick={(e) => {
+                                            e.stopPropagation();
                                             setShowSearchBox(false);
                                             setPdfSearchText('');
+                                            setSearchResultCount(0);
                                             useStore.getState().setPdfSearchText('');
+                                            manuallyClosedRef.current = true; // Lock the UI for this query
+
+                                            // More aggressive clearing
                                             const layer = document.querySelector('.react-pdf__Page__textContent');
                                             if (layer) {
                                                 layer.querySelectorAll('.pdf-highlight').forEach(el => el.classList.remove('pdf-highlight'));
